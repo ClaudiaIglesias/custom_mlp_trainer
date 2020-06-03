@@ -26,7 +26,11 @@ c = 300
 d = 1
 e = 1
 f = 300
-
+i = 0
+j = 1
+k = 1
+l = 1
+m = 300
 
 class NeuralNet():
 
@@ -565,7 +569,10 @@ class First(Widget):
         f = 300
         g = 1
         h = 300
-        i = 1
+        i = 0
+        j = 1
+        k = 300
+        l = 1
 
         with self.canvas:
             #Clear
@@ -580,32 +587,17 @@ class First(Widget):
                 num = int(hiddenlayer / 2)
                 for x in range(num):
                     with self.canvas:
-                        Color(1, 1, 0.5, 1)
-                        Line(points=[(165, 115, 385, a * 50 + 315)])
-                        Line(points=[(165, 165, 385, a * 50 + 315)])
-                        Line(points=[(165, 215, 385, a * 50 + 315)])
-                        Line(points=[(165, 265, 385, a * 50 + 315)])
-                        Line(points=[(165, 315, 385, a * 50 + 315)])
-                        Line(points=[(165, 365, 385, a * 50 + 315)])
-                        Line(points=[(165, 415, 385, a * 50 + 315)])
-                        Line(points=[(165, 465, 385, a * 50 + 315)])
-                        Line(points=[(165, 515, 385, a * 50 + 315)])
-                        Line(points=[(165, 565, 385, a * 50 + 315)])
-                        Line(points=[(165, 115, 385, a * 50 + c - 35)])
-                        Line(points=[(165, 165, 385, a * 50 + c - 35)])
-                        Line(points=[(165, 215, 385, a * 50 + c - 35)])
-                        Line(points=[(165, 265, 385, a * 50 + c - 35)])
-                        Line(points=[(165, 315, 385, a * 50 + c - 35)])
-                        Line(points=[(165, 365, 385, a * 50 + c - 35)])
-                        Line(points=[(165, 415, 385, a * 50 + c - 35)])
-                        Line(points=[(165, 465, 385, a * 50 + c - 35)])
-                        Line(points=[(165, 515, 385, a * 50 + c - 35)])
-                        Line(points=[(165, 565, 385, a * 50 + c - 35)])
-                        Line(points=[385,a * 50 + 315,605,340])
-                        Line(points=[385, a * 50 + c - 35, 605, 340])
                         Color(1, 1, .9, 1)
+                        Line(points=[385,a * 50 + 315, 605,340])
+                        Line(points=[385, a * 50 + c - 35, 605, 340])
                         RoundedRectangle(size=(30, 30), pos=(370, a * 50 + 300))
                         RoundedRectangle(size=(30, 30), pos=(370, a * 50 + c - 50))
+                        i = 0
+                        for x in range(10):
+                            with self.canvas:
+                                Line(points=[180, 115+i, 370, a * 50 + 315])
+                                Line(points=[180, 115+i, 370, a * 50 + c - 35])
+                                i = i + 50
                         a = a + 1
                         c = c - 100
             else:
@@ -619,41 +611,16 @@ class First(Widget):
                         Color(1, 1, .9, 1)
                         RoundedRectangle(size=(30, 30), pos=(370, a * 50 + 330))
                         RoundedRectangle(size=(30, 30), pos=(370, a * 50 + c - 80))
-                        Color(1, 1, 0.5, 1)
-                        Line(points=[165, 115, 385, a * 50 + 345])
-                        Line(points=[165, 165, 385, a * 50 + 345])
-                        Line(points=[165, 215, 385, a * 50 + 345])
-                        Line(points=[165, 265, 385, a * 50 + 345])
-                        Line(points=[165, 315, 385, a * 50 + 345])
-                        Line(points=[165, 365, 385, a * 50 + 345])
-                        Line(points=[165, 415, 385, a * 50 + 345])
-                        Line(points=[165, 465, 385, a * 50 + 345])
-                        Line(points=[165, 515, 385, a * 50 + 345])
-                        Line(points=[165, 565, 385, a * 50 + 345])
-                        Line(points=[165, 115, 385, a * 50 + c - 65])
-                        Line(points=[165, 165, 385, a * 50 + c - 65])
-                        Line(points=[165, 215, 385, a * 50 + c - 65])
-                        Line(points=[165, 265, 385, a * 50 + c - 65])
-                        Line(points=[165, 315, 385, a * 50 + c - 65])
-                        Line(points=[165, 365, 385, a * 50 + c - 65])
-                        Line(points=[165, 415, 385, a * 50 + c - 65])
-                        Line(points=[165, 465, 385, a * 50 + c - 65])
-                        Line(points=[165, 515, 385, a * 50 + c - 65])
-                        Line(points=[165, 565, 385, a * 50 + c - 65])
-                        Line(points=[165, 115, 385, 340])
-                        Line(points=[165, 165, 385, 340])
-                        Line(points=[165, 215, 385, 340])
-                        Line(points=[165, 265, 385, 340])
-                        Line(points=[165, 315, 385, 340])
-                        Line(points=[165, 365, 385, 340])
-                        Line(points=[165, 415, 385, 340])
-                        Line(points=[165, 465, 385, 340])
-                        Line(points=[165, 515, 385, 340])
-                        Line(points=[165, 565, 385, 340])
                         Line(points=[385, a * 50 + 345, 605, 340])
                         Line(points=[385, a * 50 + c - 65, 605, 340])
-                        Line(points=[385, 350, 605, 340])
-
+                        Line(points=[385, 340, 605, 340])
+                        i = 0
+                        for x in range(10):
+                            with self.canvas:
+                                Line(points=[180, 115 + i, 370, a * 50 + 345])
+                                Line(points=[180, 115 + i, 370, a * 50 + c - 65])
+                                Line(points=[180, 115 + i, 370, 340])
+                                i = i + 50
                         a = a + 1
                         c = c - 100
 
@@ -668,9 +635,14 @@ class First(Widget):
                         Color(1, 1, .9, 1)
                         RoundedRectangle(size=(30, 30), pos=(315, a * 50 + 300))
                         RoundedRectangle(size=(30, 30), pos=(315, a * 50 + c - 50))
+                        i = 0
+                        for x in range(10):
+                            with self.canvas:
+                                Line(points=[180, 115+i, 315, a * 50 + 315])
+                                Line(points=[180, 115+i, 315, a * 50 + c - 35])
+                            i = i + 50
                         a = a + 1
                         c = c - 100
-
             else:
                 # Odd number
                 num = int((hiddenlayer - 1) / 2)
@@ -682,6 +654,13 @@ class First(Widget):
                         Color(1, 1, .9, 1)
                         RoundedRectangle(size=(30, 30), pos=(315, a * 50 + 330))
                         RoundedRectangle(size=(30, 30), pos=(315, a * 50 + c - 80))
+                        i = 0
+                        for x in range(10):
+                            with self.canvas:
+                                Line(points=[180, 115 + i, 315, a * 50 + 345])
+                                Line(points=[180, 115 + i, 315, a * 50 + c - 65])
+                                Line(points=[180, 115 + i, 315, 340])
+                                i = i + 50
                         a = a + 1
                         c = c - 100
 
@@ -689,26 +668,84 @@ class First(Widget):
             if hiddenlayertwo % 2 == 0:
                 # Even number
                 num = int(hiddenlayertwo / 2)
+                num2 = int(hiddenlayer / 2)
+
                 for x in range(num):
                     with self.canvas:
                         Color(1, 1, .9, 1)
                         RoundedRectangle(size=(30, 30), pos=(425, d * 50 + 300))
                         RoundedRectangle(size=(30, 30), pos=(425, d * 50 + f - 50))
-                        d = d + 1
-                        f = f - 100
+                        Line(points=[455, d * 50 + 315, 605, 340])
+                        Line(points=[455, d * 50 + f - 35, 605, 340])
+
+                        j = 1
+                        k = 300
+                        if hiddenlayer % 2 == 0:
+                            for x in range(num2):
+                                 with self.canvas:
+                                    Line(points=[345, j * 50 + 315, 425, d * 50 + 315])
+                                    Line(points=[345, j * 50 + k - 35, 425, d * 50 + f - 35])
+                                    Line(points=[345, j * 50 + 315, 425, d * 50 + f - 35])
+                                    Line(points=[345, j * 50 + k - 35, 425, d * 50 + 315])
+                                    j = j + 1
+                                    k = k - 100
+                        else:
+                            for x in range(num2):
+                                 with self.canvas:
+                                    Line(points=[345, j * 50 + 345, 425, d * 50 + 315])
+                                    Line(points=[345, j * 50 + k - 65, 425, d * 50 + f - 35])
+                                    Line(points=[345, j * 50 + 345, 425, d * 50 + f - 35])
+                                    Line(points=[345, j * 50 + k - 65, 425, d * 50 + 315])
+                                    Line(points=[345, 345, 425, d * 50 + 315])
+                                    Line(points=[345, 345, 425, d * 50 + f - 35])
+                                    j = j + 1
+                                    k = k - 100
+                    d = d + 1
+                    f = f - 100
             else:
                 # Odd number
                 num = int((hiddenlayertwo - 1) / 2)
+                num2 = int(hiddenlayer / 2)
                 with self.canvas:
                     Color(1, 1, .9, 1)
                     RoundedRectangle(size=(30, 30), pos=(425, 325))
+                    Line(points=[455, 340, 605, 340])
                 for x in range(num):
                     with self.canvas:
                         Color(1, 1, .9, 1)
                         RoundedRectangle(size=(30, 30), pos=(425, d * 50 + 330))
                         RoundedRectangle(size=(30, 30), pos=(425, d * 50 + f - 80))
+                        Line(points=[455,d * 50 + 345, 605, 340])
+                        Line(points=[455, d * 50 + f - 65, 605, 340])
                         d = d + 1
                         f = f - 100
+                        j = 1
+                        k = 300
+                        if hiddenlayer % 2 == 0:
+                            for x in range(num2):
+                                with self.canvas:
+                                    Line(points=[345, j * 50 + 315, 425, d * 50 + 300])
+                                    Line(points=[345, j * 50 + k - 35, 425, d * 50 + f - 20])
+                                    Line(points=[345, j * 50 + 315, 425, d * 50 + f - 20])
+                                    Line(points=[345, j * 50 + k - 35, 425, d * 50 + 300])
+                                    Line(points=[345, j * 50 + k - 35, 425, 340])
+                                    Line(points=[345, j * 50 + 315, 425, 340])
+                                    j = j + 1
+                                    k = k - 100
+                        else:
+                            for x in range(num2):
+                                with self.canvas:
+                                    Line(points=[345, j * 50 + 345, 425, d * 50 + 300])
+                                    Line(points=[345, j * 50 + k - 65, 425, d * 50 + f - 20])
+                                    Line(points=[345, j * 50 + 345, 425, d * 50 + f - 20])
+                                    Line(points=[345, j * 50 + k - 65, 425, d * 50 + 300])
+                                    Line(points=[345, 345, 425, d * 50 + 300])
+                                    Line(points=[345, 345, 425, d * 50 + f - 20])
+                                    Line(points=[345, j * 50 + k - 65, 425, 340])
+                                    Line(points=[345, j * 50 + 345, 425, 340])
+                                    Line(points=[345, 345, 425, 340])
+                                    j = j + 1
+                                    k = k - 100
 
         if layers == 3:
             NeuralNetThree()
@@ -721,6 +758,12 @@ class First(Widget):
                         Color(1, 1, .9, 1)
                         RoundedRectangle(size=(30, 30), pos=(260, a * 50 + 300))
                         RoundedRectangle(size=(30, 30), pos=(260, a * 50 + c - 50))
+                        i = 0
+                        for x in range(10):
+                            with self.canvas:
+                                Line(points=[180, 115 + i, 260, a * 50 + 315])
+                                Line(points=[180, 115 + i, 260, a * 50 + c - 35])
+                            i = i + 50
                         a = a + 1
                         c = c - 100
             else:
@@ -734,6 +777,13 @@ class First(Widget):
                         Color(1, 1, .9, 1)
                         RoundedRectangle(size=(30, 30), pos=(260, a * 50 + 330))
                         RoundedRectangle(size=(30, 30), pos=(260, a * 50 + c - 80))
+                        i = 0
+                        for x in range(10):
+                            with self.canvas:
+                                Line(points=[180, 115 + i, 260, a * 50 + 345])
+                                Line(points=[180, 115 + i, 260, a * 50 + c - 65])
+                                Line(points=[180, 115 + i, 260, 340])
+                                i = i + 50
                         a = a + 1
                         c = c - 100
 
@@ -741,16 +791,40 @@ class First(Widget):
             if hiddenlayertwo % 2 == 0:
                 # Even number
                 num = int(hiddenlayertwo / 2)
+                num2 = int(hiddenlayer / 2)
                 for x in range(num):
                     with self.canvas:
                         Color(1, 1, .9, 1)
                         RoundedRectangle(size=(30, 30), pos=(370, d * 50 + 300))
                         RoundedRectangle(size=(30, 30), pos=(370, d * 50 + f - 50))
+                        j = 1
+                        k = 300
+                        if hiddenlayer % 2 == 0:
+                            for x in range(num2):
+                                with self.canvas:
+                                    Line(points=[290, j * 50 + 315, 370, d * 50 + 315])
+                                    Line(points=[290, j * 50 + k - 35, 370, d * 50 + f - 35])
+                                    Line(points=[290, j * 50 + 315, 370, d * 50 + f - 35])
+                                    Line(points=[290, j * 50 + k - 35, 370, d * 50 + 315])
+                                    j = j + 1
+                                    k = k - 100
+                        else:
+                            for x in range(num2):
+                                with self.canvas:
+                                    Line(points=[290, j * 50 + 345, 370, d * 50 + 315])
+                                    Line(points=[290, j * 50 + k - 65, 370, d * 50 + f - 35])
+                                    Line(points=[290, j * 50 + 345, 370, d * 50 + f - 35])
+                                    Line(points=[290, j * 50 + k - 65, 370, d * 50 + 315])
+                                    Line(points=[290, 345, 370, d * 50 + 315])
+                                    Line(points=[290, 345, 370, d * 50 + f - 35])
+                                    j = j + 1
+                                    k = k - 100
                         d = d + 1
                         f = f - 100
             else:
                 # Odd number
                 num = int((hiddenlayertwo - 1) / 2)
+                num2 = int(hiddenlayer / 2)
                 with self.canvas:
                     Color(1, 1, .9, 1)
                     RoundedRectangle(size=(30, 30), pos=(370, 325))
@@ -761,30 +835,114 @@ class First(Widget):
                         RoundedRectangle(size=(30, 30), pos=(370, d * 50 + f - 80))
                         d = d + 1
                         f = f - 100
+                        j = 1
+                        k = 300
+                        if hiddenlayer % 2 == 0:
+                            for x in range(num2):
+                                with self.canvas:
+                                    Line(points=[290, j * 50 + 315, 370, d * 50 + 300])
+                                    Line(points=[290, j * 50 + k - 35, 370, d * 50 + f - 20])
+                                    Line(points=[290, j * 50 + 315, 370, d * 50 + f - 20])
+                                    Line(points=[290, j * 50 + k - 35, 370, d * 50 + 300])
+                                    Line(points=[290, j * 50 + k - 35, 370, 340])
+                                    Line(points=[290, j * 50 + 315, 370, 340])
+                                    j = j + 1
+                                    k = k - 100
+                        else:
+                            for x in range(num2):
+                                with self.canvas:
+                                    Line(points=[290, j * 50 + 345, 370, d * 50 + 300])
+                                    Line(points=[290, j * 50 + k - 65, 370, d * 50 + f - 20])
+                                    Line(points=[290, j * 50 + 345, 370, d * 50 + f - 20])
+                                    Line(points=[290, j * 50 + k - 65, 370, d * 50 + 300])
+                                    Line(points=[290, 345, 370, d * 50 + 300])
+                                    Line(points=[290, 345, 370, d * 50 + f - 20])
+                                    Line(points=[290, j * 50 + k - 65, 370, 340])
+                                    Line(points=[290, j * 50 + 345, 370, 340])
+                                    Line(points=[290, 345, 370, 340])
+                                    j = j + 1
+                                    k = k - 100
+
+
 
 
             # hiddenlayerthree
             if hiddenlayerthree % 2 == 0:
                 # Even number
                 num = int(hiddenlayerthree / 2)
+                num3 = int(hiddenlayertwo / 2)
                 for x in range(num):
                     with self.canvas:
                         Color(1, 1, .9, 1)
                         RoundedRectangle(size=(30, 30), pos=(480, g * 50 + 300))
                         RoundedRectangle(size=(30, 30), pos=(480, g * 50 + h - 50))
+                        Line(points=[510, g * 50 + 315, 590, 340])
+                        Line(points=[510, g * 50 + h - 35, 590, 340])
+                        l = 1
+                        m = 300
+                        if hiddenlayertwo % 2 == 0:
+                            for x in range(num3):
+                                with self.canvas:
+                                    Line(points=[385, l * 50 + 315, 480, g * 50 + 315])
+                                    Line(points=[385, l * 50 + m - 35, 480, g * 50 + h - 35])
+                                    Line(points=[385, l * 50 + 315, 480, g * 50 + h - 35])
+                                    Line(points=[385, l * 50 + m - 35, 480, g * 50 + 315])
+                                    l = l + 1
+                                    m = m - 100
+                        else:
+                            for x in range(num3):
+                                with self.canvas:
+                                    Line(points=[385, l * 50 + 345, 480, g * 50 + 315])
+                                    Line(points=[385, l * 50 + m - 65, 480, g * 50 + h - 35])
+                                    Line(points=[385, l * 50 + 345, 480, g * 50 + h - 35])
+                                    Line(points=[385, l * 50 + m - 65, 480, g * 50 + 315])
+                                    Line(points=[385, 345, 480, g * 50 + 315])
+                                    Line(points=[385, 345, 480, g * 50 + h - 35])
+                                    l = l + 1
+                                    m = m - 100
                         g = g + 1
                         h = h - 100
             else:
                 # Odd number
                 num = int((hiddenlayerthree - 1) / 2)
+                num3 = int(hiddenlayertwo / 2)
                 with self.canvas:
                     Color(1, 1, .9, 1)
                     RoundedRectangle(size=(30, 30), pos=(480, 325))
+                    Line(points=[510, 340, 590, 340])
                 for x in range(num):
                     with self.canvas:
                         Color(1, 1, .9, 1)
                         RoundedRectangle(size=(30, 30), pos=(480, g * 50 + 330))
                         RoundedRectangle(size=(30, 30), pos=(480, g * 50 + h - 80))
+                        Line(points=[510, g * 50 + 345, 590, 340])
+                        Line(points=[510, g * 50 + h - 65, 590, 340])
+                        l = 1
+                        m = 300
+                        if hiddenlayertwo % 2 == 0:
+                            for x in range(num3):
+                                with self.canvas:
+                                    Line(points=[400, l * 50 + 315, 480, g * 50 + 345])
+                                    Line(points=[400, l * 50 + m - 35, 480, g * 50 + h - 65])
+                                    Line(points=[400, l * 50 + 315, 480, g * 50 + h - 65])
+                                    Line(points=[400, l * 50 + m - 35, 480, g * 50 + 345])
+                                    Line(points=[400, l * 50 + 315, 480, 340])
+                                    Line(points=[400, l * 50 + m - 35, 480, 340])
+                                    l = l + 1
+                                    m = m - 100
+                        else:
+                            for x in range(num3):
+                                with self.canvas:
+                                    Line(points=[400, l * 50 + 345, 480, g * 50 + 345])
+                                    Line(points=[400, l * 50 + m - 65, 480, g * 50 + h - 65])
+                                    Line(points=[400, l * 50 + 345, 480, g * 50 + h - 65])
+                                    Line(points=[400, l * 50 + m - 65, 480, g * 50 + 345])
+                                    Line(points=[400, 345, 480, g * 50 + 345])
+                                    Line(points=[400, 345, 480, g * 50 + h - 65])
+                                    Line(points=[400, l * 50 + 345, 480, 340])
+                                    Line(points=[400, l * 50 + m - 65, 480, 340])
+                                    l = l + 1
+                                    m = m - 100
                         g = g + 1
                         h = h - 100
 
