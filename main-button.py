@@ -19,23 +19,20 @@ from kivy.graphics.vertex_instructions import *
 hiddenlayer=7
 hiddenlayertwo = 7
 hiddenlayerthree = 7
-layers = 1
-a = 1
-b = 1
-c = 300
-d = 1
+layer = 1
+numdata = 3
+a = 0
+b = 0
+d = 0
 e = 1
-f = 300
+g = 0
 i = 0
-j = 1
-k = 1
-l = 1
-m = 300
+j = 0
+l = 0
 
 class NeuralNet():
-
     global hiddenlayer
-    def __init__(self, layers=[13, hiddenlayer, 1], learning_rate=0.001, iterations=100):
+    def __init__(self, layers=[numdata, hiddenlayer, 1], learning_rate=0.001, iterations=100):
         self.params = {}
         self.layers = layers
         self.learning_rate = learning_rate
@@ -44,6 +41,8 @@ class NeuralNet():
         self.sample_size = None
         self.X = None
         self.y = None
+        print ('a')
+
 
     def init_weights(self):
         '''
@@ -54,6 +53,8 @@ class NeuralNet():
         self.params['b1'] = np.random.randn(self.layers[1], )
         self.params['W2'] = np.random.randn(self.layers[1], self.layers[2])
         self.params['b2'] = np.random.randn(self.layers[2], )
+
+
 
 
     def relu(self, Z):
@@ -165,7 +166,7 @@ class NeuralNet():
 class NeuralNetTwo():
 
     global hiddenlayer
-    def __init__(self, layers=[13, hiddenlayer, hiddenlayertwo, 1], learning_rate=0.001, iterations=100):
+    def __init__(self, layers=[numdata, hiddenlayer, hiddenlayertwo, 1], learning_rate=0.001, iterations=100):
         self.params = {}
         self.layers = layers
         self.learning_rate = learning_rate
@@ -307,7 +308,7 @@ class NeuralNetTwo():
 class NeuralNetThree():
     global hiddenlayer
 
-    def __init__(self, layers=[13, hiddenlayer, hiddenlayertwo, 1], learning_rate=0.001, iterations=100):
+    def __init__(self, layers=[numdata, hiddenlayer, hiddenlayertwo, hiddenlayerthree, 1], learning_rate=0.001, iterations=100):
         self.params = {}
         self.layers = layers
         self.learning_rate = learning_rate
@@ -451,11 +452,11 @@ class First(Widget):
     def __init__(self,**kwargs):
         super(First, self).__init__(**kwargs)
         global hiddenlayer
-        global layers
+        global layer
         numhiddenlayer = str(hiddenlayer)
         numhiddenlayertwo = str(hiddenlayertwo)
         numhiddenlayerthree = str(hiddenlayerthree)
-        numlayers = str(layers)
+        numlayers = str(layer)
 
         with self.canvas:
             #Background
@@ -560,194 +561,25 @@ class First(Widget):
     def btnpressed(self, instance):
         global a
         global b
-        global c
         global hiddenlayer
-        a = 1
-        b = 1
-        c = 300
-        d = 1
-        f = 300
-        g = 1
-        h = 300
+        a = 0
+        b = 0
+        d = 0
+        g = 0
         i = 0
-        j = 1
-        k = 300
-        l = 1
+        j = 0
+        l = 0
+        space = numdata *30 + (numdata - 1)* 20
+        spaceone = hiddenlayer *30 + (hiddenlayer - 1)* 20
+        spacetwo = hiddenlayertwo *30 + (hiddenlayertwo - 1)* 20
+        spacethree = hiddenlayerthree *30 + (hiddenlayerthree - 1)* 20
 
         with self.canvas:
             #Clear
             Color(0, 0, 0, 1)
             Rectangle(size=(800,800), pos=(0,81))
 
-        if layers == 1:
-            NeuralNet()
-            # hiddenlayer
-            if hiddenlayer % 2 == 0:
-                # Even number
-                num = int(hiddenlayer / 2)
-                for x in range(num):
-                    with self.canvas:
-                        Color(1, 1, .9, 1)
-                        Line(points=[385,a * 50 + 315, 605,340])
-                        Line(points=[385, a * 50 + c - 35, 605, 340])
-                        RoundedRectangle(size=(30, 30), pos=(370, a * 50 + 300))
-                        RoundedRectangle(size=(30, 30), pos=(370, a * 50 + c - 50))
-                        i = 0
-                        for x in range(10):
-                            with self.canvas:
-                                Line(points=[180, 115+i, 370, a * 50 + 315])
-                                Line(points=[180, 115+i, 370, a * 50 + c - 35])
-                                i = i + 50
-                        a = a + 1
-                        c = c - 100
-            else:
-                # Odd number
-                num = int((hiddenlayer - 1) / 2)
-                with self.canvas:
-                    Color(1, 1, .9, 1)
-                    RoundedRectangle(size=(30, 30), pos=(370, 325))
-                for x in range(num):
-                    with self.canvas:
-                        Color(1, 1, .9, 1)
-                        RoundedRectangle(size=(30, 30), pos=(370, a * 50 + 330))
-                        RoundedRectangle(size=(30, 30), pos=(370, a * 50 + c - 80))
-                        Line(points=[385, a * 50 + 345, 605, 340])
-                        Line(points=[385, a * 50 + c - 65, 605, 340])
-                        Line(points=[385, 340, 605, 340])
-                        i = 0
-                        for x in range(10):
-                            with self.canvas:
-                                Line(points=[180, 115 + i, 370, a * 50 + 345])
-                                Line(points=[180, 115 + i, 370, a * 50 + c - 65])
-                                Line(points=[180, 115 + i, 370, 340])
-                                i = i + 50
-                        a = a + 1
-                        c = c - 100
-
-        if layers == 2:
-            NeuralNetTwo()
-            # hiddenlayerone
-            if hiddenlayer % 2 == 0:
-                # Even number
-                num = int(hiddenlayer / 2)
-                for x in range(num):
-                    with self.canvas:
-                        Color(1, 1, .9, 1)
-                        RoundedRectangle(size=(30, 30), pos=(315, a * 50 + 300))
-                        RoundedRectangle(size=(30, 30), pos=(315, a * 50 + c - 50))
-                        i = 0
-                        for x in range(10):
-                            with self.canvas:
-                                Line(points=[180, 115+i, 315, a * 50 + 315])
-                                Line(points=[180, 115+i, 315, a * 50 + c - 35])
-                            i = i + 50
-                        a = a + 1
-                        c = c - 100
-            else:
-                # Odd number
-                num = int((hiddenlayer - 1) / 2)
-                with self.canvas:
-                    Color(1, 1, .9, 1)
-                    RoundedRectangle(size=(30, 30), pos=(315, 325))
-                for x in range(num):
-                    with self.canvas:
-                        Color(1, 1, .9, 1)
-                        RoundedRectangle(size=(30, 30), pos=(315, a * 50 + 330))
-                        RoundedRectangle(size=(30, 30), pos=(315, a * 50 + c - 80))
-                        i = 0
-                        for x in range(10):
-                            with self.canvas:
-                                Line(points=[180, 115 + i, 315, a * 50 + 345])
-                                Line(points=[180, 115 + i, 315, a * 50 + c - 65])
-                                Line(points=[180, 115 + i, 315, 340])
-                                i = i + 50
-                        a = a + 1
-                        c = c - 100
-
-            # hiddenlayertwo
-            if hiddenlayertwo % 2 == 0:
-                # Even number
-                num = int(hiddenlayertwo / 2)
-                num2 = int(hiddenlayer / 2)
-
-                for x in range(num):
-                    with self.canvas:
-                        Color(1, 1, .9, 1)
-                        RoundedRectangle(size=(30, 30), pos=(425, d * 50 + 300))
-                        RoundedRectangle(size=(30, 30), pos=(425, d * 50 + f - 50))
-                        Line(points=[455, d * 50 + 315, 605, 340])
-                        Line(points=[455, d * 50 + f - 35, 605, 340])
-
-                        j = 1
-                        k = 300
-                        if hiddenlayer % 2 == 0:
-                            for x in range(num2):
-                                 with self.canvas:
-                                    Line(points=[345, j * 50 + 315, 425, d * 50 + 315])
-                                    Line(points=[345, j * 50 + k - 35, 425, d * 50 + f - 35])
-                                    Line(points=[345, j * 50 + 315, 425, d * 50 + f - 35])
-                                    Line(points=[345, j * 50 + k - 35, 425, d * 50 + 315])
-                                    j = j + 1
-                                    k = k - 100
-                        else:
-                            for x in range(num2):
-                                 with self.canvas:
-                                    Line(points=[345, j * 50 + 345, 425, d * 50 + 315])
-                                    Line(points=[345, j * 50 + k - 65, 425, d * 50 + f - 35])
-                                    Line(points=[345, j * 50 + 345, 425, d * 50 + f - 35])
-                                    Line(points=[345, j * 50 + k - 65, 425, d * 50 + 315])
-                                    Line(points=[345, 345, 425, d * 50 + 315])
-                                    Line(points=[345, 345, 425, d * 50 + f - 35])
-                                    j = j + 1
-                                    k = k - 100
-                    d = d + 1
-                    f = f - 100
-            else:
-                # Odd number
-                num = int((hiddenlayertwo - 1) / 2)
-                num2 = int(hiddenlayer / 2)
-                with self.canvas:
-                    Color(1, 1, .9, 1)
-                    RoundedRectangle(size=(30, 30), pos=(425, 325))
-                    Line(points=[455, 340, 605, 340])
-                for x in range(num):
-                    with self.canvas:
-                        Color(1, 1, .9, 1)
-                        RoundedRectangle(size=(30, 30), pos=(425, d * 50 + 330))
-                        RoundedRectangle(size=(30, 30), pos=(425, d * 50 + f - 80))
-                        Line(points=[455,d * 50 + 345, 605, 340])
-                        Line(points=[455, d * 50 + f - 65, 605, 340])
-                        d = d + 1
-                        f = f - 100
-                        j = 1
-                        k = 300
-                        if hiddenlayer % 2 == 0:
-                            for x in range(num2):
-                                with self.canvas:
-                                    Line(points=[345, j * 50 + 315, 425, d * 50 + 300])
-                                    Line(points=[345, j * 50 + k - 35, 425, d * 50 + f - 20])
-                                    Line(points=[345, j * 50 + 315, 425, d * 50 + f - 20])
-                                    Line(points=[345, j * 50 + k - 35, 425, d * 50 + 300])
-                                    Line(points=[345, j * 50 + k - 35, 425, 340])
-                                    Line(points=[345, j * 50 + 315, 425, 340])
-                                    j = j + 1
-                                    k = k - 100
-                        else:
-                            for x in range(num2):
-                                with self.canvas:
-                                    Line(points=[345, j * 50 + 345, 425, d * 50 + 300])
-                                    Line(points=[345, j * 50 + k - 65, 425, d * 50 + f - 20])
-                                    Line(points=[345, j * 50 + 345, 425, d * 50 + f - 20])
-                                    Line(points=[345, j * 50 + k - 65, 425, d * 50 + 300])
-                                    Line(points=[345, 345, 425, d * 50 + 300])
-                                    Line(points=[345, 345, 425, d * 50 + f - 20])
-                                    Line(points=[345, j * 50 + k - 65, 425, 340])
-                                    Line(points=[345, j * 50 + 345, 425, 340])
-                                    Line(points=[345, 345, 425, 340])
-                                    j = j + 1
-                                    k = k - 100
-
-        if layers == 3:
+        '''if layers == 3:
             NeuralNetThree()
             # hiddenlayerone
             if hiddenlayer % 2 == 0:
@@ -759,11 +591,11 @@ class First(Widget):
                         RoundedRectangle(size=(30, 30), pos=(260, a * 50 + 300))
                         RoundedRectangle(size=(30, 30), pos=(260, a * 50 + c - 50))
                         i = 0
-                        for x in range(10):
+                        for x in range(numdata):
                             with self.canvas:
-                                Line(points=[180, 115 + i, 260, a * 50 + 315])
-                                Line(points=[180, 115 + i, 260, a * 50 + c - 35])
-                            i = i + 50
+                                Line(points=[180, i*50+(325-space/2)+30, 260, a * 50 + 315])
+                                Line(points=[180, i*50+(325-space/2)+30, 260, a * 50 + c - 35])
+                            i = i + 1
                         a = a + 1
                         c = c - 100
             else:
@@ -778,12 +610,12 @@ class First(Widget):
                         RoundedRectangle(size=(30, 30), pos=(260, a * 50 + 330))
                         RoundedRectangle(size=(30, 30), pos=(260, a * 50 + c - 80))
                         i = 0
-                        for x in range(10):
+                        for x in range(numdata):
                             with self.canvas:
-                                Line(points=[180, 115 + i, 260, a * 50 + 345])
-                                Line(points=[180, 115 + i, 260, a * 50 + c - 65])
-                                Line(points=[180, 115 + i, 260, 340])
-                                i = i + 50
+                                Line(points=[180, i*50+(325-space/2)+30, 260, a * 50 + 345])
+                                Line(points=[180, i*50+(325-space/2)+30, 260, a * 50 + c - 65])
+                                Line(points=[180, i*50+(325-space/2)+30, 260, 340])
+                                i = i + 1
                         a = a + 1
                         c = c - 100
 
@@ -863,9 +695,6 @@ class First(Widget):
                                     j = j + 1
                                     k = k - 100
 
-
-
-
             # hiddenlayerthree
             if hiddenlayerthree % 2 == 0:
                 # Even number
@@ -944,20 +773,103 @@ class First(Widget):
                                     l = l + 1
                                     m = m - 100
                         g = g + 1
-                        h = h - 100
+                        h = h - 100'''
+
+        if layer == 1:
+            newneuralnet = NeuralNet()
+            #newneuralnet(Xtrain, ytrain)
+            #newneuralnet.plot_loss()
+            # hiddenlayerone
+            for x in range(hiddenlayer):
+                with self.canvas:
+                    Color(1, 1, .9, 1)
+                    Line(points=[400,a*50+(340-spaceone/2)+15, 590,340])
+                    RoundedRectangle(size=(30, 30), pos=(370, a*50+(340-spaceone/2)))
+                    i = 0
+                    for x in range(numdata):
+                        with self.canvas:
+                            Line(points=[180, i*50+(325-space/2)+30, 370, a*50+(340-spaceone/2)+15])
+                            i = i + 1
+                    a = a + 1
+
+        if layer == 2:
+            NeuralNetTwo()
+            # hiddenlayerone
+            for x in range(hiddenlayer):
+                with self.canvas:
+                    Color(1, 1, .9, 1)
+                    RoundedRectangle(size=(30, 30), pos=(315, a*50+(340-spaceone/2)))
+                    i = 0
+                    for x in range(numdata):
+                        with self.canvas:
+                            Line(points=[180, i*50+(325-space/2)+30, 315, a*50+(340-spaceone/2)+15])
+                        i = i + 1
+                    a = a + 1
+
+            # hiddenlayertwo
+            for x in range(hiddenlayertwo):
+                with self.canvas:
+                    Color(1, 1, .9, 1)
+                    RoundedRectangle(size=(30, 30), pos=(425, d*50+(340-spacetwo/2)))
+                    Line(points=[455, d*50+(340-spacetwo/2)+15, 590, 340])
+                    j = 0
+                    for x in range(hiddenlayer):
+                         with self.canvas:
+                            Line(points=[345, j*50+(340-spaceone/2)+15, 425, d*50+(340-spacetwo/2)+15])
+                            j = j + 1
+                d = d + 1
+
+        if layer == 3:
+            NeuralNetThree()
+            # hiddenlayerone
+            for x in range(hiddenlayer):
+                with self.canvas:
+                    Color(1, 1, .9, 1)
+                    RoundedRectangle(size=(30, 30), pos=(260, a*50+(340-spaceone/2)))
+                    i = 0
+                    for x in range(numdata):
+                        with self.canvas:
+                            Line(points=[180, i*50+(325-space/2)+30, 260, a*50+(340-spaceone/2)+15])
+                        i = i + 1
+                    a = a + 1
+            # hiddenlayertwo
+            for x in range(hiddenlayertwo):
+                with self.canvas:
+                    Color(1, 1, .9, 1)
+                    RoundedRectangle(size=(30, 30), pos=(370, d*50+(340-spacetwo/2)))
+                    j = 0
+                    for x in range(hiddenlayer):
+                        with self.canvas:
+                            Line(points=[290, j*50+(340-spaceone/2)+15, 370, d*50+(340-spacetwo/2)+15])
+                            j = j + 1
+                    d = d + 1
+            # hiddenlayerthree
+            for x in range(hiddenlayerthree):
+                with self.canvas:
+                    Color(1, 1, .9, 1)
+                    RoundedRectangle(size=(30, 30), pos=(480, g*50+(340-spacethree/2)))
+                    Line(points=[510, g*50+(340-spacethree/2)+15, 590, 340])
+                    l = 0
+                    for x in range(hiddenlayertwo):
+                        with self.canvas:
+                            Line(points=[400, l*50+(340-spacetwo/2)+15, 480, g*50+(340-spacethree/2)+15])
+                            l = l + 1
+                    g = g + 1
+
+
 
         #output layer
         with self.canvas:
             Color(1, 1, .9, 1)
             RoundedRectangle(size=(30, 30), pos=(590,325))
+            print(numdata)
 
         # input layer
-        for x in range(13):
-
-            b = b + 1
+        for x in range(numdata):
             with self.canvas:
                 Color(1, 1, .9, 1)
-                RoundedRectangle(size=(30, 30), pos=(150,b*50))
+                RoundedRectangle(size=(30, 30), pos=(150,b*50+(340-space/2)))
+                b = b + 1
 
     def btnplusneuronpressed(self, instance):
         global hiddenlayer
@@ -1032,15 +944,15 @@ class First(Widget):
                 self.btnlessneuronthree.disabled = True
 
     def btnlayerplusneuronpressed(self,instance):
-        global layers
+        global layer
         self.btnlayerlessneuron.disabled = False
-        if layers >= 3:
+        if layer >= 3:
             layer = 3
         else:
-            layers = layers + 1
-            numlayers = str(layers)
+            layer = layer + 1
+            numlayers = str(layer)
             self.lbllayer.text = numlayers
-            if layers == 2:
+            if layer == 2:
                 self.add_widget(self.btnplusneurontwo)
                 self.add_widget(self.lblplusbuttontwo)
                 self.add_widget(self.btnlessneurontwo)
@@ -1056,7 +968,7 @@ class First(Widget):
                 self.lblneuron.pos = (280,10)
 
                 self.btnlayerplusneuron.disabled = False
-            if layers == 3:
+            if layer == 3:
                 self.add_widget(self.btnplusneuronthree)
                 self.add_widget(self.lblplusbuttonthree)
                 self.add_widget(self.btnlessneuronthree)
@@ -1080,20 +992,20 @@ class First(Widget):
 
                 self.btnlayerplusneuron.disabled = True
     def btnlayerlessneuronpressed(self, instance):
-        global layers
+        global layer
         self.btnlayerplusneuron.disabled = False
-        if layers <= 1:
-            layers =1
+        if layer <= 1:
+            layer =1
 
         else:
             '''with self.canvas:
                 # Background
                 Color(0.05, 0.05, 0.05, 1)
                 Rectangle(size=(400, 79),pos=(100,0))'''
-            layers = layers - 1
-            numlayers = str(layers)
+            layer = layer - 1
+            numlayers = str(layer)
             self.lbllayer.text = numlayers
-            if layers==2:
+            if layer==2:
                 self.remove_widget(self.btnplusneuronthree)
                 self.remove_widget(self.lblplusbuttonthree)
                 self.remove_widget(self.btnlessneuronthree)
@@ -1116,7 +1028,7 @@ class First(Widget):
                 self.lblneurontwo.pos = (388, 10)
 
                 self.btnlayerlessneuron.disabled = False
-            if layers==1:
+            if layer==1:
                 self.remove_widget(self.btnplusneurontwo)
                 self.remove_widget(self.lblplusbuttontwo)
                 self.remove_widget(self.btnlessneurontwo)
@@ -1132,10 +1044,6 @@ class First(Widget):
                 self.lblneuron.pos = (335, 10)
 
                 self.btnlayerlessneuron.disabled = True
-
-
-
-
 
 
 class MyApp(App):
