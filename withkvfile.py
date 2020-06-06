@@ -25,7 +25,7 @@ from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.anchorlayout import AnchorLayout
 
-
+#para poder volver a hacer train va a haber que duplicarlo y hacer un segundo train en el que primero se eliminen los widgets
 
 hiddenlayer=6
 hiddenlayertwo = 7
@@ -46,6 +46,7 @@ ti = TextInput(size=(40, 30))
 ti2 = TextInput(size=(40, 30))
 
 
+jose=True
 
 def on_resize(width, height):
     print('a')
@@ -162,9 +163,7 @@ class MyApp(App):
         i = 0
         j = 0
         l = 0
-
         Input = [float(ti.text), float(ti2.text)]
-        print(Input)
 
         seed(1)
         dataset = [[1, 2, 1],
@@ -205,12 +204,21 @@ class MyApp(App):
         if layers == 1:
             # hiddenlayerone
             for x in range(hiddenlayer):
+                valuefloat = abs(network[0][a]['weights'][2])
+                # colorlayerone = 1.0 / (1.0 + np.exp(-abs(valuefloat)))
+                if valuefloat <= abs(network[0][a]['weights'][2]):
+                    valuefloat = abs(network[0][a]['weights'][2])
+            for x in range(hiddenlayer):
                 with draw.canvas:
-                    valuefloat=network[0][a]['weights'][2]
-                    Color(1, 1, .9, abs(valuefloat))
+                    value = network[0][a]['weights'][2]
+                    colorlayerone = abs(network[0][a]['weights'][2])/valuefloat
+                    colorlabel = 1-colorlayerone
+                    if colorlabel > 0.4 and colorlabel < 0.6:
+                        colorlabel=0
+                    Color(1, 1, .9, colorlayerone)
                     RoundedRectangle(size=(30, 30), pos=(370, a * 50 + (340 - spaceone / 2)))
-                    biases = "{:.2f}".format(valuefloat)
-                    draw.nodeslabel = Label(text=biases, font_size=10, pos=(335, a * 50 + (305 - spaceone / 2)), color=(1,1,1,.9))
+                    biases = "{:.2f}".format(value)
+                    draw.nodeslabel = Label(text=biases, font_size=10, pos=(335, a * 50 + (305 - spaceone / 2)), color=(colorlabel,colorlabel,colorlabel,.9))
                     draw.add_widget(draw.nodeslabel)
                 i = 0
                 e = 0
@@ -230,9 +238,23 @@ class MyApp(App):
         if layers == 2:
             # hiddenlayerone
             for x in range(hiddenlayer):
+                valuefloat = abs(network[0][a]['weights'][2])
+                # colorlayerone = 1.0 / (1.0 + np.exp(-abs(valuefloat)))
+                if valuefloat <= abs(network[0][a]['weights'][2]):
+                    valuefloat = abs(network[0][a]['weights'][2])
+            for x in range(hiddenlayer):
                 with draw.canvas:
-                    Color(1, 1, .9, 1)
+                    value = network[0][a]['weights'][2]
+                    colorlayerone = abs(network[0][a]['weights'][2]) / valuefloat
+                    colorlabel = 1 - colorlayerone
+                    if colorlabel > 0.4 and colorlabel < 0.6:
+                        colorlabel=0
+                    Color(1, 1, .9, colorlayerone)
                     RoundedRectangle(size=(30, 30), pos=(315, a * 50 + (340 - spaceone / 2)))
+                    biases = "{:.2f}".format(value)
+                    draw.nodeslabel = Label(text=biases, font_size=10, pos=(280, a * 50 + (305 - spaceone / 2)),
+                                            color=(colorlabel, colorlabel, colorlabel, .9))
+                    draw.add_widget(draw.nodeslabel)
                     i = 0
                     for x in range(numdata):
                         with draw.canvas:
@@ -317,7 +339,7 @@ class MyApp(App):
                 Color(1, 1, .9, abs(valuefloat))
                 RoundedRectangle(size=(30, 30), pos=(590, c * 50 + (340 - spaceoutput / 2)))
                 outputtext = "{:.2f}".format(valuefloat)
-                draw.add_widget(Label(text='[b]Probability:         [/b]'+ outputtext,markup = True, font_size=10, pos=(640, c * 50 + (305 - spaceoutput / 2)), color = (1, .9, .4, .9)))
+                draw.add_widget(Label(text='[b]Probability:         [/b]'+ outputtext,markup = True, font_size=10, pos=(640, c * 50 + (305 - spaceoutput / 2)), color = (1, .8, .4, .9)))
                 c = c + 1
 
         # input layer
@@ -524,11 +546,19 @@ class MyApp(App):
         numhiddenlayertwo = str(hiddenlayertwo)
         numhiddenlayerthree = str(hiddenlayerthree)
 
-        parentlayout = BoxLayout(orientation='vertical', size_hint=(1,1))
 
-        layout = BoxLayout(orientation = 'horizontal',size_hint=(1,None),height = 50, spacing=5)
+        if jose:
+            parentlayout = LayoutScreen()
+        else:
+            parentlayout = BoxLayout(orientation='vertical', size_hint=(1,1))
 
-        parentlayout.add_widget(layout)
+
+        if jose:
+            layout = parentlayout.ids.idLayoutMenu.ids.idBoxLayoutMenu
+        else:
+            layout = BoxLayout(orientation = 'horizontal',size_hint=(1,None),height = 50, spacing=5)
+            parentlayout.add_widget(layout)
+
         neuronlayout = BoxLayout(orientation='vertical')
         neurontwolayout = BoxLayout(orientation='vertical')
         neuronthreelayout = BoxLayout(orientation='vertical')
@@ -759,10 +789,18 @@ class MyApp(App):
 
                     btnlayerlessneuron.disabled = True
         def btngopressed(bntGo):
-            self.drawingvisualize(visualize)
+            if jose:
+                layoutbtgo = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen
+                self.drawingvisualize(layoutbtgo)
+            else:
+                self.drawingvisualize(visualize)
 
         def btntrainpressed(bntTrain):
-            self.drawinglblblacktwo(lblblacktwo)
+            if jose:
+                layoutbttrain = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen
+                self.drawinglblblacktwo(layoutbttrain)
+            else:
+                self.drawinglblblacktwo(lblblacktwo)
 
 
 
@@ -785,25 +823,26 @@ class MyApp(App):
         return parentlayout
 
 
-class VgxMenuScreen(BoxLayout):
-    def build(self):
-        btnGo2 = Button(text='GO222', size_hint=(1, .95), pos_hint={'center_x': .5, 'center_y': .5},
-                       background_normal='ButtonPlus.png', background_down='ButtonPlusDown.png')
-        self.add_widget(btnGo2)
-
-
-class VgxMainScreen(BoxLayout):
+class LayoutMenu(BoxLayout):
     pass
 
-class VgxUI(AnchorLayout):
+class LayoutNeuronMainScreen(BoxLayout):
     pass
 
-class VgxScreen(BoxLayout):
+class LayoutNeuron(AnchorLayout):
+    pass
+
+class LayoutScreen(BoxLayout):
     pass
 
 class MyJoseApp(App):
     def build(self):
-        return VgxScreen()
+
+        screeninstance = LayoutScreen()
+        for key, val in screeninstance.ids.items():
+            print("key={0}, val={1}".format(key, val))
+        menuboxlayout = screeninstance.ids.idLayoutMenu.ids.idBoxLayoutMenu
+        return screeninstance
 
 
 if __name__ == '__main__':

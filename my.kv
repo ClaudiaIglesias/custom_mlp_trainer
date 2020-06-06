@@ -1,0 +1,95 @@
+#:kivy 1.9.1
+
+<LayoutNeuronMainScreen>:
+    size_hint: None, None
+    canvas.before:
+        Color:
+            rgba: 0, 0.2, 0, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        canvas.before:
+            Color:
+                rgba: 0, 0, 1, 1  # blue
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        orientation: 'vertical'
+        size: self.parent.size
+        pos: self.parent.pos
+        Button:
+            text: 'Game Select'
+        Button:
+            text: 'Options'
+        Button:
+            text: 'Controllers'
+
+<LayoutMenu>:
+    canvas.before:
+        Color:
+            rgba: 1, 0, 0, 1  # red
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    width: self.parent.width  # important!
+    height: 100
+
+
+    BoxLayout:
+        id:idBoxLayoutMenu
+        spacing:5
+        orientation: 'horizontal'
+#         size: self.parent.size
+        pos: self.parent.pos
+        height: 10
+
+        canvas.before:
+            Color:
+                rgba: 0, 0, 1, 1  # blue
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+
+
+<LayoutNeuron>:
+    id:idLayoutNeuron
+    AnchorLayout:
+        id:idAnchorLayoutNeuron
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1  # white
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        width: self.parent.width  # important!
+        height: 600
+        anchor_x: 'center'
+        anchor_y: 'center'
+        LayoutNeuronMainScreen:
+            id:idLayoutNeuronMainScreen
+            size: 400, 300
+
+<LayoutScreen>:
+    id:idLayoutScreen
+    BoxLayout:
+        id:idBoxLayoutScreen
+        orientation: 'vertical'
+        size: self.parent.size  # important!
+        pos: self.parent.pos  # important!
+
+        LayoutNeuron:
+            id:idLayoutNeuron
+            size: 200, 100
+        LayoutMenu:
+            id:idLayoutMenu
+
+
+<MyApp>:
+    BoxLayout:
+        orientation: 'vertical'
+        LayoutScreen:
