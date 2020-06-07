@@ -27,10 +27,7 @@ from kivy.uix.anchorlayout import AnchorLayout
 
 #para poder volver a hacer train va a haber que duplicarlo y hacer un segundo train en el que primero se eliminen los widgets
 
-hiddenlayer=6
-hiddenlayertwo = 7
-hiddenlayerthree = 7
-layers = 1
+
 numdata = 2
 numoutputs = 1
 list_hidden = list()
@@ -159,7 +156,6 @@ class MyApp(App):
     def drawingvisualize(self, draw, *largs):
         global a
         global b
-        global hiddenlayer
         a = 0
         b = 0
         c = 0
@@ -189,37 +185,18 @@ class MyApp(App):
                    [3, 2,2, 3],
                    [0, 1,2, 0]]
 
-        if layers == 1:
-            n_inputs = len(dataset[0]) - 1
-            n_outputs = len(set([row[-1] for row in dataset]))
-            n_hidden=[hiddenlayer]
-            network = initialize_network(n_inputs, n_hidden, n_outputs)
-            train_network(network, dataset, 0.5, 20, n_outputs)
-            predict(network, Input)
+        n_inputs = len(dataset[0]) - 1
+        n_outputs = len(set([row[-1] for row in dataset]))
+        network = initialize_network(n_inputs, list_hidden, n_outputs)
+        train_network(network, dataset, 0.5, 20, n_outputs)
+        predict(network, Input)
 
-        if layers == 2:
-            n_inputs = len(dataset[0]) - 1
-            n_hidden=[hiddenlayer,hiddenlayertwo]
-            n_outputs = len(set([row[-1] for row in dataset]))
-            network = initialize_network(n_inputs, n_hidden, n_outputs)
-            train_network(network, dataset, 0.5, 20, n_outputs)
-            predict(network, Input)
-
-        if layers == 3:
-            n_inputs = len(dataset[0]) - 1
-            n_hidden=[hiddenlayer,hiddenlayertwo, hiddenlayerthree]
-            n_outputs = len(set([row[-1] for row in dataset]))
-            network = initialize_network(n_inputs, n_hidden, n_outputs)
-            train_network(network, dataset, 0.5, 20, n_outputs)
-            predict(network, Input)
 
         numoutputs = n_outputs
         numdata = n_inputs
 
         space = numdata * 30 + (numdata - 1) * 20
-        spaceone = hiddenlayer * 30 + (hiddenlayer - 1) * 20
-        spacetwo = hiddenlayertwo * 30 + (hiddenlayertwo - 1) * 20
-        spacethree = hiddenlayerthree * 30 + (hiddenlayerthree - 1) * 20
+        spaceone = list_hidden[0] * 30 + (list_hidden[0] - 1) * 20
         spaceoutput = numoutputs * 30 + (numoutputs - 1) * 20
 
         with draw.canvas:
@@ -228,12 +205,12 @@ class MyApp(App):
             Rectangle(size=(1300, 720), pos=(0, 111))
             Rectangle(size=(690, 800), pos=(0, 81))
 
-        if layers == 1:
+        if len(list_hidden) == 1:
             # hiddenlayerone
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
-            for x in range(hiddenlayer):
+            for x in range(list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][2]):
                     valuefloat = abs(network[0][a]['weights'][2])
                 e = 0
@@ -248,7 +225,7 @@ class MyApp(App):
                     e = e + 1
                 a = a + 1
             a = 0
-            for x in range(hiddenlayer):
+            for x in range(list_hidden[0]):
                 with draw.canvas:
                     value = network[0][a]['weights'][2]
                     colorlayerone = abs(network[0][a]['weights'][2])/valuefloat
@@ -282,12 +259,14 @@ class MyApp(App):
                     e = e + 1
                 a = a + 1
 
-        if layers == 2:
+        if len(list_hidden) == 2:
             # hiddenlayerone
+
+            spacetwo = list_hidden[1] * 30 + (list_hidden[1] - 1) * 20
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
-            for x in range(hiddenlayer):
+            for x in range(list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][2]):
                     valuefloat = abs(network[0][a]['weights'][2])
                 e = 0
@@ -302,7 +281,7 @@ class MyApp(App):
                     e = e + 1
                 a = a + 1
             a = 0
-            for x in range(hiddenlayer):
+            for x in range(list_hidden[0]):
                 with draw.canvas:
                     value = network[0][a]['weights'][2]
                     colorlayerone = abs(network[0][a]['weights'][2]) / valuefloat
@@ -333,13 +312,13 @@ class MyApp(App):
                 a = a + 1
 
             # hiddenlayertwo
-            for x in range(hiddenlayertwo):
+            for x in range(list_hidden[1]):
                 with draw.canvas:
                     Color(1, 1, .9, 1)
                     RoundedRectangle(size=(30, 30), pos=(425, d * 50 + (340 - spacetwo / 2)))
                     j = 0
                     e = 0
-                    for x in range(hiddenlayer):
+                    for x in range(list_hidden[0]):
                         with draw.canvas:
                             Line(points=[345, j * 50 + (340 - spaceone / 2) + 15, 425,
                                          d * 50 + (340 - spacetwo / 2) + 15])
@@ -352,9 +331,10 @@ class MyApp(App):
                             e = e + 1
                 d = d + 1
 
-        if layers == 3:
+        if len(list_hidden) == 3:
             # hiddenlayerone
-            for x in range(hiddenlayer):
+            spacethree = list_hidden[2] * 30 + (list_hidden[2] - 1) * 20
+            for x in range(list_hidden[0]):
                 with draw.canvas:
                     Color(1, 1, .9, 1)
                     RoundedRectangle(size=(30, 30), pos=(260, a * 50 + (340 - spaceone / 2)))
@@ -365,25 +345,25 @@ class MyApp(App):
                         i = i + 1
                     a = a + 1
             # hiddenlayertwo
-            for x in range(hiddenlayertwo):
+            for x in range(list_hidden[1]):
                 with draw.canvas:
                     Color(1, 1, .9, 1)
                     RoundedRectangle(size=(30, 30), pos=(370, d * 50 + (340 - spacetwo / 2)))
                     j = 0
-                    for x in range(hiddenlayer):
+                    for x in range(list_hidden[0]):
                         with draw.canvas:
                             Line(points=[290, j * 50 + (340 - spaceone / 2) + 15, 370,
                                          d * 50 + (340 - spacetwo / 2) + 15])
                             j = j + 1
                     d = d + 1
             # hiddenlayerthree
-            for x in range(hiddenlayerthree):
+            for x in range(list_hidden[2]):
                 with draw.canvas:
                     Color(1, 1, .9, 1)
                     RoundedRectangle(size=(30, 30), pos=(480, g * 50 + (340 - spacethree / 2)))
                     l = 0
                     e = 0
-                    for x in range(hiddenlayertwo):
+                    for x in range(list_hidden[1]):
                         with draw.canvas:
                             Line(points=[400, l * 50 + (340 - spacetwo / 2) + 15, 480,
                                          g * 50 + (340 - spacethree / 2) + 15])
@@ -431,7 +411,6 @@ class MyApp(App):
     def drawinglblblacktwo(self, draw, *largs):
         global a
         global b
-        global hiddenlayer
         global list_hidden
         print ('a')
         a = 0
@@ -443,6 +422,8 @@ class MyApp(App):
         i = 0
         j = 0
         l = 0
+
+
 
         seed(1)
         dataset = [[1, 2, 3, 1],
@@ -474,9 +455,7 @@ class MyApp(App):
         numoutputs = n_outputs
         numdata = n_inputs
         space = numdata * 30 + (numdata - 1) * 20
-        spaceone = hiddenlayer * 30 + (hiddenlayer - 1) * 20
-        spacetwo = hiddenlayertwo * 30 + (hiddenlayertwo - 1) * 20
-        spacethree = hiddenlayerthree * 30 + (hiddenlayerthree - 1) * 20
+        spaceone = list_hidden[0] * 30 + (list_hidden[0] - 1) * 20
         spaceoutput = numoutputs * 30 + (numoutputs - 1) * 20
 
         with draw.canvas:
@@ -491,12 +470,12 @@ class MyApp(App):
         ti3.pos = (70, 2 * 50 + (340 - space / 2))
         draw.remove_widget(ti3)
 
-        if layers == 1:
+        if len(list_hidden) == 1:
             # hiddenlayerone
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
-            for x in range(hiddenlayer):
+            for x in range(list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][2]):
                     valuefloat = abs(network[0][a]['weights'][2])
                 e = 0
@@ -511,7 +490,7 @@ class MyApp(App):
                     e = e + 1
                 a = a + 1
             a = 0
-            for x in range(hiddenlayer):
+            for x in range(list_hidden[0]):
                 with draw.canvas:
                     value = network[0][a]['weights'][-1]
                     colorlayerone = abs(network[0][a]['weights'][-1]) / valuefloat
@@ -541,12 +520,13 @@ class MyApp(App):
                     e = e + 1
                 a = a + 1
 
-        if layers == 2:
+        if len(list_hidden) == 2:
             # hiddenlayerone
+            spacetwo = list_hidden[1] * 30 + (list_hidden[1] - 1) * 20
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
-            for x in range(hiddenlayer):
+            for x in range(list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][-1]):
                     valuefloat = abs(network[0][a]['weights'][-1])
                 e = 0
@@ -557,7 +537,7 @@ class MyApp(App):
                     i = i + 1
                 a = a + 1
             a = 0
-            for x in range(hiddenlayer):
+            for x in range(list_hidden[0]):
                 with draw.canvas:
                     value = network[0][a]['weights'][-1]
                     colorlayerone = abs(network[0][a]['weights'][-1]) / valuefloat
@@ -584,12 +564,12 @@ class MyApp(App):
             linecolorinput = 1
             d = 0
             a = 0
-            for x in range(hiddenlayertwo):
+            for x in range(list_hidden[1]):
                 if valuefloat < abs(network[1][d]['weights'][-1]):
                     valuefloat = abs(network[1][d]['weights'][-1])
                 e = 0
                 j = 0
-                for y in range(hiddenlayer):
+                for y in range(list_hidden[0]):
                     if linecolorinput < abs(network[1][j]['weights'][d]):
                         linecolorinput = abs(network[1][j]['weights'][d])
                     j = j + 1
@@ -599,7 +579,7 @@ class MyApp(App):
                     e = e + 1
                 d = d + 1
             d = 0
-            for x in range(hiddenlayertwo):
+            for x in range(list_hidden[1]):
                 with draw.canvas:
                     value = network[1][d]['weights'][-1]
                     colorlayerone = abs(network[1][d]['weights'][-1]) / valuefloat
@@ -611,7 +591,7 @@ class MyApp(App):
                     draw.add_widget(draw.nodeslabel)
                 j = 0
                 e = 0
-                for y in range(hiddenlayer):
+                for y in range(list_hidden[0]):
                     color = abs(network[1][j]['weights'][e]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
@@ -625,9 +605,10 @@ class MyApp(App):
                     e = e + 1
                 d = d + 1
 
-        if layers == 3:
+        if len(list_hidden) == 3:
             # hiddenlayerone
-            for x in range(hiddenlayer):
+            spacethree = list_hidden[2] * 30 + (list_hidden[2] - 1) * 20
+            for x in range(list_hidden[0]):
                 with draw.canvas:
                     Color(1, 1, .9, 1)
                     RoundedRectangle(size=(30, 30), pos=(260, a * 50 + (340 - spaceone / 2)))
@@ -638,25 +619,25 @@ class MyApp(App):
                         i = i + 1
                     a = a + 1
             # hiddenlayertwo
-            for x in range(hiddenlayertwo):
+            for x in range(list_hidden[1]):
                 with draw.canvas:
                     Color(1, 1, .9, 1)
                     RoundedRectangle(size=(30, 30), pos=(370, d * 50 + (340 - spacetwo / 2)))
                     j = 0
-                    for x in range(hiddenlayer):
+                    for x in range(list_hidden[0]):
                         with draw.canvas:
                             Line(points=[290, j * 50 + (340 - spaceone / 2) + 15, 370,
                                          d * 50 + (340 - spacetwo / 2) + 15])
                             j = j + 1
                     d = d + 1
             # hiddenlayerthree
-            for x in range(hiddenlayerthree):
+            for x in range(list_hidden[2]):
                 with draw.canvas:
                     Color(1, 1, .9, 1)
                     RoundedRectangle(size=(30, 30), pos=(480, g * 50 + (340 - spacethree / 2)))
                     l = 0
                     e = 0
-                    for x in range(hiddenlayertwo):
+                    for x in range(list_hidden[1]):
                         with draw.canvas:
                             Line(points=[400, l * 50 + (340 - spacetwo / 2) + 15, 480,
                                          g * 50 + (340 - spacethree / 2) + 15])
@@ -700,12 +681,9 @@ class MyApp(App):
 
     def build(self):
 
+        list_hidden.append(6)
+        numlayers = str(len(list_hidden))
 
-        numlayers = str(layers)
-        numhiddenlayer = str(hiddenlayer)
-        numhiddenlayertwo = str(hiddenlayertwo)
-        numhiddenlayerthree = str(hiddenlayerthree)
-        list_hidden.append (hiddenlayer)
 
         if jose:
             parentlayout = LayoutScreen()
@@ -741,7 +719,7 @@ class MyApp(App):
                                background_normal='ButtonPlusR.png',
                                background_down='ButtonPlusRDown.png',
                                background_disabled_normal='ButtonDeactivated.png')
-        lblhiddenlayer = Label(text=numhiddenlayer)
+        lblhiddenlayer = Label(text=str(list_hidden[0]))
         lblneuron = Label(text='Neurons')
 
         # Second neuron switcher
@@ -753,7 +731,7 @@ class MyApp(App):
                                   background_normal='ButtonPlusP.png',
                                   background_down='ButtonPlusPDown.png',
                                   background_disabled_normal='ButtonDeactivated.png')
-        lblhiddenlayertwo = Label(text=numhiddenlayertwo)
+        lblhiddenlayertwo = Label(text='4')
         lblneurontwo = Label(text='Neurons')
 
         # Right/Third neuron switcher
@@ -765,7 +743,7 @@ class MyApp(App):
                                     background_normal='ButtonPlusA.png',
                                     background_down='ButtonPlusADown.png',
                                     background_disabled_normal='ButtonDeactivated.png')
-        lblhiddenlayerthree = Label(text=numhiddenlayerthree)
+        lblhiddenlayerthree = Label(text='4')
         lblneuronthree = Label(text='Neurons')
 
         # Number of layers switcher
@@ -816,89 +794,75 @@ class MyApp(App):
         #layout.add_widget(boxshowbiaslabel)
 
         def btnplusneuronpressed (btnplusneuron):
-            global hiddenlayer
 
             btnlessneuron.disabled = False
 
-            if hiddenlayer >= 10:
-                hiddenlayer = 10
+            if list_hidden[0] >= 10:
+                list_hidden[0] = 10
             else:
-                hiddenlayer = hiddenlayer + 1
-                numhiddenlayer = str(hiddenlayer)
-                lblhiddenlayer.text = numhiddenlayer
-                if hiddenlayer == 10:
+                list_hidden[0] = list_hidden[0] + 1
+                lblhiddenlayer.text = str(list_hidden[0])
+                if list_hidden[0] == 10:
                     btnplusneuron.disabled = True
         def btnlessneuronpressed(btnlessneuron):
-            global hiddenlayer
             btnplusneuron.disabled = False
-            if hiddenlayer <= 1:
-                hiddenlayer = 1
+            if list_hidden[0] <= 1:
+                list_hidden[0] = 1
             else:
-                hiddenlayer = hiddenlayer - 1
-                numhiddenlayer = str(hiddenlayer)
-                lblhiddenlayer.text = numhiddenlayer
-                if hiddenlayer == 1:
+                list_hidden[0] = list_hidden[0] - 1
+                lblhiddenlayer.text = str(list_hidden[0])
+                if list_hidden[0] == 1:
                     btnlessneuron.disabled = True
 
         def btnplusneurontwopressed(btnplusneurontwo):
-            global hiddenlayertwo
             btnlessneurontwo.disabled = False
 
-            if hiddenlayertwo >= 10:
-                hiddenlayertwo = 10
+            if list_hidden[1] >= 10:
+                list_hidden[1] = 10
             else:
-                hiddenlayertwo = hiddenlayertwo + 1
-                numhiddenlayertwo = str(hiddenlayertwo)
-                lblhiddenlayertwo.text = numhiddenlayertwo
-                if hiddenlayertwo == 10:
+                list_hidden[1] = list_hidden[1] + 1
+                lblhiddenlayertwo.text = str(list_hidden[1])
+                if list_hidden[1] == 10:
                     btnplusneurontwo.disabled = True
         def btnlessneurontwopressed(btnlessneurontwo):
-            global hiddenlayertwo
             btnplusneurontwo.disabled = False
-            if hiddenlayertwo <= 1:
-                hiddenlayertwo = 1
+            if list_hidden[1] <= 1:
+                list_hidden[1] = 1
             else:
-                hiddenlayertwo = hiddenlayertwo - 1
-                numhiddenlayertwo = str(hiddenlayertwo)
-                lblhiddenlayertwo.text = numhiddenlayertwo
-                if hiddenlayertwo == 1:
+                list_hidden[1] = list_hidden[1] - 1
+                lblhiddenlayertwo.text = str(list_hidden[1])
+                if list_hidden[1] == 1:
                     btnlessneurontwo.disabled = True
 
         def btnplusneuronthreepressed(btnplusneuronthree):
-            global hiddenlayerthree
             btnlessneuronthree.disabled = False
 
-            if hiddenlayerthree >= 10:
-                hiddenlayerthree = 10
+            if list_hidden[2] >= 10:
+                list_hidden[2] = 10
             else:
-                hiddenlayerthree = hiddenlayerthree + 1
-                numhiddenlayerthree = str(hiddenlayerthree)
-                lblhiddenlayerthree.text = numhiddenlayerthree
-                if hiddenlayerthree == 10:
+                list_hidden[2] = list_hidden[2] + 1
+                lblhiddenlayerthree.text = str(list_hidden[2])
+                if list_hidden[2] == 10:
                     btnplusneuronthree.disabled = True
         def btnlessneuronthreepressed(btnlessneuronthree):
-            global hiddenlayerthree
             btnplusneuronthree.disabled = False
-            if hiddenlayerthree <= 1:
-                hiddenlayerthree = 1
+            if list_hidden[2] <= 1:
+                list_hidden[2] = 1
             else:
-                hiddenlayerthree = hiddenlayerthree - 1
-                numhiddenlayerthree = str(hiddenlayerthree)
-                lblhiddenlayerthree.text = numhiddenlayerthree
-                if hiddenlayerthree == 1:
+                list_hidden[2] = list_hidden[2] - 1
+                lblhiddenlayerthree.text = str(list_hidden[2])
+                if list_hidden[2] == 1:
                     btnlessneuronthree.disabled = True
 
         def btnlayerplusneuronpressed(btnlayerplusneuron):
-            global layers
             btnlayerlessneuron.disabled = False
-            if layers >= 3:
-                layers = 3
+            if len(list_hidden) >= 3:
+                pass
             else:
-                layers = layers + 1
-                numlayers = str(layers)
+                numlayers = str(len(list_hidden))
                 lbllayer.text = numlayers
-                if layers == 2:
-                    list_hidden.append(hiddenlayertwo)
+                if len(list_hidden) == 1:
+                    list_hidden.append(4)
                     layout.remove_widget(btnlayerplusneuron)
                     layout.remove_widget(numlayerslayout)
                     layout.remove_widget(btnlayerlessneuron)
@@ -911,9 +875,10 @@ class MyApp(App):
                     layout.add_widget(btnlayerlessneuron)
                     layout.add_widget(numlayerslayout)
                     layout.add_widget(btnlayerplusneuron)
+                    lbllayer.text = str(len(list_hidden))
                     btnlayerplusneuron.disabled = False
-                if layers == 3:
-                    list_hidden.append(hiddenlayerthree)
+                elif len(list_hidden) == 2:
+                    list_hidden.append(4)
                     layout.remove_widget(btnlayerplusneuron)
                     layout.remove_widget(btnlayerlessneuron)
                     layout.remove_widget(numlayerslayout)
@@ -926,26 +891,24 @@ class MyApp(App):
                     layout.add_widget(btnlayerlessneuron)
                     layout.add_widget(numlayerslayout)
                     layout.add_widget(btnlayerplusneuron)
+                    lbllayer.text = str(len(list_hidden))
                     btnlayerplusneuron.disabled = True
         def btnlayerlessneuronpressed(btnlayerlessneuron):
-            global layers
             btnlayerplusneuron.disabled = False
-            if layers <= 1:
-                layers = 1
+            if len(list_hidden) <= 1:
+                pass
 
             else:
                 del list_hidden[-1]
-                layers = layers - 1
-                numlayers = str(layers)
+                numlayers = str(len(list_hidden))
                 lbllayer.text = numlayers
-                if layers == 2:
+                if len(list_hidden) == 2:
                     layout.remove_widget(btnplusneuronthree)
                     layout.remove_widget(neuronthreelayout)
                     layout.remove_widget(btnlessneuronthree)
-
-
                     btnlayerlessneuron.disabled = False
-                if layers == 1:
+
+                elif len(list_hidden) == 1:
                     layout.remove_widget(btnplusneurontwo)
                     layout.remove_widget(neurontwolayout)
                     layout.remove_widget(btnlessneurontwo)
