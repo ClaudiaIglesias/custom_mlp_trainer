@@ -1,5 +1,36 @@
 #:kivy 1.9.1
 
+
+
+<LayoutMenu>:
+    size_hint: None, None
+    canvas.before:
+        Color:
+            rgba: 1, 0, 0, 1  # red
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    width: self.parent.width  # important!
+    height: 50
+
+
+    BoxLayout:
+        id:idBoxLayoutMenu
+        spacing:5
+        orientation: 'horizontal'
+#         size: self.parent.size
+
+        pos: self.parent.pos
+        width: self.parent.width  # important!
+
+        canvas.before:
+            Color:
+                rgba: 0.05, 0.05, 0.05, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
 <LayoutNeuronMainScreen>:
     size_hint: None, None
     canvas.before:
@@ -22,42 +53,13 @@
         pos: self.parent.pos
 
 
-<LayoutMenu>:
-    canvas.before:
-        Color:
-            rgba: 1, 0, 0, 1  # red
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    width: self.parent.width  # important!
-    height: 100
-
-
-    BoxLayout:
-        id:idBoxLayoutMenu
-        spacing:5
-        orientation: 'horizontal'
-#         size: self.parent.size
-        pos: self.parent.pos
-        height: 10
-
-        canvas.before:
-            Color:
-                rgba: 0, 0, 1, 1  # blue
-            Rectangle:
-                pos: self.pos
-                size: self.size
-
-
-
 <LayoutNeuron>:
     id:idLayoutNeuron
     AnchorLayout:
         id:idAnchorLayoutNeuron
         canvas.before:
             Color:
-                rgba: 1, 1, 1, 1  # white
+                rgba: 0.05, 0.05, 0.05, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -67,10 +69,18 @@
         anchor_y: 'center'
         LayoutNeuronMainScreen:
             id:idLayoutNeuronMainScreen
-            size: 400, 300
+            size: 600, 400
 
 <LayoutScreen>:
     id:idLayoutScreen
+
+    canvas.before:
+        Color:
+            rgba: 0.05, 0.05, 0.05, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     BoxLayout:
         id:idBoxLayoutScreen
         orientation: 'vertical'
@@ -79,7 +89,19 @@
 
         LayoutNeuron:
             id:idLayoutNeuron
-            size: 200, 100
+
+        BoxLayout:
+            id:mainseparator
+            size_hint: None, None
+            width: self.parent.width
+            height: 4
+            canvas:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
         LayoutMenu:
             id:idLayoutMenu
 
