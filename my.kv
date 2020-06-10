@@ -35,22 +35,47 @@
     size_hint: None, None
     canvas.before:
         Color:
-            rgba: 0, 0.2, 0, 1
+            rgba: 1, 0.05, 0.05, 1
         Rectangle:
             pos: self.pos
             size: self.size
 
     BoxLayout:
-        canvas.before:
-            Color:
-                rgba: 0, 0, 1, 1  # blue
-            Rectangle:
-                pos: self.pos
-                size: self.size
-
         orientation: 'vertical'
+        size_hint: None, None
         size: self.parent.size
-        pos: self.parent.pos
+        BoxLayout:
+            id:idLabelsLayoutNeuronMainScreen
+            size_hint: None, 0.1
+
+            width: self.parent.width
+            height: 10
+            canvas:
+                Color:
+                    rgba: 0, 1, 0, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+        BoxLayout:
+            id:idSeparatorLayoutNeuronMainScreen
+            size_hint: None, 0.1
+
+            width: self.parent.width
+            height: 10
+            canvas:
+                Color:
+                    rgba: .0, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+        RelativeLayout:
+            id: idrelativelayoutneuronmainscreen
+            size_hint: None, 0.8
+            width: self.parent.width
+
+
+
 
 
 <LayoutNeuron>:
@@ -59,7 +84,7 @@
         id:idAnchorLayoutNeuron
         canvas.before:
             Color:
-                rgba: 0.05, 0.05, 0.05, 1
+                rgba: 0.05, 0.05, 1, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -67,16 +92,18 @@
         height: 600
         anchor_x: 'center'
         anchor_y: 'center'
+
+
         LayoutNeuronMainScreen:
             id:idLayoutNeuronMainScreen
-            size: 600, 400
+            size: 800, 480
 
 <LayoutScreen>:
     id:idLayoutScreen
 
     canvas.before:
         Color:
-            rgba: 0.05, 0.05, 0.05, 1
+            rgba: 1, 0.05, 0.05, 1
         Rectangle:
             pos: self.pos
             size: self.size
@@ -94,10 +121,21 @@
             id:mainseparator
             size_hint: None, None
             width: self.parent.width
-            height: 4
+            height: 1
             canvas:
                 Color:
-                    rgba: 1, 1, 1, 1
+                    rgba: .90, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+        BoxLayout:
+            id:mainseparator2
+            size_hint: None, None
+            width: self.parent.width
+            height: 2
+            canvas:
+                Color:
+                    rgba: 0, 0, 0, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
