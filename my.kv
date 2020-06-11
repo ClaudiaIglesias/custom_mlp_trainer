@@ -23,55 +23,56 @@
 
         pos: self.parent.pos
         width: self.parent.width  # important!
-
-        canvas.before:
+        canvas:
             Color:
-                rgba: 0.05, 0.05, 0.05, 1
+                rgba: .5,.5,.5,1
             Rectangle:
                 pos: self.pos
                 size: self.size
+                source: 'background2.jpeg'
 
 <LayoutNeuronMainScreen>:
     size_hint: None, None
     canvas.before:
         Color:
-            rgba: 1, 0.05, 0.05, 1
+            rgba: 0.2, 0.2, 0.2, 0
         Rectangle:
             pos: self.pos
             size: self.size
+            source: 'background.jpeg'
 
     BoxLayout:
         orientation: 'vertical'
         size_hint: None, None
         size: self.parent.size
         BoxLayout:
-            id:idLabelsLayoutNeuronMainScreen
-            size_hint: None, 0.1
-
             width: self.parent.width
-            height: 10
+            size_hint: None, 0.095
             canvas:
                 Color:
-                    rgba: 0, 1, 0, 1
+                    rgba: 0.05, 0.05, 0.05, 0
                 Rectangle:
                     pos: self.pos
                     size: self.size
+            RelativeLayout:
+                id:idLabelsLayoutNeuronMainScreen
+                size_hint:None, None
+                size: self.parent.size
+
+
         BoxLayout:
             id:idSeparatorLayoutNeuronMainScreen
-            size_hint: None, 0.1
+            size_hint: None, 0.005
 
             width: self.parent.width
             height: 10
-            canvas:
-                Color:
-                    rgba: .0, 1, 1, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+            Image:
+                source:'line.png'
+                width: self.parent.width
 
         RelativeLayout:
             id: idrelativelayoutneuronmainscreen
-            size_hint: None, 0.8
+            size_hint: None, 0.9
             width: self.parent.width
 
 
@@ -84,10 +85,11 @@
         id:idAnchorLayoutNeuron
         canvas.before:
             Color:
-                rgba: 0.05, 0.05, 1, 1
+                rgba: .3, .3, .3, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
+                source: 'background.png'
         width: self.parent.width  # important!
         height: 600
         anchor_x: 'center'
@@ -96,14 +98,14 @@
 
         LayoutNeuronMainScreen:
             id:idLayoutNeuronMainScreen
-            size: 800, 480
+            size: 800, 580
 
 <LayoutScreen>:
     id:idLayoutScreen
 
     canvas.before:
         Color:
-            rgba: 1, 0.05, 0.05, 1
+            rgba: 0.05, 0.05, 0.05, 1
         Rectangle:
             pos: self.pos
             size: self.size
@@ -124,10 +126,12 @@
             height: 1
             canvas:
                 Color:
-                    rgba: .90, 1, 1, 1
+                    rgba: 1, 1,1, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
+                    source: 'linea.png'
+
         BoxLayout:
             id:mainseparator2
             size_hint: None, None

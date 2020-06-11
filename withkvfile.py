@@ -137,11 +137,13 @@ def train_network(network, train, l_rate, n_epoch, n_outputs):
             backward_propagate_error(network, expected)
             update_weights(network, row, l_rate)
         print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, sum_error))
+
 #Works with btnGo
 def predict(network, row):
     outputs = forward_propagate(network, row)
     print(outputs)
     return outputs
+
 #accuracy
 def accuracy_metric(actual, predicted):
     correct = 0
@@ -149,6 +151,9 @@ def accuracy_metric(actual, predicted):
         if actual[i][-1] == predicted[i]:
             correct += 1
     return (correct / float(len(actual))) * 100.0
+
+
+
 
 
 class MyApp(App):
@@ -503,8 +508,6 @@ class MyApp(App):
                     e = e + 1
                 d = d + 1
 
-        draw.add_widget(Label(text='[b] OUTPUT ', markup=True, font_size=15, pos=(640, 500)))
-        draw.add_widget(Label(text='[b] INPUT', markup=True, font_size=15, pos=(30, 500)))
 
         # output layer
         for x in range(numoutputs):
@@ -551,11 +554,13 @@ class MyApp(App):
         l = 0
         numoutputs = n_outputs
         numdata = n_inputs
-        space = numdata * 40 + (numdata - 1) * 20
-        spaceone = list_hidden[0] * 40 + (list_hidden[0] - 1) * 20
-        spaceoutput = numoutputs * 40 + (numoutputs - 1) * 20
+        space = numdata * 35 + (numdata - 1) * 25
+        spaceone = list_hidden[0] * 35 + (list_hidden[0] - 1) * 25
+        spaceoutput = numoutputs * 35 + (numoutputs - 1) * 25
         middlex = draw.width/2
-        middley = draw.height/2
+        middley = draw.height/2 + 40
+        middletitlex = titlelayout.width / 2
+        middletitley = titlelayout.height / 2
         #ima=(Image(source='lineaverde.png',size_hint=(.1,.1),pos=(middlex-200,draw.height+80)))
         #draw.add_widget(ima)
 
@@ -567,11 +572,11 @@ class MyApp(App):
             #Rectangle(size=(1400,1400), pos=(-400,-65))
             #ima = (Image(source='backgroundmain.png', size_hint=(1, 1)))
             #draw.add_widget(ima)
-        ti.pos = (0,(middley - space / 2))
+        ti.pos = (90,(middley+5 - space / 2))
         draw.remove_widget(ti)
-        ti2.pos = (0, 1 * 50 + (middley - space / 2))
+        ti2.pos = (90, 50 + (middley+5 - space / 2))
         draw.remove_widget(ti2)
-        ti3.pos = (0, 2 * 50 + (middley - space / 2))
+        ti3.pos = (90, 2 * 50 + (middley+5 - space / 2))
         draw.remove_widget(ti3)
 
         if len(list_hidden) == 1:
@@ -579,10 +584,7 @@ class MyApp(App):
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
-            #draw.add_widget(Label(text='[b]  Hidden\nlayer one', markup=True, font_size=15, pos=(middlex-290, middley - 10),  color=(.5,.6,.6)))
-            draw.add_widget(Label(text='[b]  Hidden\nlayer one', markup=True, font_size=15, pos=(middlex, draw.height-15),  color=(.5,.6,.6), size_hint=(None,None)))
-            # draw.add_widget(
-            #     Label(text='hola', pos=(0, 0), size_hint=(None,None), size=(30,30)))
+            titlelayout.add_widget(Label(text='[b]  Hidden\nlayer one', markup=True, font_size=15, pos=(middletitlex-28, middletitley-50),  color=(.5,.6,.6), size_hint=(None,None)))
             for x in range(list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][2]):
                     valuefloat = abs(network[0][a]['weights'][2])
@@ -603,41 +605,40 @@ class MyApp(App):
                     value = network[0][a]['weights'][-1]
                     colorlayerone = abs(network[0][a]['weights'][-1]) / valuefloat
                     #Color(0.59, 0.65+colorlayerone/7.69, 0.93, 0.5+colorlayerone/2)
-                    Color(0.6- colorlayerone/10, 0.78 + colorlayerone/33.33, 0.93- colorlayerone/3.85, colorlayerone/3.33 + 0.75)
-                    RoundedRectangle(size=(40, 40), pos=(middlex, a * 50 + (middley - spaceone / 2)))
-                    Color(colorlayerone/3,colorlayerone/2.1,colorlayerone/2,1)
-                    RoundedRectangle(size=(35, 35), pos=(middlex+2.5, a * 50 + (middley+2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
+                    #Color(0.6- colorlayerone/10, 0.78 + colorlayerone/33.33, 0.93- colorlayerone/3.85, colorlayerone/3.33 + 0.75)
+                    #Color(0.49, .90 - ((0.14 / (list_hidden[0] - 1)) * a), 0.67 + ((0.06 / (list_hidden[0] - 1)) * a))
+                    Color(0, .24 - ((0.14 / (list_hidden[0] - 1)) * a), 0.22 + ((0.06 / (list_hidden[0] - 1)) * a))
+                    RoundedRectangle(size=(35, 35), pos=(middlex, a * 50 + (middley - spaceone / 2)))
+                    Color(colorlayerone,colorlayerone,colorlayerone,1)
+                    RoundedRectangle(size=(30, 30), pos=(middlex+2.5, a * 50 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
                     biases = "{:.2f}".format(value)
-                    draw.nodeslabel = Label(text=biases, font_size=9, pos=(middlex-290, a * 50 + (middley-220 - spaceone / 2)),
-                                            color=(1, 1, 1, .9))
+                    draw.nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 50 + (middley-31.5 - spaceone / 2)),
+                                            color=(1-colorlayerone, 1-colorlayerone, 1-colorlayerone, .9))
                     draw.add_widget(draw.nodeslabel)
                 i = 0
                 e = 0
                 for y in range(numdata):
                     color = abs(network[0][a]['weights'][i]) / linecolorinput
                     with draw.canvas:
-                        # Color(color, color-0.24, .15, .8)
-                        # Color(0.37,color-0.17,color)
-                        # Color(color, color-0.21, .57)
                         Color(color, color, color)
-                        Line(points=[middlex - 200, i * 50 + (middley-10 - space / 2) + 30, middlex, a * 50 + (middley+20 - spaceone / 2) ])
+                        Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex, a * 50 + (middley+20 - spaceone / 2) ])
                         i = i + 1
                 for z in range(numoutputs):
                     color = abs(network[1][e]['weights'][a]) / linecoloroutput
                     with draw.canvas:
                         Color(color, color, color)
-                        Line(points=[middlex+40, a * 50 + (middley  - spaceone / 2)+ 20, middlex+230,
+                        Line(points=[middlex+35, a * 50 + (middley  - spaceone / 2)+ 20, middlex+230,
                                      e * 50 + (middley+ 20 - spaceoutput / 2) ])
                     e = e + 1
                 a = a + 1
 
         if len(list_hidden) == 2:
             # hiddenlayerone
-            spacetwo = list_hidden[1] * 40 + (list_hidden[1] - 1) * 20
+            spacetwo = list_hidden[1] * 35 + (list_hidden[1] - 1) * 25
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
-            draw.add_widget(Label(text='[b]  Hidden\nlayer one', markup=True, font_size=15, pos=(middlex-368, middley - 10), color=(.5,.6,.6)))
+            titlelayout.add_widget(Label(text='[b]  Hidden\nlayer one', markup=True, size_hint=(None,None), font_size=15, pos=(middletitlex-108, middletitley - 50), color=(.5,.6,.6)))
             for x in range(list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][-1]):
                     valuefloat = abs(network[0][a]['weights'][-1])
@@ -653,13 +654,14 @@ class MyApp(App):
                 with draw.canvas:
                     value = network[0][a]['weights'][-1]
                     colorlayerone = abs(network[0][a]['weights'][-1]) / valuefloat
-                    Color(0.59, 0.65+colorlayerone/7.69, 0.93, 0.5+colorlayerone/2)
-                    RoundedRectangle(size=(40, 40), pos=(middlex-80, a * 50 + (middley - spaceone / 2)))
-                    Color(colorlayerone/3,colorlayerone/2,colorlayerone/2,1)
-                    RoundedRectangle(size=(35, 35), pos=(middlex + 2.5 - 80, a * 50 + (middley + 2.5 - spaceone / 2)),
+                    Color(.28 - ((0.1 / (list_hidden[0] - 1)) * a), 0.11 - ((0.11 / (list_hidden[0] - 1)) * a),
+                          0.02 + ((0.08 / (list_hidden[0] - 1)) * a))
+                    RoundedRectangle(size=(35, 35), pos=(middlex-80, a * 50 + (middley - spaceone / 2)))
+                    Color(colorlayerone,colorlayerone,colorlayerone,1)
+                    RoundedRectangle(size=(30, 30), pos=(middlex + 2.5 - 80, a * 50 + (middley + 2.5 - spaceone / 2)),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
-                    draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex-369, a * 50 + (middley -220 - spaceone / 2)),
+                    draw.nodeslabel = Label(text=biases,size_hint=(None,None),font_size=10, pos=(middlex-111.5, a * 50 + (middley-31.5 - spaceone / 2)),
                                             color=(1, 1, 1, .9))
                     draw.add_widget(draw.nodeslabel)
                 i = 0
@@ -668,7 +670,7 @@ class MyApp(App):
                     color = abs(network[0][a]['weights'][i]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
-                        Line(points=[middlex - 200, i * 50 + (middley-10 - space / 2) + 30, middlex-80, a * 50 + (middley + 20 - spaceone / 2) ])
+                        Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex-80, a * 50 + (middley + 20 - spaceone / 2) ])
                         i = i + 1
                 a = a + 1
 
@@ -678,7 +680,7 @@ class MyApp(App):
             linecolorinput = 0
             d = 0
             a = 0
-            draw.add_widget(Label(text='[b]  Hidden\nlayer two', markup=True, font_size=15, pos=(middlex-213, middley - 10), color=(.5,.6,.6)))
+            titlelayout.add_widget(Label(text='[b]  Hidden\nlayer two', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex+52, middletitley-50), color=(.5,.6,.6)))
             for x in range(list_hidden[1]):
                 if valuefloat < abs(network[1][d]['weights'][-1]):
                     valuefloat = abs(network[1][d]['weights'][-1])
@@ -699,12 +701,12 @@ class MyApp(App):
                     value = network[1][d]['weights'][-1]
                     colorlayerone = abs(network[1][d]['weights'][-1]) / valuefloat
                     Color(0.59, 0.65+colorlayerone/7.69, 0.93, 0.5+colorlayerone/2)
-                    RoundedRectangle(size=(40, 40), pos=(middlex + 80, d * 50 + (middley - spacetwo / 2)))
-                    Color(colorlayerone/3,colorlayerone/2.5,colorlayerone/2,1)
-                    RoundedRectangle(size=(35, 35), pos=(middlex + 82.5, d * 50 + (middley + 2.5 - spacetwo / 2)),
+                    RoundedRectangle(size=(35, 35), pos=(middlex + 80, d * 50 + (middley - spacetwo / 2)))
+                    Color(colorlayerone,colorlayerone,colorlayerone,1)
+                    RoundedRectangle(size=(30, 30), pos=(middlex + 82.5, d * 50 + (middley + 2.5 - spacetwo / 2)),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
-                    draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex -209, d * 50 + (middley-220 - spacetwo / 2)),
+                    draw.nodeslabel = Label(text=biases, font_size=10,size_hint=(None,None), pos=(middlex +49, d * 50 + (middley-31.5 - spacetwo / 2)),
                                             color=(1, 1, 1, .9))
                     draw.add_widget(draw.nodeslabel)
                 j = 0
@@ -713,23 +715,23 @@ class MyApp(App):
                     color = abs(network[1][d]['weights'][j]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
-                        Line(points=[middlex -40, j * 50 + (middley+20 - spaceone / 2), middlex+80, d * 50 + (middley+20 - spacetwo / 2)])
+                        Line(points=[middlex -45, j * 50 + (middley+20 - spaceone / 2), middlex+80, d * 50 + (middley+20 - spacetwo / 2)])
                         j = j + 1
                 for z in range(numoutputs):
                     color = abs(network[2][e]['weights'][d]) / linecoloroutput
                     with draw.canvas:
                         Color(color, color, color)
-                        Line(points=[middlex+120, d * 50 + (middley+20 - spacetwo / 2), middlex + 230, e * 50 + (middley +20 - spaceoutput / 2)])
+                        Line(points=[middlex+115, d * 50 + (middley+20 - spacetwo / 2), middlex + 230, e * 50 + (middley +20 - spaceoutput / 2)])
                     e = e + 1
                 d = d + 1
 
         if len(list_hidden) == 3:
             # hiddenlayerone
-            spacethree = list_hidden[2] * 40 + (list_hidden[2] - 1) * 20
-            spacetwo = list_hidden[1] * 40 + (list_hidden[1] - 1) * 20
+            spacethree = list_hidden[2] * 35 + (list_hidden[2] - 1) * 25
+            spacetwo = list_hidden[1] * 35 + (list_hidden[1] - 1) * 25
             valuefloat = 0
             linecolorinput = 0
-            draw.add_widget(Label(text='  Hidden\nlayer one', markup=True, font_size=15, pos=(middlex-420, middley -10), color=(.5,.6,.6)))
+            titlelayout.add_widget(Label(text='  Hidden\nlayer one', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex-158, middletitley-50), color=(.5,.6,.6)))
             for x in range(list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][-1]):
                     valuefloat = abs(network[0][a]['weights'][-1])
@@ -745,13 +747,13 @@ class MyApp(App):
                 with draw.canvas:
                     value = network[0][a]['weights'][-1]
                     colorlayerone = abs(network[0][a]['weights'][-1]) / valuefloat
-                    Color(0.49 + colorlayerone / 9.09, 0.9 - colorlayerone / 33.3, 0.67 + colorlayerone / 4.55, 0.5 + colorlayerone / 2)
-                    RoundedRectangle(size=(40, 40), pos=(middlex - 130, a * 50 + (middley - spaceone / 2)))
-                    Color(colorlayerone/3,colorlayerone/2,colorlayerone/2,1)
-                    RoundedRectangle(size=(35, 35), pos=(middlex + 2.5 - 130, a * 50 + (middley + 2.5 - spaceone / 2)),
+                    Color(0.8 + colorlayerone / 10, 0.8, 1, 0.25+colorlayerone/1.3)
+                    RoundedRectangle(size=(35, 35), pos=(middlex - 130, a * 50 + (middley - spaceone / 2)))
+                    Color(0,0,0,1)
+                    RoundedRectangle(size=(30, 30), pos=(middlex + 2.5 - 130, a * 50 + (middley + 2.5 - spaceone / 2)),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
-                    draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex-419, a * 50 + (middley-220 - spaceone / 2)),
+                    draw.nodeslabel = Label(text=biases,size_hint=(None,None), font_size=10, pos=(middlex-161.5, a * 50 + (middley-31.5 - spaceone / 2)),
                                             color=(1, 1, 1, .9))
                     draw.add_widget(draw.nodeslabel)
                 i = 0
@@ -760,7 +762,7 @@ class MyApp(App):
                     color = abs(network[0][a]['weights'][i]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
-                        Line(points=[middlex - 200, i * 50 + (middley-10 - space / 2) + 30, middlex-130,
+                        Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex-130,
                                      a * 50 + (middley+ 20 - spaceone / 2) ])
                         i = i + 1
                 a = a + 1
@@ -770,7 +772,7 @@ class MyApp(App):
             linecolorinput = 0
             d = 0
             a = 0
-            draw.add_widget(Label(text='  Hidden\nlayer two', markup=True, font_size=15, pos=(middlex-290, middley -10), color=(.5,.6,.6)))
+            titlelayout.add_widget(Label(text='  Hidden\nlayer two', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex-28, middletitley-50), color=(.5,.6,.6)))
             for x in range(list_hidden[1]):
                 if valuefloat < abs(network[1][d]['weights'][-1]):
                     valuefloat = abs(network[1][d]['weights'][-1])
@@ -786,13 +788,13 @@ class MyApp(App):
                 with draw.canvas:
                     value = network[1][d]['weights'][-1]
                     colorlayerone = abs(network[1][d]['weights'][-1]) / valuefloat
-                    Color(0.59, 0.65+colorlayerone/7.69, 0.93, 0.5+colorlayerone/2)
-                    RoundedRectangle(size=(40, 40), pos=(middlex, d * 50 + (middley - spacetwo / 2)))
-                    Color(colorlayerone/3,colorlayerone/2.1,colorlayerone/2,1)
-                    RoundedRectangle(size=(35, 35), pos=(middlex + 2.5, d * 50 + (middley + 2.5 - spacetwo / 2)),
+                    Color(.8,.9-colorlayerone/10,1, 0.25 + colorlayerone/1.33)
+                    RoundedRectangle(size=(35, 35), pos=(middlex, d * 50 + (middley - spacetwo / 2)))
+                    Color(0,0,0,1)
+                    RoundedRectangle(size=(30, 30), pos=(middlex + 2.5, d * 50 + (middley + 2.5 - spacetwo / 2)),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
-                    draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex-289, d * 50 + (middley-220 - spacetwo / 2)),
+                    draw.nodeslabel = Label(text=biases, font_size=10,size_hint=(None,None), pos=(middlex-31.5, d * 50 + (middley-31.5 - spacetwo / 2)),
                                             color=(1, 1, 1, .9))
                     draw.add_widget(draw.nodeslabel)
                 j = 0
@@ -801,7 +803,7 @@ class MyApp(App):
                     color = abs(network[1][d]['weights'][j]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
-                        Line(points=[middlex-90, j * 50 + (middley+20 - spaceone / 2), middlex, d * 50 + (middley+20 - spacetwo / 2)])
+                        Line(points=[middlex-95, j * 50 + (middley+20 - spaceone / 2), middlex, d * 50 + (middley+20 - spacetwo / 2)])
                         j = j + 1
                 d = d + 1
 
@@ -811,7 +813,7 @@ class MyApp(App):
             linecolorinput = 0
             d = 0
             a = 0
-            draw.add_widget(Label(text='   Hidden\nlayer three', markup=True, font_size=15, pos=(middlex-160, middley -10), color=(.5,.6,.6)))
+            titlelayout.add_widget(Label(text='   Hidden\nlayer three', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex+101, middletitley -50), color=(.5,.6,.6)))
             for x in range(list_hidden[2]):
                 if valuefloat < abs(network[2][d]['weights'][-1]):
                     valuefloat = abs(network[2][d]['weights'][-1])
@@ -832,13 +834,13 @@ class MyApp(App):
                 with draw.canvas:
                     value = network[2][d]['weights'][-1]
                     colorlayerone = abs(network[2][d]['weights'][-1]) / valuefloat
-                    Color(0.58 + colorlayerone / 16.65, 0.65-colorlayerone/7.69, 0.92, 0.5+colorlayerone/2)
-                    RoundedRectangle(size=(40, 40), pos=(middlex+130, d * 50 + (middley - spacethree / 2)))
-                    Color(colorlayerone/3,colorlayerone/2.5,colorlayerone/2,1)
-                    RoundedRectangle(size=(35, 35), pos=(middlex + 132.5, d * 50 + (middley + 2.5 - spacethree / 2)),
+                    Color(0.8, 1 - colorlayerone / 10, 1, 0.25 + colorlayerone / 1.33)
+                    RoundedRectangle(size=(35, 35), pos=(middlex+130, d * 50 + (middley - spacethree / 2)))
+                    Color(0,0,0,1)
+                    RoundedRectangle(size=(30, 30), pos=(middlex + 132.5, d * 50 + (middley + 2.5 - spacethree / 2)),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
-                    draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex-160, d * 50 + (middley-220 - spacethree / 2)),
+                    draw.nodeslabel = Label(text=biases, font_size=10,size_hint=(None,None), pos=(middlex+99, d * 50 + (middley-31.5 - spacethree / 2)),
                                             color=(1, 1, 1, .9))
                     draw.add_widget(draw.nodeslabel)
                 l = 0
@@ -847,46 +849,47 @@ class MyApp(App):
                     color = abs(network[2][d]['weights'][l]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
-                        Line(points=[middlex+40, l * 50 + (middley+20 - spacetwo / 2), middlex+130, d * 50 + (middley+20 - spacethree / 2)])
+                        Line(points=[middlex+35, l * 50 + (middley+20 - spacetwo / 2), middlex+130, d * 50 + (middley+20 - spacethree / 2)])
                         l = l + 1
                 for z in range(numoutputs):
                     color = abs(network[3][e]['weights'][d]) / linecoloroutput
                     with draw.canvas:
                         Color(color, color, color)
-                        Line(points=[middlex+170, d * 50 + (middley+20 - spacethree / 2), middlex+230, e * 50 + (middley+20 - spaceoutput / 2)])
+                        Line(points=[middlex+165, d * 50 + (middley+20 - spacethree / 2), middlex+230, e * 50 + (middley+20 - spaceoutput / 2)])
                     e = e + 1
                 d = d + 1
 
 
 
+        titlelayout.add_widget(Label(text='Output', markup=True, font_size=17, size_hint=(None, None),
+                                     pos=(middletitlex + 202, middletitley - 60), color=(.8, .9, .9)))
+        titlelayout.add_widget(Label(text='Input', markup=True, font_size=17, size_hint=(None, None),
+                                     pos=(middletitlex - 268, middletitley - 60), color=(.9, .9, .8)))
+
         # output layer
         for x in range(numoutputs):
             outputoptions = str(c)
-            lbloutputoptions = Label(text='[b]' + outputoptions, markup=True,
-                                     pos=(middlex-30, c * 50 + (middley-220 - spaceoutput / 2)), color=(1, 1, 1, 1))
+            lbloutputoptions = Label(text='[b]' + outputoptions, markup=True, size_hint=(None,None),
+                                     pos=(middlex+230, c * 50 + (middley -30 - spaceoutput / 2)), color=(1, 1, 1, 1))
             draw.add_widget(lbloutputoptions)
             value = network[-1][c]['weights'][-1]
             print(value)
             with draw.canvas:
-                #Color(0.45,1,0.83)
-                Color(.64,.52,.91)
-                RoundedRectangle(size=(40, 40), pos=(middlex + 230, c * 50 + (middley - spaceoutput / 2)))
+                Color(0.6,1,0.8+((0.2/(numoutputs-1))*c))
+                RoundedRectangle(size=(35, 35), pos=(middlex + 230, c * 50 + (middley - spaceoutput / 2)))
                 Color(0, 0, 0)
-                RoundedRectangle(size=(35, 35), pos=(middlex + 232.5, c * 50 + (middley+2.5 - spaceoutput / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
+                RoundedRectangle(size=(30, 30), pos=(middlex + 232.5, c * 50 + (middley+2.5 - spaceoutput / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
                 biases = "{:.2f}".format(value)
                 #draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex + 196, c * 50 + (middley-34 - spaceoutput / 2)),color=(1, 1, 1, .9))
-                draw.add_widget(Label(text='Output', markup=True, font_size=17, pos=(middlex-60, middley-10), color=(.4,.3,.4)))
-                draw.add_widget(Label(text='Input', markup=True, font_size=17, pos=(middlex-530, middley-10), color=(.4,.7,.6)))
             c = c + 1
 
         # input layer
         for x in range(numdata):
             with draw.canvas:
-                # Color(1,1, .53)
-                Color(.49, .90, .67)
-                RoundedRectangle(size=(40, 40), pos=(middlex - 240, b * 50 + (middley - space / 2)))
+                Color(1,.6+((0.2/(numdata-1))*b),1-((0.1/(numdata-1))*b))
+                RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - space / 2)))
                 Color(0, 0, 0)
-                RoundedRectangle(size=(35, 35), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
+                RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
                                  radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                 b = b + 1
 
@@ -895,7 +898,7 @@ class MyApp(App):
         draw.add_widget(ti3)
 
         #data
-        draw.add_widget(Label(text='[b] Accuracy: [\b]', markup = True, pos=(middlex-300, -290)))
+        draw.add_widget(Label(text='[b] Accuracy: [b/]',size_hint=(None,None), markup = True, pos=(middlex-30, 0)))
 
 
 
@@ -918,16 +921,16 @@ class MyApp(App):
             layout = BoxLayout(orientation = 'horizontal',size_hint=(1,None),height = 50, spacing=5)
             parentlayout.add_widget(layout)
 
-        neuronlayout = BoxLayout(orientation='vertical')
-        neurontwolayout = BoxLayout(orientation='vertical')
-        neuronthreelayout = BoxLayout(orientation='vertical')
-        numlayerslayout = BoxLayout(orientation='vertical')
+        neuronlayout = BoxLayout(orientation='vertical', size_hint=(.3,1))
+        neurontwolayout = BoxLayout(orientation='vertical', size_hint=(.3,1))
+        neuronthreelayout = BoxLayout(orientation='vertical', size_hint=(.3,1))
+        numlayerslayout = BoxLayout(orientation='vertical', size_hint=(.3,1))
         ratelayout = BoxLayout(orientation = 'vertical',pos_hint={'top':1}, size_hint=(0.8,0.8))
 
         btnGo = Button(color=(1,1,1,1), text='[b]GO',markup = True, font_size=20, size_hint=(.95,.9),
                        pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlusP.png', background_down='ButtonPlusPDown.png')
-        btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='ButtonPlusG.png', background_down='ButtonPlusADown.png', size_hint=(.95,.9),
-                       pos_hint={'center_x':.5, 'center_y':.5})
+        btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='ButtonPlusH.png', background_down='ButtonPlusADown.png', size_hint=(.95,.9),
+                       pos_hint={'center_x':.5, 'center_y':.5}, color = (1,1,1,1), font_size=18)
         btnRefresh = Button(text='[b]REFRESH',markup = True, background_normal='ButtonPlusG.png', background_down='ButtonPlusADown.png')
         btnnewinput=Button(color=(1,1,1,1), text='[b]New Input',markup = True, font_size=20, size_hint=(.95,.9),
                        pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlusP.png', background_down='ButtonPlusPDown.png')
@@ -939,54 +942,55 @@ class MyApp(App):
         lblshowbias = Label(text='Show biases:', color=(1, 1, 1, 1), font_size=(14))
 
         # Left Neuron Switcher
-        btnplusneuron = Button(text = '[b]+',markup = True, size_hint=(.4,.5),pos_hint={'center_x':.5, 'center_y':.5},
-                               background_normal='ButtonPlusG.png',
-                               background_down='ButtonPlusRDown.png',
+        btnplusneuron = Button(text = '[b]+',markup = True, size_hint=(.2,.5),pos_hint={'center_x':.5, 'center_y':.5},
+                               background_normal='ButtonPlus2.png',
+                               background_down='ButtonPlusGDown.png',
                                background_disabled_normal='ButtonDeactivated.png')
-        btnlessneuron = Button(text = '[b]-',markup = True,size_hint=(.4, .5),pos_hint={'center_x':.5, 'center_y':.5},
-                               background_normal='ButtonPlusG.png',
-                               background_down='ButtonPlusRDown.png',
+        btnlessneuron = Button(text = '[b]-',markup = True,size_hint=(.2, .5),pos_hint={'center_x':.5, 'center_y':.5},
+                               background_normal='ButtonPlus1.png',
+                               background_down='ButtonPlusGDown.png',
                                background_disabled_normal='ButtonDeactivated.png')
         lblhiddenlayer = Label(text=str(list_hidden[0]))
         lblneuron = Label(text='Neurons')
 
         # Second neuron switcher
-        btnplusneurontwo = Button(text = '[b]+',markup = True,size_hint=(.4, .5),pos_hint={'center_x':.5, 'center_y':.5},
-                                  background_normal='ButtonPlusG.png',
-                                  background_down='ButtonPlusPDown.png',
+        btnplusneurontwo = Button(text = '[b]+',markup = True,size_hint=(.2, .5),pos_hint={'center_x':.5, 'center_y':.5},
+                                  background_normal='ButtonPlus4.png',
+                                  background_down='ButtonPlusR.png',
                                   background_disabled_normal='ButtonDeactivated.png')
-        btnlessneurontwo = Button(text = '[b]-',markup = True,size_hint=(.4, .5), pos_hint={'center_x':.5, 'center_y':.5},
-                                  background_normal='ButtonPlusG.png',
-                                  background_down='ButtonPlusPDown.png',
+        btnlessneurontwo = Button(text = '[b]-',markup = True,size_hint=(.2, .5), pos_hint={'center_x':.5, 'center_y':.5},
+                                  background_normal='ButtonPlus3.png',
+                                  background_down='ButtonPlusR.png',
                                   background_disabled_normal='ButtonDeactivated.png')
         lblhiddenlayertwo = Label(text='4')
         lblneurontwo = Label(text='Neurons')
 
         # Right/Third neuron switcher
-        btnplusneuronthree = Button(text = '[b]+',markup = True,size_hint=(.4, .5),pos_hint={'center_x':.5, 'center_y':.5},
-                                    background_normal='ButtonPlusG.png',
-                                    background_down='ButtonPlusADown.png',
+        btnplusneuronthree = Button(text = '[b]+',markup = True,size_hint=(.2, .5),pos_hint= {'center_x':1, 'center_y':.5},
+                                    background_normal='ButtonPlus6.png',
+                                    background_down='ButtonPlusA.png',
                                     background_disabled_normal='ButtonDeactivated.png')
-        btnlessneuronthree = Button(text = '[b]-',markup = True,size_hint=(.4, .5),pos_hint={'center_x':.5, 'center_y':.5},
-                                    background_normal='ButtonPlusG.png',
-                                    background_down='ButtonPlusADown.png',
+        btnlessneuronthree = Button(text = '[b]-',markup = True,size_hint=(.2, .5),pos_hint={'center_x':1, 'center_y':.5},
+                                    background_normal='ButtonPlus5.png',
+                                    background_down='ButtonPlusA.png',
                                     background_disabled_normal='ButtonDeactivated.png')
         lblhiddenlayerthree = Label(text='4')
         lblneuronthree = Label(text='Neurons')
 
         # Number of layers switcher
-        btnlayerplusneuron = Button(text = '[b]+',markup = True,size_hint=(.4, .5),pos_hint={'center_x':.5, 'center_y':.5},
-                                    background_normal='ButtonPlusG.png',
-                                    background_down='ButtonPlusGDown.png',
+        btnlayerplusneuron = Button(text = '[b]+',markup = True,size_hint=(.2, .5),pos_hint={'center_x':1, 'center_y':.5},
+                                    background_normal='ButtonPlus8.png',
+                                    background_down='ButtonPlusR.png',
                                     background_disabled_normal='ButtonDeactivated.png')
-        btnlayerlessneuron = Button(text = '[b]-',markup = True,size_hint=(.4, .5),pos_hint={'center_x':.5, 'center_y':.5},
-                                    background_normal='ButtonPlusG.png',
-                                    background_down='ButtonPlusGDown.png',
+        btnlayerlessneuron = Button(text = '[b]-',markup = True,size_hint=(.2, .5),pos_hint={'center_x':1, 'center_y':.5},
+                                    background_normal='ButtonPlus7.png',
+                                    background_down='ButtonPlusR.png',
                                     background_disabled_normal='ButtonDeactivated.png')
         lbllayer = Label(text=numlayers)
-        lblnumlayers = Label(text='Hiddenlayers',font_size=(11),pos_hint={'center_x':.5, 'center_y':.5})
+        lblnumlayers = Label(text='Hiddenlayers',font_size=(11))
         lblblack = Widget()
         lblblacktwo = Widget()
+        lblblackthree = Widget(size_hint=(.1,.1))
         canvas= Widget(size_hint=(.1,.1))
         visualize = Label(size_hint=(.1,.1))
 
@@ -1120,6 +1124,7 @@ class MyApp(App):
                     layout.remove_widget(numlayerslayout)
                     layout.remove_widget(lblblack)
 
+                    layout.add_widget(lblblackthree)
                     layout.add_widget(btnlessneuronthree)
                     layout.add_widget(neuronthreelayout)
                     layout.add_widget(btnplusneuronthree)
@@ -1142,6 +1147,7 @@ class MyApp(App):
                     layout.remove_widget(btnplusneuronthree)
                     layout.remove_widget(neuronthreelayout)
                     layout.remove_widget(btnlessneuronthree)
+                    layout.remove_widget(lblblackthree)
                     btnlayerlessneuron.disabled = False
 
                 elif len(list_hidden) == 1:
