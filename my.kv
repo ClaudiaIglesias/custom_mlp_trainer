@@ -25,21 +25,21 @@
         width: self.parent.width  # important!
         canvas:
             Color:
-                rgba: .5,.5,.5,1
-            Rectangle:
+                rgba: .1,.1,.1,1
+            Rectangle:                     #La barra de abajo donde están los plus less btns
                 pos: self.pos
                 size: self.size
-                source: 'background2.jpeg'
+                source: 'background.jpeg'
 
 <LayoutNeuronMainScreen>:
     size_hint: None, None
     canvas.before:
         Color:
-            rgba: 0.2, 0.2, 0.2, 0
-        Rectangle:
+            rgba: 0.1, 0.1, 0.1, 1
+        Rectangle:                      #Dnd están los rectángulos
             pos: self.pos
             size: self.size
-            source: 'background.jpeg'
+            source: 'background.png'
 
     BoxLayout:
         orientation: 'vertical'
@@ -85,8 +85,8 @@
         id:idAnchorLayoutNeuron
         canvas.before:
             Color:
-                rgba: .09, .09, .09, 1
-            Rectangle:
+                rgba: .2, .2, .2, 1
+            Rectangle:                               #El fondo de everything
                 pos: self.pos
                 size: self.size
                 source: 'background.png'
