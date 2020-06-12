@@ -27,9 +27,12 @@ from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.tabbedpanel import *
 from kivy.uix.image import Image
 from kivy.uix.progressbar import ProgressBar
-from kivy.clock import Clock
+from kivy.clock import Clock, mainthread
 from kivy.properties import ObjectProperty
 from functools import wraps
+import threading
+import time
+from kivy.event import EventDispatcher
 
 
 
@@ -40,6 +43,7 @@ n_outputs = 1
 n_inputs = 2
 list_hidden = list()
 network = 2
+n_folds = ''
 a = 0
 b = 0
 c = 0
@@ -51,6 +55,7 @@ j = 0
 l = 0
 valuepb = 0
 accuracylabel =''
+scores = list()
 ti = TextInput(size=(40, 30), size_hint=(None, None))
 ti2 = TextInput(size=(40, 30), size_hint=(None, None))
 ti3 = TextInput(size=(40, 30), size_hint=(None, None))
@@ -175,8 +180,12 @@ def update_weights(network, row, l_rate):
 
 # Train a network for a fixed number of epochs
 def train_network(network, train, l_rate, n_epoch, n_outputs):
+    global valuepb
+    global n_folds
+    step = 100.0/(n_folds*n_epoch)
     for epoch in range(n_epoch):
         sum_error = 0
+        valuepb += step
         for row in train:
             outputs = forward_propagate(network, row)
             expected = [0 for i in range(n_outputs)]
@@ -204,36 +213,13 @@ def accuracy_metric(actual, predicted):
 def layoutpbnext(self):
     global valuepb
     global progressbar
-    valuepb += 20
     progressbar.value = valuepb
-    print(valuepb)
+
+trainclock = Clock.schedule_interval(layoutpbnext, 1 / 10)
 
 
-def evaluate_algorithm(dataset, algorithm, n_folds, *args):
-    global progressbar
-    progressvalue = 0
-    folds = cross_validation_split(dataset, n_folds)
-    scores = list()
-    layoutprogressbar = LayoutScreen().ids.mainseparatorprogressbar
-    for fold in folds:
-        #Clock.schedule_once(layoutpbnext)
-        layoutpbnext(progressvalue)
-        train_set = list(folds)
-        train_set.remove(fold)
-        train_set = sum(train_set, [])
-        test_set = list()
-        for row in fold:
-            row_copy = list(row)
-            test_set.append(row_copy)
-            row_copy[-1] = None
-        predicted = algorithm(train_set, test_set, *args)
-        actual = [row[-1] for row in fold]
-        accuracy = accuracy_metric(actual, predicted)
-        scores.append(accuracy)
-        progressvalue += 20
 
 
-    return scores
 
 # Backpropagation Algorithm With Stochastic Gradient Descent
 def back_propagation(train, test, l_rate, n_epoch, n_hidden):
@@ -323,11 +309,8 @@ class MyApp(App):
         j = 0
         l = 0
 
-        if progressbar.value >= 100:
-            parentlayout = LayoutScreen()
-            layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
-            layoutprogressbar.remove_widget(progressbar)
-            print('**************')
+        print('-------------------')
+
 
         numoutputs = n_outputs
         numdata = n_inputs
@@ -667,7 +650,7 @@ class MyApp(App):
         titlelayout.add_widget(Label(text='Input', markup=True, font_size=17, size_hint=(None, None),
                                      pos=(middletitlex - 268, middletitley - 60), color=(.69, 0, .83)))
         #data
-        draw.add_widget(Label(text='[b] Accuracy:' +' [/b]%.3f%%' % accuracylabel,size_hint=(None,None), markup = True, pos=(middlex-30, 0)))
+        #draw.add_widget(Label(text='[b] Accuracy:' +' [/b]%.3f%%' % accuracylabel,size_hint=(None,None), markup = True, pos=(middlex-30, 0)))
 
     def build(self):
 
@@ -692,6 +675,8 @@ class MyApp(App):
         btnRefresh = Button(text='[b]REFRESH',markup = True, background_normal='ButtonPlusG.png', background_down='ButtonPlusADown.png')
         btnnewinput=Button(color=(1,1,1,1), text='[b]New Input',markup = True, font_size=20, size_hint=(.95,.9),
                        pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlusP.png', background_down='ButtonPlusPDown.png')
+        btnCancel = Button(color=(1,1,1,1), text='[b]CANCEL',markup = True, font_size=20, size_hint=(.95,.9), pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlus5.png', background_down='ButtonPlusPDown.png')
+
 
 
         box = CheckBox()
@@ -930,10 +915,9 @@ class MyApp(App):
             layout.add_widget(lblshowbias)
             layout.add_widget(boxshowbiaslabel)
 
-
         def btnTrainpressed(btnTrain):
-            global progressbar, accuracylabel
-            global network, n_inputs, n_outputs
+            global progressbar, accuracylabel, scores
+            global network, n_inputs, n_outputs, n_folds
             layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
             layoutprogressbar.remove_widget(progressbar)
             layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
@@ -978,10 +962,13 @@ class MyApp(App):
             n_folds = 5
             l_rate = 0.3
             n_epoch = 20
-            scores = evaluate_algorithm(dataset, back_propagation, n_folds, l_rate, n_epoch, list_hidden)
-            print('Scores: %s' % scores)
-            print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
-            accuracylabel= (sum(scores) / float(len(scores)))
+
+            threading.Thread(target=evaluate_algorithm, args=(dataset, back_propagation, n_folds, l_rate, n_epoch, list_hidden)).start()
+
+            #scores = evaluate_algorithm(dataset, back_propagation, n_folds, l_rate, n_epoch, list_hidden)
+            # print('Scores: %s' % scores)
+            # print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
+            # accuracylabel= (sum(scores) / float(len(scores)))
 
 
             layoutneuronmainscreen = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
@@ -1007,14 +994,15 @@ class MyApp(App):
             layout.remove_widget(lblblackthree)
             layout.remove_widget(btnRefresh)
             layout.remove_widget(btnGo)
+            layout.remove_widget(btnCancel)
             layout.remove_widget(lblshowbias)
             layout.remove_widget(boxshowbiaslabel)
 
             layout.add_widget(btnGo)
+            layout.add_widget(btnCancel)
             layout.add_widget(btnRefresh)
             layout.add_widget(lblshowbias)
             layout.add_widget(boxshowbiaslabel)
-
 
         def btnrefreshpressed(btnRefresh):
             global valuepb
@@ -1022,6 +1010,7 @@ class MyApp(App):
             layout.remove_widget(btnGo)
             layout.remove_widget(boxshowbiaslabel)
             layout.remove_widget(lblshowbias)
+            layout.remove_widget(btnCancel)
             layout.add_widget(btnTrain)
             layout.add_widget(lblblacktwo)
             layout.add_widget(btnlessneuron)
@@ -1040,6 +1029,47 @@ class MyApp(App):
             clearbackground = (Image(source='background.png', width=backgroundscreen.width, allow_stretch = True))
             backgroundscreen.add_widget((clearbackground))
 
+        def btncancelpressed():
+            pass
+
+
+
+        class MyEventDispatcher(EventDispatcher):
+            def __init__(self, **kwargs):
+                self.register_event_type('on_test')
+                super(MyEventDispatcher, self).__init__(**kwargs)
+            @mainthread
+            def do_something(self, value):
+                # when do_something is called, the 'on_test' event will be
+                # dispatched with the value
+                self.dispatch('on_test', value)
+
+            def on_test(self, *args):
+                global trainclock
+                print ("I am dispatched", args)
+                trainclock.cancel()
+
+        def evaluate_algorithm(dataset, algorithm, n_folds, *args):
+            global progressbar
+            global scores, trainclock
+            folds = cross_validation_split(dataset, n_folds)
+            trainclock
+            for fold in folds:
+                train_set = list(folds)
+                train_set.remove(fold)
+                train_set = sum(train_set, [])
+                test_set = list()
+                for row in fold:
+                    row_copy = list(row)
+                    test_set.append(row_copy)
+                    row_copy[-1] = None
+                predicted = algorithm(train_set, test_set, *args)
+                actual = [row[-1] for row in fold]
+                accuracy = accuracy_metric(actual, predicted)
+                scores.append(accuracy)
+            ev = MyEventDispatcher()
+            ev.do_something('hola')
+
 
         #box.active = True
         btnTrain.bind(on_press=btnTrainpressed)
@@ -1053,6 +1083,7 @@ class MyApp(App):
         btnlayerplusneuron.bind(on_press=btnlayerplusneuronpressed)
         btnlayerlessneuron.bind(on_press=btnlayerlessneuronpressed)
         btnRefresh.bind(on_press=btnrefreshpressed)
+        btnCancel.bind(on_press=btncancelpressed)
         #boxshowbiaslabel.bind(on_press=showbiaslabels)
 
 
