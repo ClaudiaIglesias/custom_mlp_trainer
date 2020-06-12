@@ -26,6 +26,11 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.tabbedpanel import *
 from kivy.uix.image import Image
+from kivy.uix.progressbar import ProgressBar
+from kivy.clock import Clock
+from kivy.properties import ObjectProperty
+from functools import wraps
+
 
 
 #para poder volver a hacer train va a haber que duplicarlo y hacer un segundo train en el que primero se eliminen los widgets
@@ -46,19 +51,65 @@ g = 0
 i = 0
 j = 0
 l = 0
+valuepb = 0
+accuracylabel =''
 ti = TextInput(size=(40, 30), size_hint=(None, None))
 ti2 = TextInput(size=(40, 30), size_hint=(None, None))
 ti3 = TextInput(size=(40, 30), size_hint=(None, None))
-
+progressbar = ProgressBar()
 
 
 jose= True
 
-
+# Load a CSV file
+def load_csv(filename):
+	dataset = list()
+	with open(filename, 'r') as file:
+		csv_reader = reader(file)
+		for row in csv_reader:
+			if not row:
+				continue
+			dataset.append(row)
+	return dataset
+# String to float
+def str_column_to_float(dataset, column):
+	for row in dataset:
+		row[column] = float(row[column].strip())
+#string to integer
+def str_column_to_int(dataset, column):
+    class_values = [row[column] for row in dataset]
+    unique = set(class_values)
+    lookup = dict()
+    for i, value in enumerate(unique):
+        lookup[value] = i
+    for row in dataset:
+        row[column] = lookup[row[column]]
+    return lookup
+#max and min value of each column
+def dataset_minmax(dataset):
+	minmax = list()
+	stats = [[min(column), max(column)] for column in zip(*dataset)]
+	return stats
+#range 0-1
+def normalize_dataset(dataset, minmax):
+	for row in dataset:
+		for i in range(len(row)-1):
+			row[i] = (row[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
+#Split the data
+def cross_validation_split(dataset, n_folds):
+	dataset_split = list()
+	dataset_copy = list(dataset)
+	fold_size = int(len(dataset) / n_folds)
+	for i in range(n_folds):
+		fold = list()
+		while len(fold) < fold_size:
+			index = randrange(len(dataset_copy))
+			fold.append(dataset_copy.pop(index))
+		dataset_split.append(fold)
+	return dataset_split
 #Create the list of weights and biases
 def initialize_network(n_inputs, n_hidden, n_outputs):
     network = list()
-
     weightspernode=n_inputs
     for nodesinhidden in n_hidden:
         network.append ( [{'weights': [random() for i in range(weightspernode + 1)]} for i in range(nodesinhidden)] )
@@ -142,16 +193,70 @@ def train_network(network, train, l_rate, n_epoch, n_outputs):
 def predict(network, row):
     outputs = forward_propagate(network, row)
     print(outputs)
-    return outputs
+    return outputs.index(max(outputs))
 
 #accuracy
 def accuracy_metric(actual, predicted):
     correct = 0
     for i in range(len(actual)):
-        if actual[i][-1] == predicted[i]:
+        if actual[i] == predicted[i]:
             correct += 1
     return (correct / float(len(actual))) * 100.0
 
+#ProgressBar
+def layoutpbnext(self):
+    global valuepb
+    global progressbar
+    valuepb += 20
+    progressbar.value = valuepb
+    print(valuepb)
+    if progressbar.value >= 100:
+        layoutprogressbar = LayoutScreen().ids.mainseparatorprogressbar
+        layoutprogressbar.remove_widget(progressbar)
+        print('**************')
+
+def evaluate_algorithm(dataset, algorithm, n_folds, *args):
+    global progressbar
+    progressvalue = 0
+    folds = cross_validation_split(dataset, n_folds)
+    scores = list()
+    layoutprogressbar = LayoutScreen().ids.mainseparatorprogressbar
+    for fold in folds:
+        #Clock.schedule_once(layoutpbnext)
+        layoutpbnext(progressvalue)
+        train_set = list(folds)
+        train_set.remove(fold)
+        train_set = sum(train_set, [])
+        test_set = list()
+        for row in fold:
+            row_copy = list(row)
+            test_set.append(row_copy)
+            row_copy[-1] = None
+        predicted = algorithm(train_set, test_set, *args)
+        actual = [row[-1] for row in fold]
+        accuracy = accuracy_metric(actual, predicted)
+        scores.append(accuracy)
+        progressvalue += 20
+
+
+    return scores
+
+
+
+
+# Backpropagation Algorithm With Stochastic Gradient Descent
+def back_propagation(train, test, l_rate, n_epoch, n_hidden):
+    global network
+
+    n_inputs = len(train[0]) - 1
+    n_outputs = len(set([row[-1] for row in train]))
+    network = initialize_network(n_inputs, n_hidden, n_outputs)
+    train_network(network, train, l_rate, n_epoch, n_outputs)
+    predictions = list()
+    for row in test:
+        prediction = predict(network, row)
+        predictions.append(prediction)
+    return(predictions)
 
 
 
@@ -170,7 +275,7 @@ class MyApp(App):
             Line(points=[0, 60, 2000, 60])
             Color(1, 1, 1, 1)
             Line(points=[0, 60, 2000, 60])
-    #when Go is pressed
+    #When Go is pressed
     def drawingvisualize(self, draw, *largs):
         global network, ti, ti2, ti3
         a = 0
@@ -537,12 +642,7 @@ class MyApp(App):
                 RoundedRectangle(size=(30, 30), pos=(150, b * 50 + (340 - space / 2)))
                 b = b + 1
     def drawinglblblackkv(self, draw, titlelayout, *largs):
-        global a
-        global b
-        global list_hidden
-        global network
-        global n_outputs
-        global n_inputs
+        global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel
         a = 0
         b = 0
         c = 0
@@ -561,8 +661,6 @@ class MyApp(App):
         middley = draw.height/2 + 40
         middletitlex = titlelayout.width / 2
         middletitley = titlelayout.height / 2
-        #ima=(Image(source='lineaverde.png',size_hint=(.1,.1),pos=(middlex-200,draw.height+80)))
-        #draw.add_widget(ima)
 
 
         with draw.canvas:
@@ -584,7 +682,7 @@ class MyApp(App):
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
-            titlelayout.add_widget(Label(text='[b]  Hidden\nlayer one', markup=True, font_size=15, pos=(middletitlex-28, middletitley-50),  color=(.5,.6,.6), size_hint=(None,None)))
+            titlelayout.add_widget(Label(text='[b]  Hidden\nlayer one', markup=True, font_size=15, pos=(middletitlex-28, middletitley-50),  color=(.8,1,1), size_hint=(None,None)))
             for x in range(list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][2]):
                     valuefloat = abs(network[0][a]['weights'][2])
@@ -607,13 +705,13 @@ class MyApp(App):
                     #Color(0.59, 0.65+colorlayerone/7.69, 0.93, 0.5+colorlayerone/2)
                     #Color(0.6- colorlayerone/10, 0.78 + colorlayerone/33.33, 0.93- colorlayerone/3.85, colorlayerone/3.33 + 0.75)
                     #Color(0.49, .90 - ((0.14 / (list_hidden[0] - 1)) * a), 0.67 + ((0.06 / (list_hidden[0] - 1)) * a))
-                    Color(0, .24 - ((0.14 / (list_hidden[0] - 1)) * a), 0.22 + ((0.06 / (list_hidden[0] - 1)) * a))
+                    Color(.69-colorlayerone/1.64,0+colorlayerone/1.05,0.83+colorlayerone/6.67, 0.25 + colorlayerone/1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex, a * 50 + (middley - spaceone / 2)))
-                    Color(colorlayerone,colorlayerone,colorlayerone,1)
+                    Color(0,0,0,1)
                     RoundedRectangle(size=(30, 30), pos=(middlex+2.5, a * 50 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
                     biases = "{:.2f}".format(value)
                     draw.nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 50 + (middley-31.5 - spaceone / 2)),
-                                            color=(1-colorlayerone, 1-colorlayerone, 1-colorlayerone, .9))
+                                            color=(colorlayerone+0.25, colorlayerone+0.25, colorlayerone+0.25, 1))
                     draw.add_widget(draw.nodeslabel)
                 i = 0
                 e = 0
@@ -638,7 +736,7 @@ class MyApp(App):
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
-            titlelayout.add_widget(Label(text='[b]  Hidden\nlayer one', markup=True, size_hint=(None,None), font_size=15, pos=(middletitlex-108, middletitley - 50), color=(.5,.6,.6)))
+            titlelayout.add_widget(Label(text='[b]  Hidden\nlayer one', markup=True, size_hint=(None,None), font_size=15, pos=(middletitlex-108, middletitley - 50), color=(.8,1,1)))
             for x in range(list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][-1]):
                     valuefloat = abs(network[0][a]['weights'][-1])
@@ -654,10 +752,9 @@ class MyApp(App):
                 with draw.canvas:
                     value = network[0][a]['weights'][-1]
                     colorlayerone = abs(network[0][a]['weights'][-1]) / valuefloat
-                    Color(.28 - ((0.1 / (list_hidden[0] - 1)) * a), 0.11 - ((0.11 / (list_hidden[0] - 1)) * a),
-                          0.02 + ((0.08 / (list_hidden[0] - 1)) * a))
+                    Color(.69-colorlayerone/1.64,0+colorlayerone/1.05,0.83+colorlayerone/6.67, 0.25 + colorlayerone/1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex-80, a * 50 + (middley - spaceone / 2)))
-                    Color(colorlayerone,colorlayerone,colorlayerone,1)
+                    Color(0,0,0,1)
                     RoundedRectangle(size=(30, 30), pos=(middlex + 2.5 - 80, a * 50 + (middley + 2.5 - spaceone / 2)),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
@@ -680,7 +777,7 @@ class MyApp(App):
             linecolorinput = 0
             d = 0
             a = 0
-            titlelayout.add_widget(Label(text='[b]  Hidden\nlayer two', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex+52, middletitley-50), color=(.5,.6,.6)))
+            titlelayout.add_widget(Label(text='[b]  Hidden\nlayer two', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex+52, middletitley-50), color=(.8,1,1)))
             for x in range(list_hidden[1]):
                 if valuefloat < abs(network[1][d]['weights'][-1]):
                     valuefloat = abs(network[1][d]['weights'][-1])
@@ -700,9 +797,9 @@ class MyApp(App):
                 with draw.canvas:
                     value = network[1][d]['weights'][-1]
                     colorlayerone = abs(network[1][d]['weights'][-1]) / valuefloat
-                    Color(0.59, 0.65+colorlayerone/7.69, 0.93, 0.5+colorlayerone/2)
+                    Color(.69-colorlayerone/1.64,0+colorlayerone/1.05,0.83+colorlayerone/6.67, 0.25 + colorlayerone/1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex + 80, d * 50 + (middley - spacetwo / 2)))
-                    Color(colorlayerone,colorlayerone,colorlayerone,1)
+                    Color(0,0,0,1)
                     RoundedRectangle(size=(30, 30), pos=(middlex + 82.5, d * 50 + (middley + 2.5 - spacetwo / 2)),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
@@ -731,7 +828,7 @@ class MyApp(App):
             spacetwo = list_hidden[1] * 35 + (list_hidden[1] - 1) * 25
             valuefloat = 0
             linecolorinput = 0
-            titlelayout.add_widget(Label(text='  Hidden\nlayer one', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex-158, middletitley-50), color=(.5,.6,.6)))
+            titlelayout.add_widget(Label(text='  Hidden\nlayer one', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex-158, middletitley-50), color=(.9,.8,1)))
             for x in range(list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][-1]):
                     valuefloat = abs(network[0][a]['weights'][-1])
@@ -747,7 +844,7 @@ class MyApp(App):
                 with draw.canvas:
                     value = network[0][a]['weights'][-1]
                     colorlayerone = abs(network[0][a]['weights'][-1]) / valuefloat
-                    Color(0.8 + colorlayerone / 10, 0.8, 1, 0.25+colorlayerone/1.3)
+                    Color(.69-colorlayerone/1.64,0+colorlayerone/1.05,0.83+colorlayerone/6.67, 0.25 + colorlayerone/1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex - 130, a * 50 + (middley - spaceone / 2)))
                     Color(0,0,0,1)
                     RoundedRectangle(size=(30, 30), pos=(middlex + 2.5 - 130, a * 50 + (middley + 2.5 - spaceone / 2)),
@@ -772,7 +869,7 @@ class MyApp(App):
             linecolorinput = 0
             d = 0
             a = 0
-            titlelayout.add_widget(Label(text='  Hidden\nlayer two', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex-28, middletitley-50), color=(.5,.6,.6)))
+            titlelayout.add_widget(Label(text='  Hidden\nlayer two', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex-28, middletitley-50), color=(.8,1,1)))
             for x in range(list_hidden[1]):
                 if valuefloat < abs(network[1][d]['weights'][-1]):
                     valuefloat = abs(network[1][d]['weights'][-1])
@@ -788,7 +885,7 @@ class MyApp(App):
                 with draw.canvas:
                     value = network[1][d]['weights'][-1]
                     colorlayerone = abs(network[1][d]['weights'][-1]) / valuefloat
-                    Color(.8,.9-colorlayerone/10,1, 0.25 + colorlayerone/1.33)
+                    Color(.69-colorlayerone/1.64,0+colorlayerone/1.05,0.83+colorlayerone/6.67, 0.25 + colorlayerone/1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex, d * 50 + (middley - spacetwo / 2)))
                     Color(0,0,0,1)
                     RoundedRectangle(size=(30, 30), pos=(middlex + 2.5, d * 50 + (middley + 2.5 - spacetwo / 2)),
@@ -813,7 +910,7 @@ class MyApp(App):
             linecolorinput = 0
             d = 0
             a = 0
-            titlelayout.add_widget(Label(text='   Hidden\nlayer three', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex+101, middletitley -50), color=(.5,.6,.6)))
+            titlelayout.add_widget(Label(text='   Hidden\nlayer three', markup=True,size_hint=(None,None), font_size=15, pos=(middletitlex+101, middletitley -50), color=(.8,.9,1)))
             for x in range(list_hidden[2]):
                 if valuefloat < abs(network[2][d]['weights'][-1]):
                     valuefloat = abs(network[2][d]['weights'][-1])
@@ -834,7 +931,7 @@ class MyApp(App):
                 with draw.canvas:
                     value = network[2][d]['weights'][-1]
                     colorlayerone = abs(network[2][d]['weights'][-1]) / valuefloat
-                    Color(0.8, 1 - colorlayerone / 10, 1, 0.25 + colorlayerone / 1.33)
+                    Color(.69-colorlayerone/1.64,0+colorlayerone/1.05,0.83+colorlayerone/6.67, 0.25 + colorlayerone/1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex+130, d * 50 + (middley - spacethree / 2)))
                     Color(0,0,0,1)
                     RoundedRectangle(size=(30, 30), pos=(middlex + 132.5, d * 50 + (middley + 2.5 - spacethree / 2)),
@@ -862,9 +959,9 @@ class MyApp(App):
 
 
         titlelayout.add_widget(Label(text='Output', markup=True, font_size=17, size_hint=(None, None),
-                                     pos=(middletitlex + 202, middletitley - 60), color=(.8, .9, .9)))
+                                     pos=(middletitlex + 202, middletitley - 60), color=(.6, 1, .8)))
         titlelayout.add_widget(Label(text='Input', markup=True, font_size=17, size_hint=(None, None),
-                                     pos=(middletitlex - 268, middletitley - 60), color=(.9, .9, .8)))
+                                     pos=(middletitlex - 268, middletitley - 60), color=(.69, 0, .83)))
 
         # output layer
         for x in range(numoutputs):
@@ -875,7 +972,7 @@ class MyApp(App):
             value = network[-1][c]['weights'][-1]
             print(value)
             with draw.canvas:
-                Color(0.6,1,0.8+((0.2/(numoutputs-1))*c))
+                Color(0.6,1,0.8+((0.2/(numoutputs))*c))
                 RoundedRectangle(size=(35, 35), pos=(middlex + 230, c * 50 + (middley - spaceoutput / 2)))
                 Color(0, 0, 0)
                 RoundedRectangle(size=(30, 30), pos=(middlex + 232.5, c * 50 + (middley+2.5 - spaceoutput / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
@@ -886,7 +983,7 @@ class MyApp(App):
         # input layer
         for x in range(numdata):
             with draw.canvas:
-                Color(1,.6+((0.2/(numdata-1))*b),1-((0.1/(numdata-1))*b))
+                Color(0.69-((0.09/(numdata-1))*b),0+((.33/(numdata-1))*b),0.83+((0.12/(numdata-1))*b))
                 RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - space / 2)))
                 Color(0, 0, 0)
                 RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
@@ -898,7 +995,10 @@ class MyApp(App):
         draw.add_widget(ti3)
 
         #data
-        draw.add_widget(Label(text='[b] Accuracy: [b/]',size_hint=(None,None), markup = True, pos=(middlex-30, 0)))
+        draw.add_widget(Label(text='[b] Accuracy:' +' [/b]%.3f%%' % accuracylabel,size_hint=(None,None), markup = True, pos=(middlex-30, 0)))
+
+
+
 
 
 
@@ -927,9 +1027,8 @@ class MyApp(App):
         numlayerslayout = BoxLayout(orientation='vertical', size_hint=(.3,1))
         ratelayout = BoxLayout(orientation = 'vertical',pos_hint={'top':1}, size_hint=(0.8,0.8))
 
-        btnGo = Button(color=(1,1,1,1), text='[b]GO',markup = True, font_size=20, size_hint=(.95,.9),
-                       pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlusP.png', background_down='ButtonPlusPDown.png')
-        btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='ButtonPlusH.png', background_down='ButtonPlusADown.png', size_hint=(.95,.9),
+        btnGo = Button(color=(1,1,1,1), text='[b]GO',markup = True, font_size=20, size_hint=(.95,.9), pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlus3.png', background_down='ButtonPlusPDown.png')
+        btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='ButtonPlus3.png', background_down='ButtonPlusADown.png', size_hint=(.95,.9),
                        pos_hint={'center_x':.5, 'center_y':.5}, color = (1,1,1,1), font_size=18)
         btnRefresh = Button(text='[b]REFRESH',markup = True, background_normal='ButtonPlusG.png', background_down='ButtonPlusADown.png')
         btnnewinput=Button(color=(1,1,1,1), text='[b]New Input',markup = True, font_size=20, size_hint=(.95,.9),
@@ -943,11 +1042,11 @@ class MyApp(App):
 
         # Left Neuron Switcher
         btnplusneuron = Button(text = '[b]+',markup = True, size_hint=(.2,.5),pos_hint={'center_x':.5, 'center_y':.5},
-                               background_normal='ButtonPlus2.png',
+                               background_normal='ButtonPlus5.png',
                                background_down='ButtonPlusGDown.png',
                                background_disabled_normal='ButtonDeactivated.png')
         btnlessneuron = Button(text = '[b]-',markup = True,size_hint=(.2, .5),pos_hint={'center_x':.5, 'center_y':.5},
-                               background_normal='ButtonPlus1.png',
+                               background_normal='ButtonPlus4.png',
                                background_down='ButtonPlusGDown.png',
                                background_disabled_normal='ButtonDeactivated.png')
         lblhiddenlayer = Label(text=str(list_hidden[0]))
@@ -955,11 +1054,11 @@ class MyApp(App):
 
         # Second neuron switcher
         btnplusneurontwo = Button(text = '[b]+',markup = True,size_hint=(.2, .5),pos_hint={'center_x':.5, 'center_y':.5},
-                                  background_normal='ButtonPlus4.png',
+                                  background_normal='ButtonPlus5.png',
                                   background_down='ButtonPlusR.png',
                                   background_disabled_normal='ButtonDeactivated.png')
         btnlessneurontwo = Button(text = '[b]-',markup = True,size_hint=(.2, .5), pos_hint={'center_x':.5, 'center_y':.5},
-                                  background_normal='ButtonPlus3.png',
+                                  background_normal='ButtonPlus5.png',
                                   background_down='ButtonPlusR.png',
                                   background_disabled_normal='ButtonDeactivated.png')
         lblhiddenlayertwo = Label(text='4')
@@ -967,7 +1066,7 @@ class MyApp(App):
 
         # Right/Third neuron switcher
         btnplusneuronthree = Button(text = '[b]+',markup = True,size_hint=(.2, .5),pos_hint= {'center_x':1, 'center_y':.5},
-                                    background_normal='ButtonPlus6.png',
+                                    background_normal='ButtonPlus5.png',
                                     background_down='ButtonPlusA.png',
                                     background_disabled_normal='ButtonDeactivated.png')
         btnlessneuronthree = Button(text = '[b]-',markup = True,size_hint=(.2, .5),pos_hint={'center_x':1, 'center_y':.5},
@@ -1003,6 +1102,7 @@ class MyApp(App):
         else:
             self.background(canvas)
             layout.add_widget(canvas)
+
         layout.add_widget(btnTrain)
         layout.add_widget(lblblacktwo)
         ratelayout.add_widget(lblrate)
@@ -1021,6 +1121,8 @@ class MyApp(App):
         layout.add_widget(btnlayerplusneuron)
         btnlayerlessneuron.disabled = True
         layout.add_widget(visualize)
+
+
 
 
         neurontwolayout.add_widget(lblneurontwo)
@@ -1175,9 +1277,13 @@ class MyApp(App):
                 self.drawingvisualize(visualize)
 
         def btntrainpressed(bntTrain):
+            global progressbar, accuracylabel
             global network, n_inputs, n_outputs
             seed(1)
-            dataset = [[1, 2, 3, 1],
+            layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
+            layoutprogressbar.add_widget(progressbar)
+
+            '''dataset = [[1, 2, 3, 1],
                        [2, 1, 3, 2],
                        [1, 1, 1, 1],
                        [0, 0, 2, 0],
@@ -1193,10 +1299,6 @@ class MyApp(App):
                        [0, 2, 1, 0],
                        [3, 2, 2, 3],
                        [0, 1, 2, 0]]
-            '''dataset = [[0, 0, 1, 0],
-                       [1, 1, 1, 1],
-                       [1, 0, 1, 1],
-                       [0, 1, 0, 0]]'''
 
             n_inputs = len(dataset[0]) - 1
             n_outputs = len(set([row[-1] for row in dataset]))
@@ -1206,15 +1308,30 @@ class MyApp(App):
             #     prediction = predict(network, row)
             #     accuracy_metric(dataset,prediction)
             for layer in network:
-                print(layer)
+                print(layer)'''
+            filename = 'seeds_dataset.csv'
+            dataset = load_csv(filename)
+            for i in range(len(dataset[0]) - 1):
+                str_column_to_float(dataset, i)
+            # convert class column to integers
+            str_column_to_int(dataset, len(dataset[0]) - 1)
+            # normalize input variables
+            minmax = dataset_minmax(dataset)
+            normalize_dataset(dataset, minmax)
+            # evaluate algorithm
+            n_folds = 5
+            l_rate = 0.3
+            n_epoch = 20
+            scores = evaluate_algorithm(dataset, back_propagation, n_folds, l_rate, n_epoch, list_hidden)
+            print('Scores: %s' % scores)
+            print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
+            accuracylabel= (sum(scores) / float(len(scores)))
 
 
-            if jose:
-                layoutneuronmainscreen = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
-                layoutlabels = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idLabelsLayoutNeuronMainScreen
-                self.drawinglblblackkv(layoutneuronmainscreen, layoutlabels)
-            else:
-                self.drawinglblblacktwo(lblblacktwo)
+            layoutneuronmainscreen = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
+            layoutlabels = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idLabelsLayoutNeuronMainScreen
+            self.drawinglblblackkv(layoutneuronmainscreen, layoutlabels)
+
 
             layout.remove_widget(btnplusneuronthree)
             layout.remove_widget(neuronthreelayout)
@@ -1226,11 +1343,12 @@ class MyApp(App):
             layout.remove_widget(numlayerslayout)
             layout.remove_widget(btnlayerlessneuron)
             layout.remove_widget(lblblack)
+            layout.remove_widget(lblblacktwo)
             layout.remove_widget(btnTrain)
             layout.remove_widget(btnplusneuron)
             layout.remove_widget(btnlessneuron)
             layout.remove_widget(neuronlayout)
-            layout.remove_widget(lblblack)
+            layout.remove_widget(lblblackthree)
 
             layout.add_widget(btnGo)
             layout.add_widget(btnRefresh)
@@ -1243,6 +1361,20 @@ class MyApp(App):
                 Color(0, 0, 0, 1)
                 Rectangle(size=(1300, 720), pos=(0, 111))
                 Rectangle(size=(690, 800), pos=(0, 81))
+                layout.remove_widget(btnRefresh)
+                layout.remove_widget(btnGo)
+                layout.remove_widget(boxshowbiaslabel)
+                layout.remove_widget(lblshowbias)
+                layout.add_widget(btnTrain)
+                layout.add_widget(lblblacktwo)
+                layout.add_widget(btnlessneuron)
+                layout.add_widget(neuronlayout)
+                layout.add_widget(btnplusneuron)
+                layout.add_widget(lblblack)
+                layout.add_widget(btnlayerlessneuron)
+                layout.add_widget(numlayerslayout)
+                layout.add_widget(btnlayerplusneuron)
+                btnlayerlessneuron.disabled = True
 
         #box.active = True
         btnTrain.bind(on_press=btntrainpressed)

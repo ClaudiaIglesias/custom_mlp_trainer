@@ -85,7 +85,7 @@
         id:idAnchorLayoutNeuron
         canvas.before:
             Color:
-                rgba: .3, .3, .3, 1
+                rgba: .09, .09, .09, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -120,6 +120,19 @@
             id:idLayoutNeuron
 
         BoxLayout:
+            id:mainseparatorprogressbar
+            size_hint: None, None
+            width: self.parent.width
+            height: 2
+            canvas:
+                Color:
+                    rgba: 0, 0, 0, 0
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+
+        BoxLayout:
             id:mainseparator
             size_hint: None, None
             width: self.parent.width
@@ -139,7 +152,7 @@
             height: 2
             canvas:
                 Color:
-                    rgba: 0, 0, 0, 1
+                    rgba: 0, 0, 0, 0
                 Rectangle:
                     pos: self.pos
                     size: self.size
