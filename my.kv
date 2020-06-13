@@ -25,21 +25,21 @@
         width: self.parent.width  # important!
         canvas:
             Color:
-                rgba: .1,.1,.1,1
+                rgba: .07,.07,.07,1
             Rectangle:                     #La barra de abajo donde están los plus less btns
                 pos: self.pos
                 size: self.size
-                source: 'background.jpeg'
+                #source: 'background.png'
 
 <LayoutNeuronMainScreen>:
     size_hint: None, None
     canvas.before:
         Color:
-            rgba: 0.1, 0.1, 0.1, 1
+            rgba: 0.07, 0.07, 0.07, 0
         Rectangle:                      #Dnd están los rectángulos
             pos: self.pos
             size: self.size
-            source: 'background.png'
+            #source: 'background.png'
 
     BoxLayout:
         orientation: 'vertical'
@@ -85,11 +85,11 @@
         id:idAnchorLayoutNeuron
         canvas.before:
             Color:
-                rgba: .2, .2, .2, 1
+                rgba: 0,0,0, 1
             Rectangle:                               #El fondo de everything
                 pos: self.pos
                 size: self.size
-                source: 'background.png'
+                #source: 'background.png'
         width: self.parent.width  # important!
         height: 600
         anchor_x: 'center'
@@ -99,6 +99,7 @@
         LayoutNeuronMainScreen:
             id:idLayoutNeuronMainScreen
             size: 800, 580
+
 
 <LayoutScreen>:
     id:idLayoutScreen
@@ -136,14 +137,14 @@
             id:mainseparator
             size_hint: None, None
             width: self.parent.width
-            height: 1
+            height: 2
             canvas:
                 Color:
-                    rgba: 1, 1,1, 1
+                    rgba: 1, 1, 1, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
-                    source: 'linea.png'
+                    source: 'lineaD.png'
 
         BoxLayout:
             id:mainseparator2
