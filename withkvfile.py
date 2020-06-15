@@ -7,6 +7,7 @@ from kivy.uix.label import Label
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.widget import Widget
 from kivy.graphics import *
+from kivy.uix.gridlayout import GridLayout
 from kivy.config import Config
 from kivy.uix.textinput import TextInput
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -33,6 +34,8 @@ from functools import wraps
 import threading
 import time
 from kivy.event import EventDispatcher
+from kivy.uix.filechooser import *
+from kivy.uix.popup import Popup
 
 
 
@@ -41,11 +44,15 @@ numdata = 2
 numoutputs = 1
 n_outputs = 1
 n_inputs = 2
+dataset = 1
 list_hidden = list()
+listinputs = list()
+input = list()
 network = 2
 n_folds = 5
 l_rate = 0.3
 n_epoch = 20
+prediction = 'no'
 a = 0
 b = 0
 c = 0
@@ -58,6 +65,8 @@ l = 0
 valuepb = 0
 accuracylabel =''
 scores = list()
+trainclock = None
+myevent = None
 ti = TextInput(size=(40, 30), size_hint=(None, None))
 ti2 = TextInput(size=(40, 30), size_hint=(None, None))
 ti3 = TextInput(size=(40, 30), size_hint=(None, None))
@@ -221,9 +230,6 @@ def layoutpbnext(self):
     global progressbar
     progressbar.value = valuepb
 
-trainclock = Clock.schedule_interval(layoutpbnext, 1 / 10)
-
-
 
 # Backpropagation Algorithm With Stochastic Gradient Descent
 def back_propagation(train, test, l_rate, n_epoch, n_hidden):
@@ -243,17 +249,16 @@ def back_propagation(train, test, l_rate, n_epoch, n_hidden):
 
 
 class MyApp(App):
-    Input = ''
 
-    #When Go is pressed
+    #When Predictpredictions is pressed
     def drawingvisualize(self, draw, *largs):
-        global network, ti, ti2, ti3
+        global network, listinputs, input, numdata
         c = 0
-        #Input = [float(ti.text), float(ti2.text), float(ti3.text)]
+        l = 0
 
-        # Input = [float(ti.text), float(ti2.text)]
-        # predict(network, Input)
-        #
+        draw.canvas.clear()
+        MyApp.drawinglblblackkv('j', layoutneuronmainscreen, layoutlabels)
+
         numoutputs = n_outputs
         numdata = n_inputs
         middlex = draw.width / 2
@@ -261,7 +266,19 @@ class MyApp(App):
         space = numdata * 35 + (numdata - 1) * 25
         spaceoutput = numoutputs * 35 + (numoutputs - 1) * 25
 
-        for x in range(numoutputs):
+        l = 0
+        for element in listinputs:
+            #inputtext = element.text
+            #input.append(float(inputtext))
+            inputlabel = Label(text='[b]' + element.text, markup=True, size=(30, 30), font_size=17, size_hint=(None, None),
+                              pos=(middlex - 270, 50 * l + (middley+2 - space / 2)), color=(1, 1, 1, 1))
+            draw.add_widget(inputlabel)
+            draw.remove_widget(element)
+            l += 1
+
+        '''predict(network, input)'''
+
+        '''for x in range(numoutputs):
             value = network[-1][c]['weights'][-1]
             valuefloat = network[1][c]['output']
             print(value)
@@ -276,22 +293,11 @@ class MyApp(App):
                                       font_size=12, pos=(middlex + 290, c * 50 + (middley - 30 - spaceoutput / 2)),
                                       color=(1, 1, 0.83)))
                 #draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex + 196, c * 50 + (middley-34 - spaceoutput / 2)),color=(1, 1, 1, .9))
-            c = c + 1
-
-        Color(1,1,1)
-        inputtext = Label(text='[b]' + ti.text, markup = True, size=(30, 30), size_hint= (None,None), pos=(middlex, (middley - space / 2)), color=(1,1,1,1))
-        inputtext2 = Label(text='[b]' + ti2.text, markup = True, size=(30, 30), size_hint= (None,None), pos=(middlex-250, 50 + (middley - 30 - space / 2)), color=(1,1,1, 1))
-        #inputtext3 = Label(text='[b]' + ti3.text, markup = True, size=(30, 30), size_hint= (None,None), pos=(middlex-250, 50 * 2 + (middley - 30 - space / 2)), color=(1,1,1, 1))
-        draw.add_widget(inputtext)
-        draw.add_widget(inputtext2)
-        #draw.add_widget(inputtext3)
-        draw.remove_widget(ti)
-        draw.remove_widget(ti2)
-        #draw.remove_widget(ti3)
+            c = c + 1'''
 
     # When Train is pressed
     def drawinglblblackkv(self, draw, titlelayout, *largs):
-        global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel, progressbar
+        global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel, progressbar, prediction
         global hiddenlayeronelabelthree, hiddenlayeronelabelone, hiddenlayeronelabeltwo, outputlabel, inputlabel
         a = 0
         b = 0
@@ -302,11 +308,11 @@ class MyApp(App):
         i = 0
         j = 0
         l = 0
+        prediction = 'yes'
 
         draw.canvas.clear()
 
         numoutputs = n_outputs
-        numdata = n_inputs
         space = numdata * 35 + (numdata - 1) * 25
         spaceone = list_hidden[0] * 35 + (list_hidden[0] - 1) * 25
         spaceoutput = numoutputs * 35 + (numoutputs - 1) * 25
@@ -326,12 +332,7 @@ class MyApp(App):
         titlelayout.add_widget(outputlabel)
         titlelayout.add_widget(inputlabel)
 
-        ti.pos = (90,(middley+5 - space / 2))
-        draw.remove_widget(ti)
-        ti2.pos = (90, 50 + (middley+5 - space / 2))
-        draw.remove_widget(ti2)
-        ti3.pos = (90, 2 * 50 + (middley+5 - space / 2))
-        draw.remove_widget(ti3)
+
 
         if len(list_hidden) == 1:
             # hiddenlayerone
@@ -341,8 +342,8 @@ class MyApp(App):
             hiddenlayeronelabelone.pos = (middletitlex - 28, middletitley - 50)
             titlelayout.add_widget(hiddenlayeronelabelone)
             for x in range(list_hidden[0]):
-                if valuefloat < abs(network[0][a]['weights'][2]):
-                    valuefloat = abs(network[0][a]['weights'][2])
+                if valuefloat < abs(network[0][a]['weights'][-1]):
+                    valuefloat = abs(network[0][a]['weights'][-1])
                 e = 0
                 i = 0
                 for y in range(numdata):
@@ -358,17 +359,14 @@ class MyApp(App):
             for x in range(list_hidden[0]):
                 with draw.canvas:
                     value = network[0][a]['weights'][-1]
-                    colorlayerone = abs(network[0][a]['weights'][-1]) / valuefloat
-                    #Color(0.59, 0.65+colorlayerone/7.69, 0.93, 0.5+colorlayerone/2)
-                    #Color(0.6- colorlayerone/10, 0.78 + colorlayerone/33.33, 0.93- colorlayerone/3.85, colorlayerone/3.33 + 0.75)
-                    #Color(0.49, .90 - ((0.14 / (list_hidden[0] - 1)) * a), 0.67 + ((0.06 / (list_hidden[0] - 1)) * a))
+                    colorlayerone = abs(value) / valuefloat
                     Color(1,1,1, 0.25 + colorlayerone/1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex, a * 50 + (middley - spaceone / 2)))
                     Color(0,0,0,1)
                     RoundedRectangle(size=(30, 30), pos=(middlex+2.5, a * 50 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
                     biases = "{:.2f}".format(value)
                     draw.nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 50 + (middley-31.5 - spaceone / 2)),
-                                            color=(colorlayerone+0.25, colorlayerone+0.25, colorlayerone+0.25, 1))
+                                            color=(1,1,1, 0.25 + colorlayerone/1.33))
                     draw.add_widget(draw.nodeslabel)
                 i = 0
                 e = 0
@@ -417,7 +415,7 @@ class MyApp(App):
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
                     draw.nodeslabel = Label(text=biases,size_hint=(None,None),font_size=10, pos=(middlex-111.5, a * 50 + (middley-31.5 - spaceone / 2)),
-                                            color=(1, 1, 1, .9))
+                                            color=(1,1,1, 0.25 + colorlayerone/1.33))
                     draw.add_widget(draw.nodeslabel)
                 i = 0
                 e = 0
@@ -463,7 +461,7 @@ class MyApp(App):
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
                     draw.nodeslabel = Label(text=biases, font_size=10,size_hint=(None,None), pos=(middlex +49, d * 50 + (middley-31.5 - spacetwo / 2)),
-                                            color=(1, 1, 1, .9))
+                                            color=(1,1,1, 0.25 + colorlayerone/1.33))
                     draw.add_widget(draw.nodeslabel)
                 j = 0
                 e = 0
@@ -511,7 +509,7 @@ class MyApp(App):
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
                     draw.nodeslabel = Label(text=biases,size_hint=(None,None), font_size=10, pos=(middlex-161.5, a * 50 + (middley-31.5 - spaceone / 2)),
-                                            color=(1, 1, 1, .9))
+                                            color=(1,1,1, 0.25 + colorlayerone/1.33))
                     draw.add_widget(draw.nodeslabel)
                 i = 0
                 e = 0
@@ -553,7 +551,7 @@ class MyApp(App):
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
                     draw.nodeslabel = Label(text=biases, font_size=10,size_hint=(None,None), pos=(middlex-31.5, d * 50 + (middley-31.5 - spacetwo / 2)),
-                                            color=(1, 1, 1, .9))
+                                            color=(1,1,1, 0.25 + colorlayerone/1.33))
                     draw.add_widget(draw.nodeslabel)
                 j = 0
                 e = 0
@@ -600,7 +598,7 @@ class MyApp(App):
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     biases = "{:.2f}".format(value)
                     draw.nodeslabel = Label(text=biases, font_size=10,size_hint=(None,None), pos=(middlex+99, d * 50 + (middley-31.5 - spacethree / 2)),
-                                            color=(1, 1, 1, .9))
+                                            color=(1,1,1, 0.25 + colorlayerone/1.33))
                     draw.add_widget(draw.nodeslabel)
                 l = 0
                 e = 0
@@ -622,7 +620,7 @@ class MyApp(App):
         for x in range(numoutputs):
             outputoptions = str(c)
             lbloutputoptions = Label(text='[b]' + outputoptions, markup=True, size_hint=(None,None),
-                                     pos=(middlex+230, c * 50 + (middley -30 - spaceoutput / 2)), color=(1, 1, 1, 1))
+                                     pos=(middlex+230, c * 50 + (middley -30 - spaceoutput / 2)), font_size = 17, color=(1, 1, 1, 1))
             draw.add_widget(lbloutputoptions)
             value = network[-1][c]['weights'][-1]
             print(value)
@@ -637,21 +635,17 @@ class MyApp(App):
         # input layer
         for x in range(numdata):
             with draw.canvas:
-                Color(.44, .27, .76)
+                Color(.69,0,.83)
                 RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - space / 2)))
                 Color(0, 0, 0)
                 RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
                                  radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                 b = b + 1
 
-        draw.add_widget(ti)
-        draw.add_widget(ti2)
-        #draw.add_widget(ti3)
-
         #data
         #draw.add_widget(Label(text='[b] Accuracy:' +' [/b]%.3f%%' % accuracylabel,size_hint=(None,None), markup = True, pos=(middlex-30, 0)))
 
-    #When OK is pressed. Plain normal size
+    #When btnOK is pressed. Plain normal size
     def drawingblank(self, draw, titlelayout, *largs):
         global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel, progressbar
         global hiddenlayeronelabelthree, hiddenlayeronelabelone, hiddenlayeronelabeltwo, outputlabel, inputlabel
@@ -668,7 +662,6 @@ class MyApp(App):
         draw.canvas.clear()
 
         numoutputs = n_outputs
-        numdata = n_inputs
         space = numdata * 35 + (numdata - 1) * 25
         spaceone = list_hidden[0] * 35 + (list_hidden[0] - 1) * 25
         spaceoutput = numoutputs * 35 + (numoutputs - 1) * 25
@@ -687,13 +680,6 @@ class MyApp(App):
         titlelayout.remove_widget(inputlabel)
         titlelayout.add_widget(outputlabel)
         titlelayout.add_widget(inputlabel)
-
-        ti.pos = (90,(middley+5 - space / 2))
-        draw.remove_widget(ti)
-        ti2.pos = (90, 50 + (middley+5 - space / 2))
-        draw.remove_widget(ti2)
-        ti3.pos = (90, 2 * 50 + (middley+5 - space / 2))
-        draw.remove_widget(ti3)
 
         if len(list_hidden) == 1:
             # hiddenlayerone
@@ -874,9 +860,10 @@ class MyApp(App):
                                  radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                 b = b + 1
 
-        draw.add_widget(ti)
-        draw.add_widget(ti2)
-        #draw.add_widget(ti3)
+    #When btnError is pressed
+    def drawingerror(selfself, draw, labellayout, *largs):
+        global prediction
+        prediction = 'yes'
 
     #Plain drawing small size
     def drawingtryout(self, draw, titlelayout, *largs):
@@ -1081,6 +1068,29 @@ class MyApp(App):
                                  radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                 b = b + 1
 
+    #Adding TextInputs
+    def drawinginputs(self,draw,titlelayout, *largs):
+        global listinputs, numdata
+        middlex = draw.width / 2
+        middley = draw.height / 2 + 40
+        space = numdata * 35 + (numdata - 1) * 25
+        listinputs = list()
+
+        a = 0
+        for x in range(numdata):
+            x = TextInput(size=(40,30), size_hint=(None, None), pos = (middlex - 290, 50 * a + (middley + 4 - space / 2)))
+            draw.add_widget(x)
+            a += 1
+            listinputs.append(x)
+            print(listinputs)
+
+        '''ti.pos = (90, (middley + 5 - space / 2))
+        draw.add_widget(ti)
+        ti2.pos = (90, 50 + (middley + 5 - space / 2))
+        draw.add_widget(ti2)
+        ti3.pos = (90, 2 * 50 + (middley + 5 - space / 2))
+        draw.add_widget(ti3)'''
+
     #Clear canvas
     def clear(self,draw,titlelayout, *largs):
         draw.canvas.clear()
@@ -1091,9 +1101,29 @@ class MyApp(App):
         titlelayout.remove_widget(inputlabel)
 
     def build(self):
-        global layoutneuronmainscreen, layoutlabels, parentlayout
+        global layoutneuronmainscreen, layoutlabels, parentlayout, myevent
+        class MyEventDispatcher(EventDispatcher):
+            def __init__(self, **kwargs):
+                self.register_event_type('on_test')
+                super(MyEventDispatcher, self).__init__(**kwargs)
+            @mainthread
+            def evevaluatealgorithm(self, value):
+                # when do_something is called, the 'on_test' event will be
+                # dispatched with the value
+                self.dispatch('on_test', value)
+
+            def on_test(self, *args):
+                global trainclock
+                trainclock.cancel()
+                errorlayout(self)
+                layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
+                layoutprogressbar.remove_widget(progressbar)
+            def drawingmainlayout(self):
+                MyApp.drawingblank(btnOk, layoutneuronmainscreen, layoutlabels)
+
         list_hidden.append(6)
         numlayers = str(len(list_hidden))
+        myevent = MyEventDispatcher()
 
         parentlayout = LayoutScreen()
         layoutneuronmainscreen = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
@@ -1101,6 +1131,11 @@ class MyApp(App):
         layoutmainscreen = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen
         layout = parentlayout.ids.idLayoutMenu.ids.idBoxLayoutMenu
         btnlayout = parentlayout.ids.idLayoutMenu
+        layoutinfoleft = parentlayout.ids.idboxlayoutleft
+        layoutinforight = parentlayout.ids.idboxlayoutright
+
+
+
 
         neuronlayout = BoxLayout(orientation='vertical', size_hint=(.3,1))
         neurontwolayout = BoxLayout(orientation='vertical', size_hint=(.3,1))
@@ -1114,28 +1149,34 @@ class MyApp(App):
         layoutsettingsdown = BoxLayout(orientation='horizontal',spacing = 10)
         layoutsettingsupleft = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(.7,1))
         layoutsettingsupright = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(.3,1))
+        layoutinfotop = BoxLayout(orientation='horizontal', spacing = 15,size_hint = (1,.15), pos_hint={'center_x':.5, 'center_y':.5})
+        layoutinfomiddle = BoxLayout(orientation='horizontal',size_hint=(1,1))
+        layoutinfodown = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(1,.1))
 
 
 
-        btnPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True, font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonPlusPDown.png')
-        btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='ButtonPlusP.png', background_down='ButtonPlusADown.png', size_hint=(.95,.9),
+
+
+        btnPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='ButtonSettingsDisabled.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
+        btnProcessPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='ButtonSettingsDisabled.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
+        btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png', size_hint=(.95,.9),
                        pos_hint={'center_x':.5, 'center_y':.5}, color = (1,1,1,1), font_size=18)
         btnError = Button(text='[b]ERROR', markup=True, background_normal='ButtonPlusP.png',
-                          background_down='ButtonPlusADown.png', size_hint=(.95, .9),
-                          pos_hint={'center_x': .5, 'center_y': .5}, color=(1, 1, 1, 1), font_size=18)
+                          background_down='ButtonDeactivated.png', size_hint=(.95, .9),
+                          pos_hint={'center_x': .5, 'center_y': .5},background_disabled_normal='ButtonSettingsDisabled.png', color=(1, 1, 1, 1), font_size=18)
         btnOk = Button(text='[b]OK', markup=True, background_normal='ButtonPlusB.png',
-                          background_down='ButtonPlusA.png', size_hint=(.8, .8),
+                          background_down='ButtonDeactivated.png', size_hint=(.8, .8),
                           pos_hint={'center_x': .5, 'center_y': .5}, color=(0, 0, 0, 1), font_size=18)
         btnOpen = Button(text='[b]OPEN', markup=True, background_normal='ButtonPlusP.png',
                        background_down='ButtonPlusGDown.png', size_hint=(.8, .8),
                        pos_hint={'center_x': .5, 'center_y': .5}, color=(1, 1, 1, 1), font_size=18)
-        btnBack = Button(text='[b]BACK', markup=True, background_normal='ButtonPlusP.png',
-                       background_down='ButtonPlusADown.png', size_hint=(.95, .9),
-                       pos_hint={'center_x': .5, 'center_y': .5}, color=(1, 1, 1, 1), font_size=18)
-        btnSettings = Button(text='[b]SETTINGS', markup = True, background_normal='ButtonPlusP.png', background_down='ButtonPlusADown.png')
+        btnBack = Button(text='[b]', markup=True, background_normal='ButtonBack.png',
+                       background_down='ButtonBack.png', size_hint=(None, None), size=(60,60),
+                       pos_hint={'center_x': 1, 'center_y': .5}, color=(1, 1, 1, 1),background_disabled_normal='ButtonBackDisabled.png')
+        btnSettings = Button(background_normal='ButtonSettings.png', background_down='ButtonSettings.png', size_hint=(None, None), size=(60,60), pos_hint={'center_x':1, 'center_y':.5},background_disabled_normal='ButtonSettingsDisabled.png')
         btnnewinput=Button(color=(1,1,1,1), text='[b]New Input',markup = True, font_size=18, size_hint=(.95,.9),
-                       pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlusP.png', background_down='ButtonPlusPDown.png')
-        btnCancel = Button(color=(1,1,1,1), text='[b]CANCEL',markup = True, font_size=18, size_hint=(.95,.9), pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlusP.png', background_down='ButtonPlusPDown.png')
+                       pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
+        btnCancel = Button(color=(1,1,1,1), text='[b]CANCEL',markup = True, font_size=18, size_hint=(.95,.9), pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
 
 
 
@@ -1146,92 +1187,93 @@ class MyApp(App):
         # Left Neuron Switcher
         btnplusneuron = Button(text = '[b]+',markup = True, size_hint=(.2,.8),pos_hint={'center_x':.5, 'center_y':.5},
                                background_normal='ButtonPlusP.png',
-                               background_down='ButtonPlusA.png',
-                               background_disabled_normal='ButtonDeactivated.png')
+                               background_down='ButtonDeactivated.png',
+                               background_disabled_normal='ButtonDeactivated.png', font_size=20)
         btnlessneuron = Button(text = '[b]-',markup = True,size_hint=(.2, .8),pos_hint={'center_x':.5, 'center_y':.5},
                                background_normal='ButtonPlusP.png',
-                               background_down='ButtonPlusA.png',
-                               background_disabled_normal='ButtonDeactivated.png')
+                               background_down='ButtonDeactivated.png',
+                               background_disabled_normal='ButtonDeactivated.png', font_size=20)
         lblhiddenlayer = Label(text=str(list_hidden[0]))
         lblneuron = Label(text='[b]Neurons', markup=True)
 
         # Second neuron switcher
         btnplusneurontwo = Button(text = '[b]+',markup = True,size_hint=(.2, .8),pos_hint={'center_x':.5, 'center_y':.5},
                                   background_normal='ButtonPlusP.png',
-                                  background_down='ButtonPlusR.png',
-                                  background_disabled_normal='ButtonDeactivated.png')
+                                  background_down='ButtonDeactivated.png',
+                                  background_disabled_normal='ButtonDeactivated.png', font_size=20)
         btnlessneurontwo = Button(text = '[b]-',markup = True,size_hint=(.2, .8), pos_hint={'center_x':.5, 'center_y':.5},
                                   background_normal='ButtonPlusP.png',
-                                  background_down='ButtonPlusR.png',
-                                  background_disabled_normal='ButtonDeactivated.png')
+                                  background_down='ButtonDeactivated.png',
+                                  background_disabled_normal='ButtonDeactivated.png', font_size=20)
         lblhiddenlayertwo = Label(text='4')
         lblneurontwo = Label(text='[b]Neurons', markup=True)
 
         # Right/Third neuron switcher
         btnplusneuronthree = Button(text = '[b]+',markup = True,size_hint=(.2, .8),pos_hint= {'center_x':1, 'center_y':.5},
                                     background_normal='ButtonPlusP.png',
-                                    background_down='ButtonPlusPDown.png',
-                                    background_disabled_normal='ButtonDeactivated.png')
+                                    background_down='ButtonDeactivated.png',
+                                    background_disabled_normal='ButtonDeactivated.png', font_size=20)
         btnlessneuronthree = Button(text = '[b]-',markup = True,size_hint=(.2, .8),pos_hint={'center_x':1, 'center_y':.5},
                                     background_normal='ButtonPlusP.png',
-                                    background_down='ButtonPlusPDown.png',
-                                    background_disabled_normal='ButtonDeactivated.png')
+                                    background_down='ButtonDeactivated.png',
+                                    background_disabled_normal='ButtonDeactivated.png', font_size=20)
         lblhiddenlayerthree = Label(text='4')
         lblneuronthree = Label(text='[b]Neurons', markup=True)
 
         # Number of layers switcher
         btnlayerplusneuron = Button(text = '[b]+',markup = True,size_hint=(.2, .8),pos_hint={'center_x':1, 'center_y':.5},
                                     background_normal='ButtonPlusP.png',
-                                    background_down='ButtonPlusGDown.png',
-                                    background_disabled_normal='ButtonDeactivated.png')
+                                    background_down='ButtonDeactivated.png',
+                                    background_disabled_normal='ButtonDeactivated.png', font_size=20)
         btnlayerlessneuron = Button(text = '[b]-',markup = True,size_hint=(.2, .8),pos_hint={'center_x':1, 'center_y':.5},
                                     background_normal='ButtonPlusP.png',
-                                    background_down='ButtonPlusGDown.png',
-                                    background_disabled_normal='ButtonDeactivated.png')
+                                    background_down='ButtonDeactivated.png',
+                                    background_disabled_normal='ButtonDeactivated.png', font_size=20)
         lbllayer = Label(text=numlayers)
         lblnumlayers = Label(text='[b] Hiddenlayers',markup = True, font_size=(11))
         lblblack = Widget(size_hint=(.1,.1))
         lblblacktwo = Widget(size_hint=(.1,.1))
         lblblackthree = Widget(size_hint=(.1,.1))
-        canvas= Widget(size_hint=(.1,.1))
+        canvas= Widget(size_hint=(.02,.1))
         visualize = Label(size_hint=(.1,.1))
 
         btnplusepoch = Button(text='[b]+', markup=True, size_hint=(.2, .8),
                               pos_hint={'center_x': 1, 'center_y': .5},
                               background_normal='ButtonPlusP.png',
-                              background_down='ButtonPlusA.png',
-                              background_disabled_normal='ButtonDeactivated.png')
+                              background_down='ButtonDeactivated.png',
+                              background_disabled_normal='ButtonDeactivated.png', font_size=20)
         btnlessepoch = Button(text='[b]-', markup=True, size_hint=(.2, .8),
                                     pos_hint={'center_x': 1, 'center_y': .5},
                                     background_normal='ButtonPlusP.png',
-                                    background_down='ButtonPlusA.png',
-                                    background_disabled_normal='ButtonDeactivated.png')
-        lblepoch = Label(text='[b] RANGE:',markup=True, font_size=(11), pos_hint={'center_x':.5, 'center_y':.5})
+                                    background_down='ButtonDeactivated.png',
+                                    background_disabled_normal='ButtonDeactivated.png', font_size=20)
+        lblepoch = Label(text='[b] CYCLES:',markup=True, font_size=(11), pos_hint={'center_x':.5, 'center_y':.5})
         numepoch = Label(text=str(n_epoch))
         btnplusrate = Button(text='[b]+', markup=True, size_hint=(.2, .8),
                               pos_hint={'center_x': 1, 'center_y': .5},
                               background_normal='ButtonPlusP.png',
-                              background_down='ButtonPlusR.png',
-                              background_disabled_normal='ButtonDeactivated.png')
+                              background_down='ButtonDeactivated.png',
+                              background_disabled_normal='ButtonDeactivated.png', font_size=20)
         btnlessrate = Button(text='[b]-', markup=True, size_hint=(.2, .8),
                               pos_hint={'center_x': 1, 'center_y': .5},
                               background_normal='ButtonPlusP.png',
-                              background_down='ButtonPlusR.png',
-                              background_disabled_normal='ButtonDeactivated.png')
+                              background_down='ButtonDeactivated.png',
+                              background_disabled_normal='ButtonDeactivated.png', font_size=20)
         lblrate = Label(text='[b]RATE:',markup=True, font_size=(11), pos_hint={'center_x': .5, 'center_y': .5})
         numrate = Label(text=str(l_rate))
         btnplusfolds = Button(text='[b]+', markup=True, size_hint=(.2, .8),
                              pos_hint={'center_x': 1, 'center_y': .5},
                              background_normal='ButtonPlusP.png',
-                             background_down='ButtonPlusGDown.png',
-                             background_disabled_normal='ButtonDeactivated.png')
+                             background_down='ButtonDeactivated.png',
+                             background_disabled_normal='ButtonDeactivated.png', font_size=20)
         btnlessfolds = Button(text='[b]-', markup=True, size_hint=(.2, .8),
                              pos_hint={'center_x': 1, 'center_y': .5},
                              background_normal='ButtonPlusP.png',
-                             background_down='ButtonPlusGDown.png',
-                             background_disabled_normal='ButtonDeactivated.png')
+                             background_down='ButtonDeactivated.png',
+                             background_disabled_normal='ButtonDeactivated.png', font_size=20)
         lblfolds = Label(text='[b]FOLDS:',markup=True, font_size=(11), pos_hint={'center_x': .5, 'center_y': .5})
         numfolds = Label(text=str(n_folds))
+
 
 
         layoutsettingsup.add_widget(layoutsettingsupleft)
@@ -1268,6 +1310,13 @@ class MyApp(App):
         ratelayout.add_widget(numrate)
         foldslayout.add_widget(lblfolds)
         foldslayout.add_widget(numfolds)
+        layoutinfoleft.add_widget(layoutinfotop)
+        layoutinfoleft.add_widget(layoutinfomiddle)
+        layoutinfoleft.add_widget(layoutinfodown)
+        layoutsettingsvertical.add_widget(layoutsettingsup)
+        layoutsettingsvertical.add_widget(layoutsettingsdown)
+        #layoutinfotop.add_widget(canvas)
+
 
         neurontwolayout.add_widget(lblneurontwo)
         neurontwolayout.add_widget(lblhiddenlayertwo)
@@ -1275,72 +1324,180 @@ class MyApp(App):
         neuronthreelayout.add_widget(lblhiddenlayerthree)
 
         def settingslayout(settings):
+            global prediction
+            prediction = 'no'
             btnlayout.height = 300
             layoutmainscreen.height = 350
+            layoutinfoleft.size_hint_x = 0.2
+            layoutinforight.size_hint_x = 0.2
             layouttrainscreen = parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
-            layouttrainscreen.anchor_x = 'center'
 
             layout.remove_widget(btnTrain)
             layout.remove_widget(btnError)
             layout.remove_widget(btnPredict)
-            layout.remove_widget(btnSettings)
-
-            layout.add_widget(layoutsettingsvertical)
-            layoutsettingsvertical.add_widget(layoutsettingsup)
-            layoutsettingsvertical.add_widget(layoutsettingsdown)
-
+            layoutinfotop.remove_widget(btnSettings)
+            layoutinfotop.remove_widget(btnBack)
+            layout.remove_widget(btnPredict)
+            layout.remove_widget(btnProcessPredict)
+            layout.remove_widget(btnCancel)
+            layout.remove_widget(btnnewinput)
             self.clear(layoutneuronmainscreen, layoutlabels)
+            layout.add_widget(layoutsettingsvertical)
 
         settingslayout(lblblackthree)
 
         def mainlayout(self):
+            global prediction, n_inputs, n_outputs, dataset, numdata, listinputs
             layoutmainscreen.height = 580
             btnlayout.height = 50
+            layoutinfoleft.size_hint_x = 0.1
+            layoutinforight.size_hint_x = 0.1
+
+            filename = 'seeds_dataset.csv'
+            dataset = load_csv(filename)
+            for i in range(len(dataset[0]) - 1):
+                str_column_to_float(dataset, i)
+            # convert class column to integers
+            str_column_to_int(dataset, len(dataset[0]) - 1)
+            # normalize input variables
+            minmax = dataset_minmax(dataset)
+            normalize_dataset(dataset, minmax)
+            n_inputs = len(dataset[0]) - 1
+            numdata = n_inputs
+            n_outputs = len(set([row[-1] for row in dataset]))
+
             layouttrainscreen = parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
             layouttrainscreen.anchor_x = 'center'
+
             layout.remove_widget(layoutsettingsvertical)
-            layoutsettingsvertical.remove_widget(layoutsettingsup)
-            layoutsettingsvertical.remove_widget(layoutsettingsdown)
             layout.remove_widget(btnCancel)
             layout.remove_widget(btnnewinput)
-            layout.remove_widget(btnBack)
+            layoutinfotop.remove_widget(btnSettings)
+            layoutinfotop.remove_widget(btnBack)
+            btnSettings.disabled = False
+            btnBack.disabled = False
+            layout.remove_widget(btnProcessPredict)
+            layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
+            layoutprogressbar.remove_widget(progressbar)
+            for element in listinputs:
+                layoutneuronmainscreen.remove_widget(element)
 
-            layout.add_widget(btnSettings)
+
             layout.add_widget(btnTrain)
             layout.add_widget(btnError)
-            layout.add_widget(btnPredict)
-
-            MyApp.drawingblank(btnOk, layoutneuronmainscreen, layoutlabels)
+            layoutinfotop.add_widget(btnSettings)
+            if prediction == 'no':
+                myevent.drawingmainlayout()
+            else:
+                layout.add_widget(btnPredict)
 
         def predictlayout(self):
             layouttrainscreen = parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
-            layouttrainscreen.anchor_x = 'right'
+            layouttrainscreen.anchor_x = 'center'
             layout.remove_widget(btnTrain)
             layout.remove_widget(btnError)
             layout.remove_widget(btnPredict)
             layout.remove_widget(btnCancel)
+            layoutinfotop.remove_widget(btnSettings)
+            layoutinfotop.remove_widget(btnBack)
+            layout.remove_widget(btnnewinput)
+            btnSettings.disabled = False
+            btnBack.disabled = False
 
-            layout.add_widget(btnBack)
-            layout.add_widget(btnnewinput)
+            layout.add_widget(btnProcessPredict)
+            layoutinfotop.add_widget(btnBack)
+            layoutinfotop.add_widget(btnSettings)
+
+            MyApp.drawinginputs(self,layoutneuronmainscreen, layoutlabels)
+
+        def predictdonelayout(self):
+            global listinputs
+            layouttrainscreen = parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
+            for element in listinputs:
+                inputtext = element.text
+                if inputtext == '':
+                    pass
+                else:
+                    input.append(float(inputtext))
+
+            if len(input) < numdata:
+                container = BoxLayout(orientation = 'vertical')
+                container.add_widget(Label(text='Not all inputs where submited'))
+                popupone = Popup(title='ERROR', content=container, size_hint=(.3,.3), separator_color = (.69,0,.83,1), auto_dismiss = False)
+                popupbtn = Button(text='OK', on_press= popupone.dismiss, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png')
+                container.add_widget(popupbtn)
+                popupone.open() #declared
+            else:
+                layouttrainscreen.anchor_x = 'center'
+                layout.remove_widget(btnTrain)
+                layout.remove_widget(btnError)
+                layout.remove_widget(btnPredict)
+                layout.remove_widget(btnCancel)
+                layoutinfotop.remove_widget(btnSettings)
+                layoutinfotop.remove_widget(btnBack)
+                layout.remove_widget(btnProcessPredict)
+                btnSettings.disabled = False
+                btnBack.disabled = False
+                layoutinfotop.add_widget(btnBack)
+                layoutinfotop.add_widget(btnSettings)
+                layout.add_widget(btnnewinput)
+                for row in dataset:
+                    prediction = predict(network, row)
+                    accuracy_metric(dataset,prediction)
+                MyApp.drawingvisualize(self, layoutneuronmainscreen)
 
         def trainlayout(self):
             layouttrainscreen = parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
-            layouttrainscreen.anchor_x = 'right'
+            layoutinfoleft.size_hint_x = 0.4
+            layoutinforight.size_hint_x = 0.0
             layout.remove_widget(btnTrain)
             layout.remove_widget(btnError)
             layout.remove_widget(btnPredict)
             layout.remove_widget(btnCancel)
+            layoutinfotop.remove_widget(btnSettings)
+            layoutinfotop.remove_widget(btnBack)
+            layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
+            layoutprogressbar.remove_widget(progressbar)
+            progressbar.value=0
+            btnSettings.disabled = False
+            btnBack.disabled = False
 
-            layout.add_widget(btnBack)
+            layoutinfotop.add_widget(btnBack)
+            layoutinfotop.add_widget(btnSettings)
+            MyApp.drawinglblblackkv(self,layoutneuronmainscreen, layoutlabels)
 
         def cancellayout(self):
             layout.remove_widget(btnTrain)
             layout.remove_widget(btnError)
             layout.remove_widget(btnPredict)
-            layout.remove_widget(btnBack)
             layout.remove_widget(btnnewinput)
-            layout.remove_widget(btnSettings)
+            layoutinfotop.remove_widget(btnBack)
+            layoutinfotop.remove_widget(btnSettings)
+            btnSettings.disabled = True
+            btnBack.disabled = True
             layout.add_widget(btnCancel)
+            layoutinfotop.add_widget(btnBack)
+            layoutinfotop.add_widget(btnSettings)
+
+        def errorlayout(self):
+            layouttrainscreen = parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
+            layoutinfoleft.size_hint_x = 0.4
+            layoutinforight.size_hint_x = 0.0
+            layout.remove_widget(btnTrain)
+            layout.remove_widget(btnError)
+            layout.remove_widget(btnPredict)
+            layout.remove_widget(btnCancel)
+            layoutinfotop.remove_widget(btnSettings)
+            layoutinfotop.remove_widget(btnBack)
+            layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
+            layoutprogressbar.remove_widget(progressbar)
+            progressbar.value = 0
+            btnSettings.disabled = False
+            btnBack.disabled = False
+
+            layoutinfotop.add_widget(btnBack)
+            layoutinfotop.add_widget(btnSettings)
+            MyApp.drawingerror(self, layoutneuronmainscreen, layoutlabels)
 
         def btnplusneuronpressed (btnplusneuron):
             btnlessneuron.disabled = False
@@ -1520,25 +1677,9 @@ class MyApp(App):
                 if n_epoch == 10:
                     btnlessepoch.disabled = True
 
-
-        def btngopressed(bntGo):
-
-            layoutneuronmainscreen = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
-            self.drawingvisualize(layoutneuronmainscreen)
-
-            #layoutbtgo = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen
-            #layoutbntgo = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
-            #self.drawingvisualize(layoutbntgo)
-            layout.remove_widget(btnSettings)
-            layout.remove_widget(btnPredict)
-            layout.remove_widget(boxshowbiaslabel)
-            layout.add_widget(btnnewinput)
-            layout.add_widget(boxshowbiaslabel)
-
         def btnTrainpressed(btnTrain):
-            global progressbar, accuracylabel, scores
-            global network, n_inputs, n_outputs, n_folds
-            cancellayout('h')
+            global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata
+            global network, n_inputs, n_outputs, n_folds, dataset, list_hidden
             layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
             layoutprogressbar.remove_widget(progressbar)
             layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
@@ -1562,38 +1703,15 @@ class MyApp(App):
                        [0, 1, 2, 0]]'''
 
 
-            filename = 'seeds_dataset.csv'
-            dataset = load_csv(filename)
-            for i in range(len(dataset[0]) - 1):
-                str_column_to_float(dataset, i)
-            # convert class column to integers
-            str_column_to_int(dataset, len(dataset[0]) - 1)
-            # normalize input variables
-            minmax = dataset_minmax(dataset)
-            normalize_dataset(dataset, minmax)
-
-            n_inputs = len(dataset[0]) - 1
-            n_outputs = len(set([row[-1] for row in dataset]))
             network = initialize_network(n_inputs, list_hidden, n_outputs)
-            train_network(network, dataset, 0.5, 20, n_outputs)
+            train_network(network, dataset, l_rate, n_epoch, n_outputs)
             # for row in dataset:
             #      prediction = predict(network, row)
             #      accuracy_metric(dataset,prediction)
             for layer in network:
                 print(layer)
+            trainlayout(btnTrain)
 
-
-            # filename = 'seeds_dataset.csv'
-            # dataset = load_csv(filename)
-            # for i in range(len(dataset[0]) - 1):
-            #     str_column_to_float(dataset, i)
-            # # convert class column to integers
-            # str_column_to_int(dataset, len(dataset[0]) - 1)
-            # # normalize input variables
-            # minmax = dataset_minmax(dataset)
-            # normalize_dataset(dataset, minmax)
-            # # evaluate algorithm
-            #
             # threading.Thread(target=evaluate_algorithm, args=(dataset, back_propagation, n_folds, l_rate, n_epoch, list_hidden)).start()
 
             # scores = evaluate_algorithm(dataset, back_propagation, n_folds, l_rate, n_epoch, list_hidden)
@@ -1601,58 +1719,33 @@ class MyApp(App):
             # print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
             # accuracylabel= (sum(scores) / float(len(scores)))
 
+        def btnErrorpressed(btnTrain):
+            global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata
+            global network, n_inputs, n_outputs, n_folds, dataset, list_hidden, trainclock
+            layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
+            layoutprogressbar.add_widget(progressbar)
 
-        def btnrefreshpressed(btnRefresh):
-            global valuepb
-            layout.remove_widget(btnRefresh)
-            layout.remove_widget(btnPredict)
-            layout.remove_widget(boxshowbiaslabel)
-            layout.remove_widget(btnCancel)
-            layout.add_widget(btnTrain)
-            layout.add_widget(lblblacktwo)
-            layout.add_widget(btnlessneuron)
-            layout.add_widget(neuronlayout)
-            layout.add_widget(btnplusneuron)
-            layout.add_widget(lblblack)
-            layout.add_widget(btnlayerlessneuron)
-            layout.add_widget(numlayerslayout)
-            layout.add_widget(btnlayerplusneuron)
+            trainclock = Clock.schedule_interval(layoutpbnext, 1 / 10)
 
-            valuepb=0
-            progressbar.value = 0
+            threading.Thread(target=evaluate_algorithm, args=(dataset, back_propagation, n_folds, l_rate, n_epoch, list_hidden)).start()
+            cancellayout(self)
 
-            imagescreen = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
-            backgroundscreen = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen
-            clearbackground = (Image(source='background.png', width=backgroundscreen.width, allow_stretch = True))
-            backgroundscreen.add_widget((clearbackground))
+            # print('Scores: %s' % scores)
+            # print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
+            # accuracylabel= (sum(scores) / float(len(scores)))
+            #
+            # errorlayout(btnError)
 
         def btncancelpressed():
+            progressbar.value=0
+
+        def btnfilechooser():
             pass
 
-        class MyEventDispatcher(EventDispatcher):
-            def __init__(self, **kwargs):
-                self.register_event_type('on_test')
-                super(MyEventDispatcher, self).__init__(**kwargs)
-            @mainthread
-            def do_something(self, value):
-                # when do_something is called, the 'on_test' event will be
-                # dispatched with the value
-                self.dispatch('on_test', value)
-
-            def on_test(self, *args):
-                global trainclock
-                print ("I am dispatched", args)
-                trainlayout('a')
-                trainclock.cancel()
-                layoutneuronmainscreen = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
-                layoutlabels = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idLabelsLayoutNeuronMainScreen
-                self.drawinglblblackkv(layoutneuronmainscreen, layoutlabels)
-
         def evaluate_algorithm(dataset, algorithm, n_folds, *args):
-            global progressbar
-            global scores, trainclock
+            global progressbar, myevent
+            global scores
             folds = cross_validation_split(dataset, n_folds)
-            trainclock
             for fold in folds:
                 train_set = list(folds)
                 train_set.remove(fold)
@@ -1666,13 +1759,14 @@ class MyApp(App):
                 actual = [row[-1] for row in fold]
                 accuracy = accuracy_metric(actual, predicted)
                 scores.append(accuracy)
-            ev = MyEventDispatcher()
-            ev.do_something('hola')
+            myevent.evevaluatealgorithm('hola')
 
 
-        #box.active = True
+
         btnTrain.bind(on_press=btnTrainpressed)
-        btnPredict.bind(on_press=btngopressed)
+        btnPredict.bind(on_press=predictlayout)
+        btnProcessPredict.bind(on_press=predictdonelayout)
+        btnnewinput.bind(on_press=predictlayout)
         btnplusneuron.bind(on_press=btnplusneuronpressed)
         btnlessneuron.bind(on_press=btnlessneuronpressed)
         btnplusneurontwo.bind(on_press=btnplusneurontwopressed)
@@ -1685,13 +1779,14 @@ class MyApp(App):
         btnCancel.bind(on_press=btncancelpressed)
         btnOk.bind(on_press=mainlayout)
         btnBack.bind(on_press=mainlayout)
-        #boxshowbiaslabel.bind(on_press=showbiaslabels)
+        btnError.bind(on_press=btnErrorpressed)
         btnplusfolds.bind(on_press=btnplusfoldspressed)
         btnlessfolds.bind(on_press=btnlessfoldspressed)
         btnplusepoch.bind(on_press=btnplusepochpressed)
         btnlessepoch.bind(on_press=btnlessepochpressed)
         btnplusrate.bind(on_press=btnplusratepressed)
         btnlessrate.bind(on_press=btnlessratepressed)
+        btnOpen.bind(on_press=btnfilechooser)
 
         return parentlayout
 
@@ -1700,6 +1795,8 @@ class LayoutMenu(BoxLayout):
     pass
 
 class LayoutNeuronMainScreen(BoxLayout):
+    pass
+class LayoutInfo(BoxLayout):
     pass
 
 class LayoutNeuron(AnchorLayout):

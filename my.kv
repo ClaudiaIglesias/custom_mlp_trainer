@@ -76,11 +76,9 @@
             width: self.parent.width
 
 
-
-
-
 <LayoutNeuron>:
     id:idLayoutNeuron
+    width: self.parent.width
     AnchorLayout:
         id:idAnchorLayoutNeuron
         canvas.before:
@@ -95,10 +93,10 @@
         anchor_x: 'center'
         anchor_y: 'center'
 
-
         LayoutNeuronMainScreen:
             id:idLayoutNeuronMainScreen
             size: 800, 580
+
 
 
 <LayoutScreen>:
@@ -117,8 +115,34 @@
         size: self.parent.size  # important!
         pos: self.parent.pos  # important!
 
-        LayoutNeuron:
-            id:idLayoutNeuron
+        BoxLayout:
+            orientation: 'horizontal'
+            BoxLayout:
+                id: idboxlayoutleft
+                orientation: 'vertical'
+                size_hint_x: 0.2
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+            LayoutNeuron:
+                id:idLayoutNeuron
+                size_hint_x: 0.6
+
+            BoxLayout:
+                id: idboxlayoutright
+                size_hint_x: 0.2
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+
+
 
         BoxLayout:
             id:mainseparatorprogressbar
