@@ -6,7 +6,7 @@
     size_hint: None, None
     canvas.before:
         Color:
-            rgba: 1, 0, 0, 1  # red
+            rgba: 1, 0, 0, 0  # red
         Rectangle:
             pos: self.pos
             size: self.size
@@ -104,7 +104,7 @@
 
     canvas.before:
         Color:
-            rgba: 0.05, 0.05, 0.05, 1
+            rgba: 0,0,0, 1
         Rectangle:
             pos: self.pos
             size: self.size
@@ -123,7 +123,7 @@
                 size_hint_x: 0.2
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba: 0,0,0, 0
                     Rectangle:
                         pos: self.pos
                         size: self.size
@@ -136,7 +136,7 @@
                 size_hint_x: 0.2
                 canvas.before:
                     Color:
-                        rgba: 0, 0, 0, 1
+                        rgba: 0, 0, 0, 0
                     Rectangle:
                         pos: self.pos
                         size: self.size
@@ -164,11 +164,11 @@
             height: 2
             canvas:
                 Color:
-                    rgba: 1, 1, 1, 1
+                    rgba: .7,.7,.7,1
                 Rectangle:
                     pos: self.pos
                     size: self.size
-                    source: 'lineaD.png'
+                    #source: 'lineaD.png'
 
         BoxLayout:
             id:mainseparator2

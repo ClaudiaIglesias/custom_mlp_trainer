@@ -53,6 +53,7 @@ n_folds = 5
 l_rate = 0.3
 n_epoch = 20
 prediction = 'no'
+varerrorlayout = False
 a = 0
 b = 0
 c = 0
@@ -65,6 +66,7 @@ l = 0
 valuepb = 0
 accuracylabel =''
 scores = list()
+biaseslabels = list()
 trainclock = None
 myevent = None
 ti = TextInput(size=(40, 30), size_hint=(None, None))
@@ -75,8 +77,8 @@ progressbar = ProgressBar()
 hiddenlayeronelabelone = Label(text='[b]  Hidden\nlayer one', markup=True, font_size=15, color=(1,1,1), size_hint=(None, None))
 hiddenlayeronelabeltwo = Label(text='[b]  Hidden\nlayer two', markup=True, size_hint=(None,None), font_size=15 , color=(1,1,1))
 hiddenlayeronelabelthree = Label(text='[b]   Hidden\nlayer three', markup=True,size_hint=(None,None), font_size=15, color=(1,1,1))
-outputlabel = Label(text='Output', markup=True, font_size=17, size_hint=(None, None), color=(.85, .63, .27))
-inputlabel = Label(text='Input', markup=True, font_size=17, size_hint=(None, None), color=(.69, 0, .83))
+outputlabel = Label(text='Output', markup=True, font_size=17, size_hint=(None, None), color=(1,1,1))
+inputlabel = Label(text='Input', markup=True, font_size=17, size_hint=(None, None), color=(1,1,1))
 
 # Load a CSV file
 def load_csv(filename):
@@ -296,8 +298,8 @@ class MyApp(App):
             c = c + 1'''
 
     # When Train is pressed
-    def drawinglblblackkv(self, draw, titlelayout, *largs):
-        global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel, progressbar, prediction
+    def drawinglblblackkv(self, draw, titlelayout, textlayout, *largs):
+        global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel, progressbar, prediction, biaseslabels
         global hiddenlayeronelabelthree, hiddenlayeronelabelone, hiddenlayeronelabeltwo, outputlabel, inputlabel
         a = 0
         b = 0
@@ -333,6 +335,17 @@ class MyApp(App):
         titlelayout.add_widget(inputlabel)
 
 
+        labelfile = (Label(text='[b] File: [/b]' + 'filename', markup = True, pos_hint={'center_x':.5, 'center_y':0}, size_hint=(1,.1)))
+        labeltype = (Label(text='[b] Test: [/b]' + 'train', markup=True, pos_hint={'center_x': .5, 'center_y': 0},
+                           size_hint=(1, .1), color=(.67,.57,.69)))
+        labelaccuracy = (Label(text='[b] idk yet', markup = True, pos_hint={'center_x':.5, 'center_y':1}, size_hint=(1,.1)))
+        separator = (Label(text = '-----------------------------------------------------------------------------------------------------------------------------------------------', pos_hint={'center_x':.5, 'center_y':.5}, size_hint=(1,.1), color = (6,.87,.89,1)))
+        textlayout.add_widget(labelfile)
+        textlayout.add_widget(labeltype)
+        textlayout.add_widget(labelaccuracy)
+        textlayout.add_widget(separator)
+
+
 
         if len(list_hidden) == 1:
             # hiddenlayerone
@@ -365,9 +378,10 @@ class MyApp(App):
                     Color(0,0,0,1)
                     RoundedRectangle(size=(30, 30), pos=(middlex+2.5, a * 50 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
                     biases = "{:.2f}".format(value)
-                    draw.nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 50 + (middley-31.5 - spaceone / 2)),
+                    nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 50 + (middley-31.5 - spaceone / 2)),
                                             color=(1,1,1, 0.25 + colorlayerone/1.33))
-                    draw.add_widget(draw.nodeslabel)
+                    draw.add_widget(nodeslabel)
+                    biaseslabels.append(nodeslabel)
                 i = 0
                 e = 0
                 for y in range(numdata):
@@ -625,7 +639,7 @@ class MyApp(App):
             value = network[-1][c]['weights'][-1]
             print(value)
             with draw.canvas:
-                Color(.85, .63, .27)
+                Color(.67,.57,.69)
                 RoundedRectangle(size=(35, 35), pos=(middlex + 230, c * 50 + (middley - spaceoutput / 2)))
                 Color(0, 0, 0)
                 RoundedRectangle(size=(30, 30), pos=(middlex + 232.5, c * 50 + (middley+2.5 - spaceoutput / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
@@ -635,7 +649,7 @@ class MyApp(App):
         # input layer
         for x in range(numdata):
             with draw.canvas:
-                Color(.69,0,.83)
+                Color(.6,.87,.89)
                 RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - space / 2)))
                 Color(0, 0, 0)
                 RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
@@ -844,7 +858,7 @@ class MyApp(App):
                                      pos=(middlex+230, c * 50 + (middley -30 - spaceoutput / 2)), color=(1, 1, 1, 1))
             draw.add_widget(lbloutputoptions)
             with draw.canvas:
-                Color(.85, .63, .27)
+                Color(.67,.57,.69)
                 RoundedRectangle(size=(35, 35), pos=(middlex + 230, c * 50 + (middley - spaceoutput / 2)))
                 Color(0, 0, 0)
                 RoundedRectangle(size=(30, 30), pos=(middlex + 232.5, c * 50 + (middley+2.5 - spaceoutput / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
@@ -853,7 +867,7 @@ class MyApp(App):
         # input layer
         for x in range(numdata):
             with draw.canvas:
-                Color(.69,0,.83)
+                Color(.6,.87,.89)
                 RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - space / 2)))
                 Color(0, 0, 0)
                 RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
@@ -861,9 +875,18 @@ class MyApp(App):
                 b = b + 1
 
     #When btnError is pressed
-    def drawingerror(selfself, draw, labellayout, *largs):
-        global prediction
-        prediction = 'yes'
+    def drawingerror(selfself, textlayout, data, *largs):
+        global dataset, scores, varerrorlayout
+        varerrorlayout = True
+        labelfile = (Label(text='[b] File: [/b]' + 'filename', markup = True, pos_hint={'center_x':.5, 'center_y':0}, size_hint=(1,.1)))
+        labeltype = (Label(text='[b] Test: [/b]' + 'error', markup=True, pos_hint={'center_x': .5, 'center_y': 0},
+                           size_hint=(1, .1), color=(.67,.57,.69)))
+        labelaccuracy = (Label(text='[b] Accuracy: [/b]' + str("{:.2f}".format(data)) + '%', markup = True, pos_hint={'center_x':.5, 'center_y':1}, size_hint=(1,.1)))
+        separator = (Label(text = '-----------------------------------------------------------------------------------------------------------------------------------------------', pos_hint={'center_x':.5, 'center_y':.5}, size_hint=(1,.1), color = (6,.87,.89,1)))
+        textlayout.add_widget(labelfile)
+        textlayout.add_widget(labeltype)
+        textlayout.add_widget(labelaccuracy)
+        textlayout.add_widget(separator)
 
     #Plain drawing small size
     def drawingtryout(self, draw, titlelayout, *largs):
@@ -1053,7 +1076,7 @@ class MyApp(App):
                                      pos=(middlex+215, c * 30 + (middley -40 - spaceoutput / 2)), color=(1, 1, 1, 1))
             draw.add_widget(lbloutputoptions)
             with draw.canvas:
-                Color(.85+c/9,0.63+c/9,.27+c/9)
+                Color(.67+c/9,.57+c/9,.69+c/9)
                 RoundedRectangle(size=(20, 20), pos=(middlex + 230, c * 30 + (middley - spaceoutput / 2)))
                 Color(0, 0, 0)
                 RoundedRectangle(size=(15, 15), pos=(middlex + 232.5, c * 30 + (middley+2.5 - spaceoutput / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
@@ -1061,7 +1084,7 @@ class MyApp(App):
         # input layer
         for x in range(numdata):
             with draw.canvas:
-                Color(.69,0,.83)
+                Color(.6,.87,.89)
                 RoundedRectangle(size=(20, 20), pos=(middlex - 240, b * 30 + (middley - space / 2)))
                 Color(0, 0, 0)
                 RoundedRectangle(size=(15, 15), pos=(middlex - 237.5, b * 30 + (middley + 2.5 - space / 2)),
@@ -1115,9 +1138,12 @@ class MyApp(App):
             def on_test(self, *args):
                 global trainclock
                 trainclock.cancel()
-                errorlayout(self)
                 layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
                 layoutprogressbar.remove_widget(progressbar)
+                print('Scores: %s' % scores)
+                print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
+                accuracylabel = (sum(scores) / float(len(scores)))
+                errorlayout(accuracylabel)
             def drawingmainlayout(self):
                 MyApp.drawingblank(btnOk, layoutneuronmainscreen, layoutlabels)
 
@@ -1150,20 +1176,20 @@ class MyApp(App):
         layoutsettingsupleft = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(.7,1))
         layoutsettingsupright = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(.3,1))
         layoutinfotop = BoxLayout(orientation='horizontal', spacing = 15,size_hint = (1,.15), pos_hint={'center_x':.5, 'center_y':.5})
-        layoutinfomiddle = BoxLayout(orientation='horizontal',size_hint=(1,1))
+        layoutinfomiddle = BoxLayout(orientation='vertical',size_hint=(.9,1), pos_hint={'center_x':.5, 'center_y':.5})
         layoutinfodown = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(1,.1))
 
 
 
 
 
-        btnPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='ButtonSettingsDisabled.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
-        btnProcessPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='ButtonSettingsDisabled.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
+        btnPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='ButtonDeactivated.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
+        btnProcessPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='ButtonDeactivated.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
         btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png', size_hint=(.95,.9),
                        pos_hint={'center_x':.5, 'center_y':.5}, color = (1,1,1,1), font_size=18)
         btnError = Button(text='[b]ERROR', markup=True, background_normal='ButtonPlusP.png',
                           background_down='ButtonDeactivated.png', size_hint=(.95, .9),
-                          pos_hint={'center_x': .5, 'center_y': .5},background_disabled_normal='ButtonSettingsDisabled.png', color=(1, 1, 1, 1), font_size=18)
+                          pos_hint={'center_x': .5, 'center_y': .5},background_disabled_normal='ButtonDeactivated.png', color=(1, 1, 1, 1), font_size=18)
         btnOk = Button(text='[b]OK', markup=True, background_normal='ButtonPlusB.png',
                           background_down='ButtonDeactivated.png', size_hint=(.8, .8),
                           pos_hint={'center_x': .5, 'center_y': .5}, color=(0, 0, 0, 1), font_size=18)
@@ -1316,6 +1342,7 @@ class MyApp(App):
         layoutsettingsvertical.add_widget(layoutsettingsup)
         layoutsettingsvertical.add_widget(layoutsettingsdown)
         #layoutinfotop.add_widget(canvas)
+        layoutinfodown.add_widget(Label(text='[b] Current file: [/b]' + 'filename', markup=True))
 
 
         neurontwolayout.add_widget(lblneurontwo)
@@ -1324,13 +1351,16 @@ class MyApp(App):
         neuronthreelayout.add_widget(lblhiddenlayerthree)
 
         def settingslayout(settings):
-            global prediction
+            global prediction, biaseslabels, varerrorlayout
             prediction = 'no'
+            varerrorlayout = False
             btnlayout.height = 300
             layoutmainscreen.height = 350
             layoutinfoleft.size_hint_x = 0.2
             layoutinforight.size_hint_x = 0.2
             layouttrainscreen = parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
+            for element in biaseslabels:
+                layoutneuronmainscreen.remove_widget(element)
 
             layout.remove_widget(btnTrain)
             layout.remove_widget(btnError)
@@ -1379,17 +1409,20 @@ class MyApp(App):
             layout.remove_widget(btnProcessPredict)
             layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
             layoutprogressbar.remove_widget(progressbar)
-            for element in listinputs:
-                layoutneuronmainscreen.remove_widget(element)
 
 
             layout.add_widget(btnTrain)
             layout.add_widget(btnError)
+            layout.add_widget(btnPredict)
             layoutinfotop.add_widget(btnSettings)
             if prediction == 'no':
-                myevent.drawingmainlayout()
+                if varerrorlayout == False:
+                    myevent.drawingmainlayout()
+                    btnPredict.disabled = True
+                else:
+                    btnPredict.disabled = True
             else:
-                layout.add_widget(btnPredict)
+                btnPredict.disabled = False
 
         def predictlayout(self):
             layouttrainscreen = parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
@@ -1423,7 +1456,7 @@ class MyApp(App):
             if len(input) < numdata:
                 container = BoxLayout(orientation = 'vertical')
                 container.add_widget(Label(text='Not all inputs where submited'))
-                popupone = Popup(title='ERROR', content=container, size_hint=(.3,.3), separator_color = (.69,0,.83,1), auto_dismiss = False)
+                popupone = Popup(title='ERROR', content=container, size_hint=(.3,.3), separator_color = (.67,.57,.69,1), auto_dismiss = False)
                 popupbtn = Button(text='OK', on_press= popupone.dismiss, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png')
                 container.add_widget(popupbtn)
                 popupone.open() #declared
@@ -1464,7 +1497,7 @@ class MyApp(App):
 
             layoutinfotop.add_widget(btnBack)
             layoutinfotop.add_widget(btnSettings)
-            MyApp.drawinglblblackkv(self,layoutneuronmainscreen, layoutlabels)
+            MyApp.drawinglblblackkv(self,layoutneuronmainscreen, layoutlabels, layoutinfomiddle)
 
         def cancellayout(self):
             layout.remove_widget(btnTrain)
@@ -1479,7 +1512,7 @@ class MyApp(App):
             layoutinfotop.add_widget(btnBack)
             layoutinfotop.add_widget(btnSettings)
 
-        def errorlayout(self):
+        def errorlayout(accuracy):
             layouttrainscreen = parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
             layoutinfoleft.size_hint_x = 0.4
             layoutinforight.size_hint_x = 0.0
@@ -1497,7 +1530,7 @@ class MyApp(App):
 
             layoutinfotop.add_widget(btnBack)
             layoutinfotop.add_widget(btnSettings)
-            MyApp.drawingerror(self, layoutneuronmainscreen, layoutlabels)
+            MyApp.drawingerror(self, layoutinfomiddle, accuracy)
 
         def btnplusneuronpressed (btnplusneuron):
             btnlessneuron.disabled = False
