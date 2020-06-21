@@ -118,7 +118,7 @@
         BoxLayout:
             orientation: 'horizontal'
             BoxLayout:
-                id: idboxlayoutleft
+                id: idboxlayoutleft                     #Layout left
                 orientation: 'vertical'
                 size_hint_x: 0.2
                 canvas.before:
@@ -127,19 +127,55 @@
                     Rectangle:
                         pos: self.pos
                         size: self.size
+                BoxLayout:
+                    id: idlayouttop
+                    orientation: 'horizontal'
+                    spacing: 15
+                    size_hint: (1,.15)
+                    pos_hint: {'center_x':.5, 'center_y':.5}
+                BoxLayout:
+                    id: idlayoutmiddle
+                    orientation: 'vertical'
+                    size_hint: (.9,.70)
+                    pos_hint: {'center_x':.5, 'center_y':.5}
+                    #Label:
+                        #text: '[b] File: [/b][i]'
+                        #markup: True
+                        #pos_hint: {'center_x': .5, 'center_y': 0}
+                        #size_hint: (1, .1)
+                BoxLayout:
+                    id: idlayoutdown
+                    orientation: 'vertical'
+                    spacing: 10
+                    size_hint: (1,.05)
+                BoxLayout:
+                    id: idlayoutlbldown
+                    orientation: 'horizontal'
+                    spacing: 10
+                    size_hint: (1,.1)
             LayoutNeuron:
                 id:idLayoutNeuron
                 size_hint_x: 0.6
 
             BoxLayout:
                 id: idboxlayoutright
-                size_hint_x: 0.2
+                size_hint_x: 0.2                   #Info right
                 canvas.before:
                     Color:
                         rgba: 0, 0, 0, 0
                     Rectangle:
                         pos: self.pos
                         size: self.size
+                BoxLayout:
+                    id: idlayoutrightmiddle
+                    orientation: 'vertical'
+                    size_hint: (.9,.9)
+                    pos_hint: {'center_x':.5, 'center_y':.5}
+                BoxLayout:
+                    id: idlayoutrightdown
+                    orientation: 'vertical'
+                    spacing: 10
+                    size_hint: (1,.1)
 
 
 
@@ -184,6 +220,46 @@
 
         LayoutMenu:
             id:idLayoutMenu
+
+
+
+<Filechooser>:
+    id: idfilechooser
+    BoxLayout:
+        orientation:'vertical'
+        FileChooserIconView:
+            id: filechooserbox
+            path: '.'
+            on_selection: text_input.text = self.selection and self.selection[0] or ''
+            #on_selection: idfilechooser.selected(filechooserbox.selection)
+
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: None,.1
+            width: self.parent.width
+            TextInput:
+                id: text_input
+                size_hint_y: None
+                height: 30
+                multiline: False
+                pos_hint: {'center_x': .5, 'center_y': .5}
+            Button:
+                text: 'Cancel'
+                on_press: idfilechooser.popupdismiss()
+                size_hint: 0.2,.1
+                pos_hint: {'center_x': .5, 'center_y': .5}
+                background_normal: 'ButtonPlusP.png'
+                background_down: 'ButtonDeactivated.png'
+            Button:
+                text: 'Open'
+                on_press: idfilechooser.open(filechooserbox.path, text_input.text)
+                size_hint: 0.2,.1
+                pos_hint: {'center_x': .5, 'center_y': .5}
+                background_normal: 'ButtonPlusB.png'
+                background_down: 'ButtonDeactivated.png'
+                color: 0,0,0,1
+
 
 
 <MyApp>:

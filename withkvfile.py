@@ -7,6 +7,7 @@ from kivy.uix.label import Label
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.widget import Widget
 from kivy.graphics import *
+from datetime import datetime
 from kivy.uix.gridlayout import GridLayout
 from kivy.config import Config
 from kivy.uix.textinput import TextInput
@@ -30,12 +31,16 @@ from kivy.uix.image import Image
 from kivy.uix.progressbar import ProgressBar
 from kivy.clock import Clock, mainthread
 from kivy.properties import ObjectProperty
+from kivy.uix.floatlayout import FloatLayout
 from functools import wraps
 import threading
 import time
+from kivy.factory import Factory
 from kivy.event import EventDispatcher
 from kivy.uix.filechooser import *
 from kivy.uix.popup import Popup
+import os
+from os.path import dirname, join, basename, exists, expanduser
 
 
 
@@ -48,11 +53,11 @@ dataset = 1
 list_hidden = list()
 listinputs = list()
 input = list()
-network = 2
+network = []
 n_folds = 5
 l_rate = 0.3
 n_epoch = 20
-prediction = 'no'
+prediction = False
 varerrorlayout = False
 a = 0
 b = 0
@@ -64,21 +69,40 @@ i = 0
 j = 0
 l = 0
 valuepb = 0
+valuetrain = 0
 accuracylabel =''
 scores = list()
 biaseslabels = list()
 trainclock = None
 myevent = None
+leftlbllist = list()
+leftpanellist = list()
+filename = ''
 ti = TextInput(size=(40, 30), size_hint=(None, None))
 ti2 = TextInput(size=(40, 30), size_hint=(None, None))
 ti3 = TextInput(size=(40, 30), size_hint=(None, None))
 progressbar = ProgressBar()
+popup = None
+currentpage = 0
 
 hiddenlayeronelabelone = Label(text='[b]  Hidden\nlayer one', markup=True, font_size=15, color=(1,1,1), size_hint=(None, None))
 hiddenlayeronelabeltwo = Label(text='[b]  Hidden\nlayer two', markup=True, size_hint=(None,None), font_size=15 , color=(1,1,1))
 hiddenlayeronelabelthree = Label(text='[b]   Hidden\nlayer three', markup=True,size_hint=(None,None), font_size=15, color=(1,1,1))
 outputlabel = Label(text='Output', markup=True, font_size=17, size_hint=(None, None), color=(1,1,1))
 inputlabel = Label(text='Input', markup=True, font_size=17, size_hint=(None, None), color=(1,1,1))
+lblcurrentpage = Label(text=('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str("{:.0f}".format(len(leftlbllist)/7))), markup=True)
+lblfilename = Label(text='[b] Current file: [/b]' + '[i] no file selected', markup=True,pos_hint={'center_x': 0, 'center_y': .5} )
+btnplussidetext = Button(text='[b]>', markup=True, size_hint=(.2, .8),
+                         pos_hint={'center_x': 1, 'center_y': .5},
+                         background_normal='ButtonPlusP.png',
+                         background_down='ButtonDeactivated.png',
+                         background_disabled_normal='ButtonDeactivated.png', font_size=20)
+btnlesssidetext = Button(text='[b]<', markup=True, size_hint=(.2, .8),
+                         pos_hint={'center_x': 1, 'center_y': .5},
+                         background_normal='ButtonPlusP.png',
+                         background_down='ButtonDeactivated.png',
+                         background_disabled_normal='ButtonDeactivated.png', font_size=20)
+
 
 # Load a CSV file
 def load_csv(filename):
@@ -126,6 +150,7 @@ def cross_validation_split(dataset, n_folds):
 			fold.append(dataset_copy.pop(index))
 		dataset_split.append(fold)
 	return dataset_split
+
 #Create the list of weights and biases
 def initialize_network(n_inputs, n_hidden, n_outputs):
     network = list()
@@ -196,13 +221,15 @@ def update_weights(network, row, l_rate):
             neuron['weights'][-1] += l_rate * neuron['delta']
 
 # Train a network for a fixed number of epochs
-def train_network(network, train, l_rate, n_epoch, n_outputs):
-    global valuepb
+def train_network(network, train, l_rate, n_epoch, n_outputs, type):
+    global valuepb, myevent, valuetrain
     global n_folds
     step = 100.0/(n_folds*n_epoch)
+    steptrain = 100.0/ n_epoch
     for epoch in range(n_epoch):
         sum_error = 0
         valuepb += step
+        valuetrain += steptrain
         for row in train:
             outputs = forward_propagate(network, row)
             expected = [0 for i in range(n_outputs)]
@@ -211,11 +238,15 @@ def train_network(network, train, l_rate, n_epoch, n_outputs):
             backward_propagate_error(network, expected)
             update_weights(network, row, l_rate)
         print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, sum_error))
+    if type == 'train':
+        myevent.trainnetwork('hola')
 
 #Works with btnGo
 def predict(network, row):
     outputs = forward_propagate(network, row)
     print(outputs)
+    print('..........')
+    print(outputs.index(max(outputs)))
     return outputs.index(max(outputs))
 
 #accuracy
@@ -231,6 +262,10 @@ def layoutpbnext(self):
     global valuepb
     global progressbar
     progressbar.value = valuepb
+def layoutpbtrainnext(self):
+    global valuetrain
+    global progressbar
+    progressbar.value = valuetrain
 
 
 # Backpropagation Algorithm With Stochastic Gradient Descent
@@ -240,7 +275,7 @@ def back_propagation(train, test, l_rate, n_epoch, n_hidden):
     n_inputs = len(train[0]) - 1
     n_outputs = len(set([row[-1] for row in train]))
     network = initialize_network(n_inputs, n_hidden, n_outputs)
-    train_network(network, train, l_rate, n_epoch, n_outputs)
+    train_network(network, train, l_rate, n_epoch, n_outputs, 'backp')
     predictions = list()
     for row in test:
         prediction = predict(network, row)
@@ -258,8 +293,8 @@ class MyApp(App):
         c = 0
         l = 0
 
-        draw.canvas.clear()
-        MyApp.drawinglblblackkv('j', layoutneuronmainscreen, layoutlabels)
+        #draw.canvas.clear()
+        #MyApp.drawinglblblackkv('j', layoutneuronmainscreen, layoutlabels)
 
         numoutputs = n_outputs
         numdata = n_inputs
@@ -277,8 +312,6 @@ class MyApp(App):
             draw.add_widget(inputlabel)
             draw.remove_widget(element)
             l += 1
-
-        '''predict(network, input)'''
 
         '''for x in range(numoutputs):
             value = network[-1][c]['weights'][-1]
@@ -301,6 +334,7 @@ class MyApp(App):
     def drawinglblblackkv(self, draw, titlelayout, textlayout, *largs):
         global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel, progressbar, prediction, biaseslabels
         global hiddenlayeronelabelthree, hiddenlayeronelabelone, hiddenlayeronelabeltwo, outputlabel, inputlabel
+        global n_epoch, n_folds, l_rate
         a = 0
         b = 0
         c = 0
@@ -310,9 +344,10 @@ class MyApp(App):
         i = 0
         j = 0
         l = 0
-        prediction = 'yes'
+        prediction = True
 
         draw.canvas.clear()
+        MyApp.leftlabels(self, textlayout, 0, 'train')
 
         numoutputs = n_outputs
         space = numdata * 35 + (numdata - 1) * 25
@@ -333,17 +368,6 @@ class MyApp(App):
         titlelayout.remove_widget(inputlabel)
         titlelayout.add_widget(outputlabel)
         titlelayout.add_widget(inputlabel)
-
-
-        labelfile = (Label(text='[b] File: [/b]' + 'filename', markup = True, pos_hint={'center_x':.5, 'center_y':0}, size_hint=(1,.1)))
-        labeltype = (Label(text='[b] Test: [/b]' + 'train', markup=True, pos_hint={'center_x': .5, 'center_y': 0},
-                           size_hint=(1, .1), color=(.67,.57,.69)))
-        labelaccuracy = (Label(text='[b] idk yet', markup = True, pos_hint={'center_x':.5, 'center_y':1}, size_hint=(1,.1)))
-        separator = (Label(text = '-----------------------------------------------------------------------------------------------------------------------------------------------', pos_hint={'center_x':.5, 'center_y':.5}, size_hint=(1,.1), color = (6,.87,.89,1)))
-        textlayout.add_widget(labelfile)
-        textlayout.add_widget(labeltype)
-        textlayout.add_widget(labelaccuracy)
-        textlayout.add_widget(separator)
 
 
 
@@ -377,11 +401,11 @@ class MyApp(App):
                     RoundedRectangle(size=(35, 35), pos=(middlex, a * 50 + (middley - spaceone / 2)))
                     Color(0,0,0,1)
                     RoundedRectangle(size=(30, 30), pos=(middlex+2.5, a * 50 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
-                    biases = "{:.2f}".format(value)
-                    nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 50 + (middley-31.5 - spaceone / 2)),
-                                            color=(1,1,1, 0.25 + colorlayerone/1.33))
-                    draw.add_widget(nodeslabel)
-                    biaseslabels.append(nodeslabel)
+                biases = "{:.2f}".format(value)
+                nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 50 + (middley-31.5 - spaceone / 2)),
+                                        color=(1,1,1, 0.25 + colorlayerone/1.33))
+                draw.add_widget(nodeslabel)
+                biaseslabels.append(nodeslabel)
                 i = 0
                 e = 0
                 for y in range(numdata):
@@ -637,7 +661,6 @@ class MyApp(App):
                                      pos=(middlex+230, c * 50 + (middley -30 - spaceoutput / 2)), font_size = 17, color=(1, 1, 1, 1))
             draw.add_widget(lbloutputoptions)
             value = network[-1][c]['weights'][-1]
-            print(value)
             with draw.canvas:
                 Color(.67,.57,.69)
                 RoundedRectangle(size=(35, 35), pos=(middlex + 230, c * 50 + (middley - spaceoutput / 2)))
@@ -874,20 +897,116 @@ class MyApp(App):
                                  radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                 b = b + 1
 
-    #When btnError is pressed
-    def drawingerror(selfself, textlayout, data, *largs):
-        global dataset, scores, varerrorlayout
-        varerrorlayout = True
-        labelfile = (Label(text='[b] File: [/b]' + 'filename', markup = True, pos_hint={'center_x':.5, 'center_y':0}, size_hint=(1,.1)))
-        labeltype = (Label(text='[b] Test: [/b]' + 'error', markup=True, pos_hint={'center_x': .5, 'center_y': 0},
-                           size_hint=(1, .1), color=(.67,.57,.69)))
-        labelaccuracy = (Label(text='[b] Accuracy: [/b]' + str("{:.2f}".format(data)) + '%', markup = True, pos_hint={'center_x':.5, 'center_y':1}, size_hint=(1,.1)))
-        separator = (Label(text = '-----------------------------------------------------------------------------------------------------------------------------------------------', pos_hint={'center_x':.5, 'center_y':.5}, size_hint=(1,.1), color = (6,.87,.89,1)))
-        textlayout.add_widget(labelfile)
-        textlayout.add_widget(labeltype)
-        textlayout.add_widget(labelaccuracy)
-        textlayout.add_widget(separator)
+    class Lblleft():
+        labelfile = None
+        labeltype = None
+        labelcycles = None
+        labelrate = None
+        labelfolds = None
+        labelaccuracy = None
+        lbldate = None
+        networklist = list()
+        n_outputlbl = None
+        n_inputlbl = None
 
+    #When btnError is pressed
+    #The lbls on the left
+    def leftlabels(self, textlayout, dataerror, type, *largs):
+        global dataset, scores, varerrorlayout, n_epoch, n_folds, l_rate
+        global list_hidden, network, n_outputs, n_inputs, currentpage
+
+        leftpanelitem = MyApp.Lblleft()
+        datestr = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+        leftpanelitem.lbldate = (Label(text= datestr, markup=True, pos_hint={'center_x': .5, 'center_y': 0},
+                           size_hint=(1, .1)))
+        leftpanelitem.labelfile = (Label(text='[b] File: [/b][i]' + filename, markup=True, pos_hint={'center_x': .5, 'center_y': 0},
+                           size_hint=(1, .1)))
+        leftpanelitem.labeltype = (Label(text='[b] [color=4BDCFF]Test: [/b][/color]' + type, markup=True,
+                           pos_hint={'center_x': .5, 'center_y': 0},
+                           size_hint=(1, .1), color=(1, 1, 1)))
+
+        leftpanelitem.labelcycles = (Label(text='[b] [color=D464EB]Cycles: [/b][/color]' + str(n_epoch), markup=True,
+                             pos_hint={'center_x': .5, 'center_y': 0},
+                             size_hint=(1, .1), color=(1, 1, 1)))
+        leftpanelitem.labelrate = (Label(text='[b] [color=D464EB]Rate: [/b][/color]' + str(l_rate), markup=True,
+                           pos_hint={'center_x': .5, 'center_y': 0},
+                           size_hint=(1, .1), color=(1, 1, 1)))
+        leftpanelitem.labelfolds = (Label(text='[b] [color=D464EB]Folds: [/b][/color]' + str(n_folds), markup=True,
+                            pos_hint={'center_x': .5, 'center_y': 0},
+                            size_hint=(1, .1), color=(1, 1, 1)))
+        if type == 'Find error':
+            varerrorlayout = True
+            leftpanelitem.labelaccuracy = (Label(text='[b] Accuracy: [/b]' + str("{:.2f}".format(dataerror)) + '%', markup=True,
+                                   pos_hint={'center_x': .5, 'center_y': 1}, size_hint=(1, .1)))
+        if type == 'train':
+            varerrorlayout = True
+            leftpanelitem.labelaccuracy = (Label(text='[b] Idk yet: [/b]', markup=True,
+                                   pos_hint={'center_x': .5, 'center_y': 1}, size_hint=(1, .1)))
+
+
+        leftpanelitem.networklist = network.copy()
+        leftpanelitem.n_outputlbl = n_outputs
+        leftpanelitem.n_inputlbl = n_inputs
+
+        leftlbllist.append(leftpanelitem.lbldate)
+        leftlbllist.append(leftpanelitem.labelfile)
+        leftlbllist.append(leftpanelitem.labeltype)
+        leftlbllist.append(leftpanelitem.labelcycles)
+        leftlbllist.append(leftpanelitem.labelrate)
+        leftlbllist.append(leftpanelitem.labelfolds)
+        leftlbllist.append(leftpanelitem.labelaccuracy)
+
+        currentpage = len(leftlbllist)/7
+
+        if currentpage == 1:
+            btnlesssidetext.disabled = True
+        if currentpage != 1:
+            btnlesssidetext.disabled = False
+        btnplussidetext.disabled = True
+
+        for element in leftlbllist:
+            textlayout.remove_widget(element)
+
+        textlayout.add_widget(leftpanelitem.lbldate)
+        textlayout.add_widget(leftpanelitem.labelfile)
+        textlayout.add_widget(leftpanelitem.labeltype)
+        textlayout.add_widget(leftpanelitem.labelcycles)
+        textlayout.add_widget(leftpanelitem.labelrate)
+        textlayout.add_widget(leftpanelitem.labelfolds)
+        textlayout.add_widget(leftpanelitem.labelaccuracy)
+
+
+        leftpanellist.append(leftpanelitem)
+        lblcurrentpage.text = ('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str("{:.0f}".format(len(leftlbllist)/7)))
+
+    #Change between pages
+    def leflabelswitch(self, textlayout, dataerror, type, *largs):
+        global currentpage, btnplussidetext, btnlesssidetext
+        if type == 'btnplus':
+            currentpage += 1
+            btnlesssidetext.disabled = False
+            for element in leftlbllist:
+                textlayout.remove_widget(element)
+            p = 0
+            for x in range (7):
+                textlayout.add_widget(leftlbllist [int(7*(currentpage-1) + p)])
+                p +=1
+        if type == 'btnless':
+            currentpage -= 1
+            btnplussidetext.disabled = False
+            for element in leftlbllist:
+                textlayout.remove_widget(element)
+            p = 0
+            for x in range (7):
+                textlayout.add_widget(leftlbllist [int(7*(currentpage-1) + p)])
+                p +=1
+        if currentpage == 1:
+            btnlesssidetext.disabled = True
+        if currentpage == len(leftlbllist)/7:
+            btnplussidetext.disabled = True
+        lblcurrentpage.text = ('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str(
+            "{:.0f}".format(len(leftlbllist) / 7)))
     #Plain drawing small size
     def drawingtryout(self, draw, titlelayout, *largs):
         global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel, progressbar
@@ -1105,7 +1224,6 @@ class MyApp(App):
             draw.add_widget(x)
             a += 1
             listinputs.append(x)
-            print(listinputs)
 
         '''ti.pos = (90, (middley + 5 - space / 2))
         draw.add_widget(ti)
@@ -1124,15 +1242,14 @@ class MyApp(App):
         titlelayout.remove_widget(inputlabel)
 
     def build(self):
-        global layoutneuronmainscreen, layoutlabels, parentlayout, myevent
+        global layoutneuronmainscreen, layoutlabels, parentlayout, myevent, lblfilename, btnlesssidetext, btnplussidetext, lblcurrentpage
         class MyEventDispatcher(EventDispatcher):
             def __init__(self, **kwargs):
                 self.register_event_type('on_test')
+                self.register_event_type('on_trainfinished')
                 super(MyEventDispatcher, self).__init__(**kwargs)
             @mainthread
             def evevaluatealgorithm(self, value):
-                # when do_something is called, the 'on_test' event will be
-                # dispatched with the value
                 self.dispatch('on_test', value)
 
             def on_test(self, *args):
@@ -1140,10 +1257,26 @@ class MyApp(App):
                 trainclock.cancel()
                 layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
                 layoutprogressbar.remove_widget(progressbar)
+                progressbar.value = 0
                 print('Scores: %s' % scores)
                 print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
                 accuracylabel = (sum(scores) / float(len(scores)))
                 errorlayout(accuracylabel)
+
+            @mainthread
+            def trainnetwork(self, value):
+                self.dispatch('on_trainfinished', value)
+
+            def on_trainfinished(self, *args):
+                global trainclock
+                trainclock.cancel()
+                layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
+                layoutprogressbar.remove_widget(progressbar)
+                progressbar.value = 0
+                trainlayout(btnTrain)
+                for layer in network:
+                    print(layer)
+
             def drawingmainlayout(self):
                 MyApp.drawingblank(btnOk, layoutneuronmainscreen, layoutlabels)
 
@@ -1175,9 +1308,12 @@ class MyApp(App):
         layoutsettingsdown = BoxLayout(orientation='horizontal',spacing = 10)
         layoutsettingsupleft = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(.7,1))
         layoutsettingsupright = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(.3,1))
-        layoutinfotop = BoxLayout(orientation='horizontal', spacing = 15,size_hint = (1,.15), pos_hint={'center_x':.5, 'center_y':.5})
-        layoutinfomiddle = BoxLayout(orientation='vertical',size_hint=(.9,1), pos_hint={'center_x':.5, 'center_y':.5})
-        layoutinfodown = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(1,.1))
+        layoutinfotop = parentlayout.ids.idlayouttop
+        layoutinfomiddle = parentlayout.ids.idlayoutmiddle
+        layoutinfodown = parentlayout.ids.idlayoutdown
+        layoutbtninfo = parentlayout.ids.idlayoutlbldown
+        layoutfilenameright = parentlayout.ids.idlayoutrightdown
+
 
 
 
@@ -1302,6 +1438,9 @@ class MyApp(App):
 
 
 
+        btnplussidetext.disabled = True
+        btnlesssidetext.disabled = True
+
         layoutsettingsup.add_widget(layoutsettingsupleft)
         layoutsettingsup.add_widget(lblblack)
         layoutsettingsup.add_widget(layoutsettingsupright)
@@ -1336,13 +1475,15 @@ class MyApp(App):
         ratelayout.add_widget(numrate)
         foldslayout.add_widget(lblfolds)
         foldslayout.add_widget(numfolds)
-        layoutinfoleft.add_widget(layoutinfotop)
-        layoutinfoleft.add_widget(layoutinfomiddle)
-        layoutinfoleft.add_widget(layoutinfodown)
         layoutsettingsvertical.add_widget(layoutsettingsup)
         layoutsettingsvertical.add_widget(layoutsettingsdown)
-        #layoutinfotop.add_widget(canvas)
-        layoutinfodown.add_widget(Label(text='[b] Current file: [/b]' + 'filename', markup=True))
+        layoutbtninfo.add_widget(btnlesssidetext)
+        layoutbtninfo.add_widget(btnplussidetext)
+        layoutinfodown.add_widget(Label(
+            text='-----------------------------------------------------------------------------------------------------------------------------------------------',
+            pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1, .1), color=(.6, .87, .89, 1)))
+        layoutinfodown.add_widget(lblcurrentpage)
+        layoutfilenameright.add_widget(lblfilename)
 
 
         neurontwolayout.add_widget(lblneurontwo)
@@ -1352,7 +1493,7 @@ class MyApp(App):
 
         def settingslayout(settings):
             global prediction, biaseslabels, varerrorlayout
-            prediction = 'no'
+            prediction = False
             varerrorlayout = False
             btnlayout.height = 300
             layoutmainscreen.height = 350
@@ -1361,6 +1502,7 @@ class MyApp(App):
             layouttrainscreen = parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
             for element in biaseslabels:
                 layoutneuronmainscreen.remove_widget(element)
+            biaseslabels = list()
 
             layout.remove_widget(btnTrain)
             layout.remove_widget(btnError)
@@ -1377,7 +1519,7 @@ class MyApp(App):
         settingslayout(lblblackthree)
 
         def mainlayout(self):
-            global prediction, n_inputs, n_outputs, dataset, numdata, listinputs
+            global prediction, n_inputs, n_outputs, dataset, numdata, listinputs, filename
             layoutmainscreen.height = 580
             btnlayout.height = 50
             layoutinfoleft.size_hint_x = 0.1
@@ -1415,7 +1557,7 @@ class MyApp(App):
             layout.add_widget(btnError)
             layout.add_widget(btnPredict)
             layoutinfotop.add_widget(btnSettings)
-            if prediction == 'no':
+            if prediction == False:
                 if varerrorlayout == False:
                     myevent.drawingmainlayout()
                     btnPredict.disabled = True
@@ -1474,9 +1616,9 @@ class MyApp(App):
                 layoutinfotop.add_widget(btnBack)
                 layoutinfotop.add_widget(btnSettings)
                 layout.add_widget(btnnewinput)
-                for row in dataset:
+                for row in input:
                     prediction = predict(network, row)
-                    accuracy_metric(dataset,prediction)
+                    #accuracy_metric(dataset,prediction)
                 MyApp.drawingvisualize(self, layoutneuronmainscreen)
 
         def trainlayout(self):
@@ -1530,7 +1672,7 @@ class MyApp(App):
 
             layoutinfotop.add_widget(btnBack)
             layoutinfotop.add_widget(btnSettings)
-            MyApp.drawingerror(self, layoutinfomiddle, accuracy)
+            MyApp.leftlabels(self, layoutinfomiddle, accuracy, 'Find error')
 
         def btnplusneuronpressed (btnplusneuron):
             btnlessneuron.disabled = False
@@ -1711,8 +1853,8 @@ class MyApp(App):
                     btnlessepoch.disabled = True
 
         def btnTrainpressed(btnTrain):
-            global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata
-            global network, n_inputs, n_outputs, n_folds, dataset, list_hidden
+            global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata, valuetrain
+            global network, n_inputs, n_outputs, n_folds, dataset, list_hidden, trainclock
             layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
             layoutprogressbar.remove_widget(progressbar)
             layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
@@ -1735,45 +1877,41 @@ class MyApp(App):
                        [3, 2, 2, 3],
                        [0, 1, 2, 0]]'''
 
-
+            progressbar.value = 0
+            valuetrain = 0
+            trainclock = Clock.schedule_interval(layoutpbtrainnext, 1 / 10)
             network = initialize_network(n_inputs, list_hidden, n_outputs)
-            train_network(network, dataset, l_rate, n_epoch, n_outputs)
+            threading.Thread(target=train_network, args=(network, dataset, l_rate, n_epoch, n_outputs, 'train')).start()
+
+            #train_network(network, dataset, l_rate, n_epoch, n_outputs)
             # for row in dataset:
             #      prediction = predict(network, row)
             #      accuracy_metric(dataset,prediction)
-            for layer in network:
-                print(layer)
-            trainlayout(btnTrain)
-
-            # threading.Thread(target=evaluate_algorithm, args=(dataset, back_propagation, n_folds, l_rate, n_epoch, list_hidden)).start()
-
-            # scores = evaluate_algorithm(dataset, back_propagation, n_folds, l_rate, n_epoch, list_hidden)
-            # print('Scores: %s' % scores)
-            # print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
-            # accuracylabel= (sum(scores) / float(len(scores)))
+            cancellayout(self)
 
         def btnErrorpressed(btnTrain):
-            global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata
+            global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata, valuepb
             global network, n_inputs, n_outputs, n_folds, dataset, list_hidden, trainclock
             layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
             layoutprogressbar.add_widget(progressbar)
+            progressbar.value = 0
+            valuepb = 0
 
             trainclock = Clock.schedule_interval(layoutpbnext, 1 / 10)
 
             threading.Thread(target=evaluate_algorithm, args=(dataset, back_propagation, n_folds, l_rate, n_epoch, list_hidden)).start()
             cancellayout(self)
 
-            # print('Scores: %s' % scores)
-            # print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
-            # accuracylabel= (sum(scores) / float(len(scores)))
-            #
-            # errorlayout(btnError)
+        def filechooserfunction(self):
+            global popup
+            content = Filechooser()
+            popup = Popup(title="Load file", content=content,
+                                size_hint=(0.9, 0.9),auto_dismiss= False, separator_color= (.67,.57,.69))
+            popup.open()
 
-        def btncancelpressed():
+        def btncancelpressed(self):
             progressbar.value=0
 
-        def btnfilechooser():
-            pass
 
         def evaluate_algorithm(dataset, algorithm, n_folds, *args):
             global progressbar, myevent
@@ -1793,7 +1931,6 @@ class MyApp(App):
                 accuracy = accuracy_metric(actual, predicted)
                 scores.append(accuracy)
             myevent.evevaluatealgorithm('hola')
-
 
 
         btnTrain.bind(on_press=btnTrainpressed)
@@ -1819,9 +1956,13 @@ class MyApp(App):
         btnlessepoch.bind(on_press=btnlessepochpressed)
         btnplusrate.bind(on_press=btnplusratepressed)
         btnlessrate.bind(on_press=btnlessratepressed)
-        btnOpen.bind(on_press=btnfilechooser)
+        btnOpen.bind(on_press=filechooserfunction)
+        btnplussidetext.bind(on_press=lambda x:MyApp().leflabelswitch(layoutinfomiddle, 0,'btnplus'))
+        btnlesssidetext.bind(on_press=lambda x:MyApp().leflabelswitch(layoutinfomiddle, 0, 'btnless'))
+
 
         return parentlayout
+
 
 
 class LayoutMenu(BoxLayout):
@@ -1837,6 +1978,19 @@ class LayoutNeuron(AnchorLayout):
 
 class LayoutScreen(BoxLayout):
     pass
+
+class Filechooser(BoxLayout):
+    def open(self, path, filenameselected):
+        global popup, filename, lblfilename
+        with open(os.path.join(path, filenameselected)) as f:
+            print(f.read())
+        filename = filenameselected
+        lblfilename.text = ('[b] Current file: [/b]' + '[i]' + str(basename(filenameselected)))
+        popup.dismiss()
+
+    def popupdismiss(self):
+        global popup
+        popup.dismiss()
 
 class MyJoseApp(App):
     def build(self):
