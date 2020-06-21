@@ -75,7 +75,6 @@ scores = list()
 biaseslabels = list()
 trainclock = None
 myevent = None
-leftlbllist = list()
 leftpanellist = list()
 filename = ''
 ti = TextInput(size=(40, 30), size_hint=(None, None))
@@ -90,7 +89,7 @@ hiddenlayeronelabeltwo = Label(text='[b]  Hidden\nlayer two', markup=True, size_
 hiddenlayeronelabelthree = Label(text='[b]   Hidden\nlayer three', markup=True,size_hint=(None,None), font_size=15, color=(1,1,1))
 outputlabel = Label(text='Output', markup=True, font_size=17, size_hint=(None, None), color=(1,1,1))
 inputlabel = Label(text='Input', markup=True, font_size=17, size_hint=(None, None), color=(1,1,1))
-lblcurrentpage = Label(text=('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str("{:.0f}".format(len(leftlbllist)/7))), markup=True)
+lblcurrentpage = Label(text=('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + '0'), markup=True)
 lblfilename = Label(text='[b] Current file: [/b]' + '[i] no file selected', markup=True,pos_hint={'center_x': 0, 'center_y': .5} )
 btnplussidetext = Button(text='[b]>', markup=True, size_hint=(.2, .8),
                          pos_hint={'center_x': 1, 'center_y': .5},
@@ -347,7 +346,11 @@ class MyApp(App):
         prediction = True
 
         draw.canvas.clear()
-        MyApp.leftlabels(self, textlayout, 0, 'train')
+
+        mydata=MyApp.createleftpanelitem(self, type = 'train', dataerror = 0)
+        MyApp.leftlabels(self, textlayout, mydata, *largs)
+
+
 
         numoutputs = n_outputs
         space = numdata * 35 + (numdata - 1) * 25
@@ -908,105 +911,103 @@ class MyApp(App):
         networklist = list()
         n_outputlbl = None
         n_inputlbl = None
-
-    #When btnError is pressed
-    #The lbls on the left
-    def leftlabels(self, textlayout, dataerror, type, *largs):
+        datestr = None
+        filename = None
+        type = None
+        n_epoch = None
+        n_folds = None
+        l_rate = None
+    def createleftpanelitem(self,type, dataerror):
         global dataset, scores, varerrorlayout, n_epoch, n_folds, l_rate
         global list_hidden, network, n_outputs, n_inputs, currentpage
-
         leftpanelitem = MyApp.Lblleft()
-        datestr = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-
-        leftpanelitem.lbldate = (Label(text= datestr, markup=True, pos_hint={'center_x': .5, 'center_y': 0},
-                           size_hint=(1, .1)))
-        leftpanelitem.labelfile = (Label(text='[b] File: [/b][i]' + filename, markup=True, pos_hint={'center_x': .5, 'center_y': 0},
-                           size_hint=(1, .1)))
-        leftpanelitem.labeltype = (Label(text='[b] [color=4BDCFF]Test: [/b][/color]' + type, markup=True,
-                           pos_hint={'center_x': .5, 'center_y': 0},
-                           size_hint=(1, .1), color=(1, 1, 1)))
-
-        leftpanelitem.labelcycles = (Label(text='[b] [color=D464EB]Cycles: [/b][/color]' + str(n_epoch), markup=True,
-                             pos_hint={'center_x': .5, 'center_y': 0},
-                             size_hint=(1, .1), color=(1, 1, 1)))
-        leftpanelitem.labelrate = (Label(text='[b] [color=D464EB]Rate: [/b][/color]' + str(l_rate), markup=True,
-                           pos_hint={'center_x': .5, 'center_y': 0},
-                           size_hint=(1, .1), color=(1, 1, 1)))
-        leftpanelitem.labelfolds = (Label(text='[b] [color=D464EB]Folds: [/b][/color]' + str(n_folds), markup=True,
-                            pos_hint={'center_x': .5, 'center_y': 0},
-                            size_hint=(1, .1), color=(1, 1, 1)))
-        if type == 'Find error':
-            varerrorlayout = True
-            leftpanelitem.labelaccuracy = (Label(text='[b] Accuracy: [/b]' + str("{:.2f}".format(dataerror)) + '%', markup=True,
-                                   pos_hint={'center_x': .5, 'center_y': 1}, size_hint=(1, .1)))
-        if type == 'train':
-            varerrorlayout = True
-            leftpanelitem.labelaccuracy = (Label(text='[b] Idk yet: [/b]', markup=True,
-                                   pos_hint={'center_x': .5, 'center_y': 1}, size_hint=(1, .1)))
-
-
+        leftpanelitem.datestr = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         leftpanelitem.networklist = network.copy()
         leftpanelitem.n_outputlbl = n_outputs
         leftpanelitem.n_inputlbl = n_inputs
+        leftpanelitem.filename = filename
+        leftpanelitem.type = type
+        leftpanelitem.n_epoch = n_epoch
+        leftpanelitem.n_folds = n_folds
+        leftpanelitem.l_rate = l_rate
+        leftpanelitem.dataerror = dataerror
+        leftpanellist.append(leftpanelitem)
+        currentpage = len(leftpanellist)
+        MyApp.establishbtnpages(self)
+        return leftpanelitem
 
-        leftlbllist.append(leftpanelitem.lbldate)
-        leftlbllist.append(leftpanelitem.labelfile)
-        leftlbllist.append(leftpanelitem.labeltype)
-        leftlbllist.append(leftpanelitem.labelcycles)
-        leftlbllist.append(leftpanelitem.labelrate)
-        leftlbllist.append(leftpanelitem.labelfolds)
-        leftlbllist.append(leftpanelitem.labelaccuracy)
+    #When btnError is pressed
+    #The lbls on the left
+    def leftlabels(self, textlayout, leftpanelitem, *largs):
+        global dataset, scores, varerrorlayout, n_epoch, n_folds, l_rate
+        global list_hidden, network, n_outputs, n_inputs, currentpage
 
-        currentpage = len(leftlbllist)/7
+
+        lbldate= Label(text=leftpanelitem.datestr, markup=True, halign="left", size_hint=(1, .1))
+        lbldate.bind(size=lbldate.setter('text_size'))
+        labelfile = (Label(text='[b] File: [/b][i]' + leftpanelitem.filename, markup=True, pos_hint={'center_x': .5, 'center_y': 0},
+                           size_hint=(1, .1)))
+        labeltype = (Label(text='[b] [color=4BDCFF]Test: [/b][/color]' + leftpanelitem.type, markup=True,
+                           pos_hint={'center_x': .5, 'center_y': 0},
+                           size_hint=(1, .1), color=(1, 1, 1)))
+
+        labelcycles = (Label(text='[b] [color=D464EB]Cycles: [/b][/color]' + str(leftpanelitem.n_epoch), markup=True,
+                             pos_hint={'center_x': .5, 'center_y': 0},
+                             size_hint=(1, .1), color=(1, 1, 1)))
+        labelrate = (Label(text='[b] [color=D464EB]Rate: [/b][/color]' + str(leftpanelitem.l_rate), markup=True,
+                           pos_hint={'center_x': .5, 'center_y': 0},
+                           size_hint=(1, .1), color=(1, 1, 1)))
+        labelfolds = (Label(text='[b] [color=D464EB]Folds: [/b][/color]' + str(leftpanelitem.n_folds), markup=True,
+                            pos_hint={'center_x': .5, 'center_y': 0},
+                            size_hint=(1, .1), color=(1, 1, 1)))
+        varerrorlayout = True
+        labelaccuracy = (Label(text='[b] Accuracy: [/b]' + str("{:.2f}".format(leftpanelitem.dataerror)) + '%', markup=True,
+                                   pos_hint={'center_x': .5, 'center_y': 1}, size_hint=(1, .1)))
+
+
+
 
         if currentpage == 1:
             btnlesssidetext.disabled = True
         if currentpage != 1:
             btnlesssidetext.disabled = False
-        btnplussidetext.disabled = True
 
-        for element in leftlbllist:
-            textlayout.remove_widget(element)
+        textlayout.clear_widgets()
 
-        textlayout.add_widget(leftpanelitem.lbldate)
-        textlayout.add_widget(leftpanelitem.labelfile)
-        textlayout.add_widget(leftpanelitem.labeltype)
-        textlayout.add_widget(leftpanelitem.labelcycles)
-        textlayout.add_widget(leftpanelitem.labelrate)
-        textlayout.add_widget(leftpanelitem.labelfolds)
-        textlayout.add_widget(leftpanelitem.labelaccuracy)
+        textlayout.add_widget(lbldate)
+        textlayout.add_widget(labelfile)
+        textlayout.add_widget(labeltype)
+        textlayout.add_widget(labelcycles)
+        textlayout.add_widget(labelrate)
+        textlayout.add_widget(labelfolds)
+        textlayout.add_widget(labelaccuracy)
 
 
-        leftpanellist.append(leftpanelitem)
-        lblcurrentpage.text = ('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str("{:.0f}".format(len(leftlbllist)/7)))
+        lblcurrentpage.text = ('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str("{:.0f}".format(len(leftpanellist))))
+
+    def establishbtnpages(self):
+        btnplussidetext.disabled = False
+        btnlesssidetext.disabled = False
+        if currentpage == 1:
+            btnlesssidetext.disabled = True
+        if currentpage == len(leftpanellist):
+            btnplussidetext.disabled = True
 
     #Change between pages
     def leflabelswitch(self, textlayout, dataerror, type, *largs):
         global currentpage, btnplussidetext, btnlesssidetext
         if type == 'btnplus':
             currentpage += 1
-            btnlesssidetext.disabled = False
-            for element in leftlbllist:
-                textlayout.remove_widget(element)
-            p = 0
-            for x in range (7):
-                textlayout.add_widget(leftlbllist [int(7*(currentpage-1) + p)])
-                p +=1
+            mydata = leftpanellist[currentpage -1]
+            MyApp.leftlabels(self, textlayout, mydata, *largs)
         if type == 'btnless':
             currentpage -= 1
-            btnplussidetext.disabled = False
-            for element in leftlbllist:
-                textlayout.remove_widget(element)
-            p = 0
-            for x in range (7):
-                textlayout.add_widget(leftlbllist [int(7*(currentpage-1) + p)])
-                p +=1
-        if currentpage == 1:
-            btnlesssidetext.disabled = True
-        if currentpage == len(leftlbllist)/7:
-            btnplussidetext.disabled = True
+            mydata = leftpanellist[currentpage - 1]
+            MyApp.leftlabels(self, textlayout, mydata, *largs)
+        MyApp.establishbtnpages(self)
+
         lblcurrentpage.text = ('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str(
-            "{:.0f}".format(len(leftlbllist) / 7)))
+            "{:.0f}".format(len(leftpanellist))))
     #Plain drawing small size
     def drawingtryout(self, draw, titlelayout, *largs):
         global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel, progressbar
@@ -1672,7 +1673,8 @@ class MyApp(App):
 
             layoutinfotop.add_widget(btnBack)
             layoutinfotop.add_widget(btnSettings)
-            MyApp.leftlabels(self, layoutinfomiddle, accuracy, 'Find error')
+            mydata = MyApp.createleftpanelitem(self, type='Find error', dataerror=accuracy)
+            MyApp.leftlabels(self, layoutinfomiddle, mydata)
 
         def btnplusneuronpressed (btnplusneuron):
             btnlessneuron.disabled = False
