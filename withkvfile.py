@@ -330,8 +330,8 @@ class MyApp(App):
             c = c + 1'''
 
     # When Train is pressed
-    def drawinglblblackkv(self, draw, titlelayout, textlayout, *largs):
-        global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel, progressbar, prediction, biaseslabels
+    def drawinglblblackkv(self, textlayout, mydata, *largs):
+        global a, b, accuracylabel, progressbar, prediction, biaseslabels
         global hiddenlayeronelabelthree, hiddenlayeronelabelone, hiddenlayeronelabeltwo, outputlabel, inputlabel
         global n_epoch, n_folds, l_rate
         a = 0
@@ -345,16 +345,18 @@ class MyApp(App):
         l = 0
         prediction = True
 
+        draw = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
+        titlelayout = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idLabelsLayoutNeuronMainScreen
+
         draw.canvas.clear()
 
-        mydata=MyApp.createleftpanelitem(self, type = 'train', dataerror = 0)
+
         MyApp.leftlabels(self, textlayout, mydata, *largs)
 
 
-
-        numoutputs = n_outputs
+        numoutputs = mydata.n_outputlbl
         space = numdata * 35 + (numdata - 1) * 25
-        spaceone = list_hidden[0] * 35 + (list_hidden[0] - 1) * 25
+        spaceone =mydata.list_hidden[0] * 35 + (mydata.list_hidden[0] - 1) * 25
         spaceoutput = numoutputs * 35 + (numoutputs - 1) * 25
         middlex = draw.width/2
         middley = draw.height/2 + 40
@@ -374,14 +376,14 @@ class MyApp(App):
 
 
 
-        if len(list_hidden) == 1:
+        if len(mydata.list_hidden) == 1:
             # hiddenlayerone
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
             hiddenlayeronelabelone.pos = (middletitlex - 28, middletitley - 50)
             titlelayout.add_widget(hiddenlayeronelabelone)
-            for x in range(list_hidden[0]):
+            for x in range(mydata.list_hidden[0]):
                 if valuefloat < abs(network[0][a]['weights'][-1]):
                     valuefloat = abs(network[0][a]['weights'][-1])
                 e = 0
@@ -396,9 +398,9 @@ class MyApp(App):
                     e = e + 1
                 a = a + 1
             a = 0
-            for x in range(list_hidden[0]):
+            for x in range(mydata.list_hidden[0]):
                 with draw.canvas:
-                    value = network[0][a]['weights'][-1]
+                    value = mydata.networklist[0][a]['weights'][-1]
                     colorlayerone = abs(value) / valuefloat
                     Color(1,1,1, 0.25 + colorlayerone/1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex, a * 50 + (middley - spaceone / 2)))
@@ -412,13 +414,13 @@ class MyApp(App):
                 i = 0
                 e = 0
                 for y in range(numdata):
-                    color = abs(network[0][a]['weights'][i]) / linecolorinput
+                    color = abs(mydata.networklist[0][a]['weights'][i]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
                         Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex, a * 50 + (middley+20 - spaceone / 2) ])
                         i = i + 1
                 for z in range(numoutputs):
-                    color = abs(network[1][e]['weights'][a]) / linecoloroutput
+                    color = abs(mydata.networklist[1][e]['weights'][a]) / linecoloroutput
                     with draw.canvas:
                         Color(color, color, color)
                         Line(points=[middlex+35, a * 50 + (middley  - spaceone / 2)+ 20, middlex+230,
@@ -426,29 +428,29 @@ class MyApp(App):
                     e = e + 1
                 a = a + 1
 
-        if len(list_hidden) == 2:
+        if len(mydata.list_hidden) == 2:
             # hiddenlayerone
-            spacetwo = list_hidden[1] * 35 + (list_hidden[1] - 1) * 25
+            spacetwo = mydata.list_hidden[1] * 35 + (mydata.list_hidden[1] - 1) * 25
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
             hiddenlayeronelabelone.pos = (middletitlex - 108, middletitley - 50)
             titlelayout.add_widget(hiddenlayeronelabelone)
-            for x in range(list_hidden[0]):
-                if valuefloat < abs(network[0][a]['weights'][-1]):
-                    valuefloat = abs(network[0][a]['weights'][-1])
+            for x in range(mydata.list_hidden[0]):
+                if valuefloat < abs(mydata.networklist[0][a]['weights'][-1]):
+                    valuefloat = abs(mydata.networklist[0][a]['weights'][-1])
                 e = 0
                 i = 0
                 for y in range(numdata):
-                    if linecolorinput < abs(network[0][a]['weights'][i]):
-                        linecolorinput = abs(network[0][a]['weights'][i])
+                    if linecolorinput < abs(mydata.networklist[0][a]['weights'][i]):
+                        linecolorinput = abs(mydata.networklist[0][a]['weights'][i])
                     i = i + 1
                 a = a + 1
             a = 0
-            for x in range(list_hidden[0]):
+            for x in range(mydata.list_hidden[0]):
                 with draw.canvas:
-                    value = network[0][a]['weights'][-1]
-                    colorlayerone = abs(network[0][a]['weights'][-1]) / valuefloat
+                    value = mydata.networklist[0][a]['weights'][-1]
+                    colorlayerone = abs(mydata.networklist[0][a]['weights'][-1]) / valuefloat
                     Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex-80, a * 50 + (middley - spaceone / 2)))
                     Color(0,0,0,1)
@@ -461,7 +463,7 @@ class MyApp(App):
                 i = 0
                 e = 0
                 for y in range(numdata):
-                    color = abs(network[0][a]['weights'][i]) / linecolorinput
+                    color = abs(mydata.networklist[0][a]['weights'][i]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
                         Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex-80, a * 50 + (middley + 20 - spaceone / 2) ])
@@ -476,25 +478,25 @@ class MyApp(App):
             a = 0
             hiddenlayeronelabeltwo.pos = (middletitlex + 52, middletitley - 50)
             titlelayout.add_widget(hiddenlayeronelabeltwo)
-            for x in range(list_hidden[1]):
-                if valuefloat < abs(network[1][d]['weights'][-1]):
-                    valuefloat = abs(network[1][d]['weights'][-1])
+            for x in range(mydata.list_hidden[1]):
+                if valuefloat < abs(mydata.networklist[1][d]['weights'][-1]):
+                    valuefloat = abs(mydata.networklist[1][d]['weights'][-1])
                 e = 0
                 j = 0
-                for y in range(list_hidden[0]):
-                    if linecolorinput < abs(network[1][d]['weights'][j]):
-                        linecolorinput = abs(network[1][d]['weights'][j])
+                for y in range(mydata.list_hidden[0]):
+                    if linecolorinput < abs(mydata.networklist[1][d]['weights'][j]):
+                        linecolorinput = abs(mydata.networklist[1][d]['weights'][j])
                     j = j + 1
                 for z in range(numoutputs):
-                    if linecoloroutput < abs(network[2][e]['weights'][d]):
-                        linecoloroutput = abs(network[2][e]['weights'][d])
+                    if linecoloroutput < abs(mydata.networklist[2][e]['weights'][d]):
+                        linecoloroutput = abs(mydata.networklist[2][e]['weights'][d])
                     e = e + 1
                 d = d + 1
             d = 0
-            for x in range(list_hidden[1]):
+            for x in range(mydata.list_hidden[1]):
                 with draw.canvas:
-                    value = network[1][d]['weights'][-1]
-                    colorlayerone = abs(network[1][d]['weights'][-1]) / valuefloat
+                    value = mydata.networklist[1][d]['weights'][-1]
+                    colorlayerone = abs(mydata.networklist[1][d]['weights'][-1]) / valuefloat
                     Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex + 80, d * 50 + (middley - spacetwo / 2)))
                     Color(0,0,0,1)
@@ -506,43 +508,43 @@ class MyApp(App):
                     draw.add_widget(draw.nodeslabel)
                 j = 0
                 e = 0
-                for y in range(list_hidden[0]):
-                    color = abs(network[1][d]['weights'][j]) / linecolorinput
+                for y in range(mydata.list_hidden[0]):
+                    color = abs(mydata.networklist[1][d]['weights'][j]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
                         Line(points=[middlex -45, j * 50 + (middley+20 - spaceone / 2), middlex+80, d * 50 + (middley+20 - spacetwo / 2)])
                         j = j + 1
                 for z in range(numoutputs):
-                    color = abs(network[2][e]['weights'][d]) / linecoloroutput
+                    color = abs(mydata.networklist[2][e]['weights'][d]) / linecoloroutput
                     with draw.canvas:
                         Color(color, color, color)
                         Line(points=[middlex+115, d * 50 + (middley+20 - spacetwo / 2), middlex + 230, e * 50 + (middley +20 - spaceoutput / 2)])
                     e = e + 1
                 d = d + 1
 
-        if len(list_hidden) == 3:
+        if len(mydata.list_hidden) == 3:
             # hiddenlayerone
-            spacethree = list_hidden[2] * 35 + (list_hidden[2] - 1) * 25
-            spacetwo = list_hidden[1] * 35 + (list_hidden[1] - 1) * 25
+            spacethree = mydata.list_hidden[2] * 35 + (mydata.list_hidden[2] - 1) * 25
+            spacetwo = mydata.list_hidden[1] * 35 + (mydata.list_hidden[1] - 1) * 25
             valuefloat = 0
             linecolorinput = 0
             hiddenlayeronelabelone.pos = (middletitlex - 158, middletitley - 50)
             titlelayout.add_widget(hiddenlayeronelabelone)
-            for x in range(list_hidden[0]):
-                if valuefloat < abs(network[0][a]['weights'][-1]):
-                    valuefloat = abs(network[0][a]['weights'][-1])
+            for x in range(mydata.list_hidden[0]):
+                if valuefloat < abs(mydata.networklist[0][a]['weights'][-1]):
+                    valuefloat = abs(mydata.networklist[0][a]['weights'][-1])
                 e = 0
                 i = 0
                 for y in range(numdata):
-                    if linecolorinput < abs(network[0][a]['weights'][i]):
-                        linecolorinput = abs(network[0][a]['weights'][i])
+                    if linecolorinput < abs(mydata.networklist[0][a]['weights'][i]):
+                        linecolorinput = abs(mydata.networklist[0][a]['weights'][i])
                     i = i + 1
                 a = a + 1
             a = 0
-            for x in range(list_hidden[0]):
+            for x in range(mydata.list_hidden[0]):
                 with draw.canvas:
-                    value = network[0][a]['weights'][-1]
-                    colorlayerone = abs(network[0][a]['weights'][-1]) / valuefloat
+                    value = mydata.networklist[0][a]['weights'][-1]
+                    colorlayerone = abs(mydata.networklist[0][a]['weights'][-1]) / valuefloat
                     Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex - 130, a * 50 + (middley - spaceone / 2)))
                     Color(0,0,0,1)
@@ -555,7 +557,7 @@ class MyApp(App):
                 i = 0
                 e = 0
                 for y in range(numdata):
-                    color = abs(network[0][a]['weights'][i]) / linecolorinput
+                    color = abs(mydata.networklist[0][a]['weights'][i]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
                         Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex-130,
@@ -570,21 +572,21 @@ class MyApp(App):
             a = 0
             hiddenlayeronelabeltwo.pos = (middletitlex - 28, middletitley - 50)
             titlelayout.add_widget(hiddenlayeronelabeltwo)
-            for x in range(list_hidden[1]):
-                if valuefloat < abs(network[1][d]['weights'][-1]):
-                    valuefloat = abs(network[1][d]['weights'][-1])
+            for x in range(mydata.list_hidden[1]):
+                if valuefloat < abs(mydata.networklist[1][d]['weights'][-1]):
+                    valuefloat = abs(mydata.networklist[1][d]['weights'][-1])
                 e = 0
                 j = 0
-                for y in range(list_hidden[0]):
-                    if linecolorinput < abs(network[1][d]['weights'][j]):
-                        linecolorinput = abs(network[1][d]['weights'][j])
+                for y in range(mydata.list_hidden[0]):
+                    if linecolorinput < abs(mydata.networklist[1][d]['weights'][j]):
+                        linecolorinput = abs(mydata.networklist[1][d]['weights'][j])
                     j = j + 1
                 d = d + 1
             d = 0
-            for x in range(list_hidden[1]):
+            for x in range(mydata.list_hidden[1]):
                 with draw.canvas:
-                    value = network[1][d]['weights'][-1]
-                    colorlayerone = abs(network[1][d]['weights'][-1]) / valuefloat
+                    value = mydata.networklist[1][d]['weights'][-1]
+                    colorlayerone = abs(mydata.networklist[1][d]['weights'][-1]) / valuefloat
                     Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex, d * 50 + (middley - spacetwo / 2)))
                     Color(0,0,0,1)
@@ -596,8 +598,8 @@ class MyApp(App):
                     draw.add_widget(draw.nodeslabel)
                 j = 0
                 e = 0
-                for y in range(list_hidden[0]):
-                    color = abs(network[1][d]['weights'][j]) / linecolorinput
+                for y in range(mydata.list_hidden[0]):
+                    color = abs(mydata.networklist[1][d]['weights'][j]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
                         Line(points=[middlex-95, j * 50 + (middley+20 - spaceone / 2), middlex, d * 50 + (middley+20 - spacetwo / 2)])
@@ -612,26 +614,26 @@ class MyApp(App):
             a = 0
             hiddenlayeronelabelthree.pos = (middletitlex + 101, middletitley - 50)
             titlelayout.add_widget(hiddenlayeronelabelthree)
-            for x in range(list_hidden[2]):
-                if valuefloat < abs(network[2][d]['weights'][-1]):
-                    valuefloat = abs(network[2][d]['weights'][-1])
+            for x in range(mydata.list_hidden[2]):
+                if valuefloat < abs(mydata.networklist[2][d]['weights'][-1]):
+                    valuefloat = abs(mydata.networklist[2][d]['weights'][-1])
 
                 e = 0
                 j = 0
-                for y in range(list_hidden[1]):
-                    if linecolorinput < abs(network[2][d]['weights'][j]):
-                        linecolorinput = abs(network[2][d]['weights'][j])
+                for y in range(mydata.list_hidden[1]):
+                    if linecolorinput < abs(mydata.networklist[2][d]['weights'][j]):
+                        linecolorinput = abs(mydata.networklist[2][d]['weights'][j])
                     j = j + 1
                 for z in range(numoutputs):
-                    if linecoloroutput < abs(network[3][e]['weights'][d]):
-                        linecoloroutput = abs(network[3][e]['weights'][d])
+                    if linecoloroutput < abs(mydata.networklist[3][e]['weights'][d]):
+                        linecoloroutput = abs(mydata.networklist[3][e]['weights'][d])
                     e = e + 1
                 d = d + 1
             d = 0
-            for x in range(list_hidden[2]):
+            for x in range(mydata.list_hidden[2]):
                 with draw.canvas:
-                    value = network[2][d]['weights'][-1]
-                    colorlayerone = abs(network[2][d]['weights'][-1]) / valuefloat
+                    value = mydata.networklist[2][d]['weights'][-1]
+                    colorlayerone = abs(mydata.networklist[2][d]['weights'][-1]) / valuefloat
                     Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
                     RoundedRectangle(size=(35, 35), pos=(middlex+130, d * 50 + (middley - spacethree / 2)))
                     Color(0,0,0,1)
@@ -643,14 +645,14 @@ class MyApp(App):
                     draw.add_widget(draw.nodeslabel)
                 l = 0
                 e = 0
-                for y in range(list_hidden[1]):
-                    color = abs(network[2][d]['weights'][l]) / linecolorinput
+                for y in range(mydata.list_hidden[1]):
+                    color = abs(mydata.networklist[2][d]['weights'][l]) / linecolorinput
                     with draw.canvas:
                         Color(color, color, color)
                         Line(points=[middlex+35, l * 50 + (middley+20 - spacetwo / 2), middlex+130, d * 50 + (middley+20 - spacethree / 2)])
                         l = l + 1
                 for z in range(numoutputs):
-                    color = abs(network[3][e]['weights'][d]) / linecoloroutput
+                    color = abs(mydata.networklist[3][e]['weights'][d]) / linecoloroutput
                     with draw.canvas:
                         Color(color, color, color)
                         Line(points=[middlex+165, d * 50 + (middley+20 - spacethree / 2), middlex+230, e * 50 + (middley+20 - spaceoutput / 2)])
@@ -663,7 +665,7 @@ class MyApp(App):
             lbloutputoptions = Label(text='[b]' + outputoptions, markup=True, size_hint=(None,None),
                                      pos=(middlex+230, c * 50 + (middley -30 - spaceoutput / 2)), font_size = 17, color=(1, 1, 1, 1))
             draw.add_widget(lbloutputoptions)
-            value = network[-1][c]['weights'][-1]
+            value = mydata.networklist[-1][c]['weights'][-1]
             with draw.canvas:
                 Color(.67,.57,.69)
                 RoundedRectangle(size=(35, 35), pos=(middlex + 230, c * 50 + (middley - spaceoutput / 2)))
@@ -682,8 +684,6 @@ class MyApp(App):
                                  radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                 b = b + 1
 
-        #data
-        #draw.add_widget(Label(text='[b] Accuracy:' +' [/b]%.3f%%' % accuracylabel,size_hint=(None,None), markup = True, pos=(middlex-30, 0)))
 
     #When btnOK is pressed. Plain normal size
     def drawingblank(self, draw, titlelayout, *largs):
@@ -901,40 +901,25 @@ class MyApp(App):
                 b = b + 1
 
     class Lblleft():
-        labelfile = None
-        labeltype = None
-        labelcycles = None
-        labelrate = None
-        labelfolds = None
-        labelaccuracy = None
-        lbldate = None
-        networklist = list()
-        n_outputlbl = None
-        n_inputlbl = None
-        datestr = None
-        filename = None
-        type = None
-        n_epoch = None
-        n_folds = None
-        l_rate = None
-    def createleftpanelitem(self,type, dataerror):
-        global dataset, scores, varerrorlayout, n_epoch, n_folds, l_rate
-        global list_hidden, network, n_outputs, n_inputs, currentpage
-        leftpanelitem = MyApp.Lblleft()
-        leftpanelitem.datestr = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        leftpanelitem.networklist = network.copy()
-        leftpanelitem.n_outputlbl = n_outputs
-        leftpanelitem.n_inputlbl = n_inputs
-        leftpanelitem.filename = filename
-        leftpanelitem.type = type
-        leftpanelitem.n_epoch = n_epoch
-        leftpanelitem.n_folds = n_folds
-        leftpanelitem.l_rate = l_rate
-        leftpanelitem.dataerror = dataerror
-        leftpanellist.append(leftpanelitem)
-        currentpage = len(leftpanellist)
-        MyApp.establishbtnpages(self)
-        return leftpanelitem
+
+        def __init__(self, type, dataerror):
+            global dataset, scores, varerrorlayout, n_epoch, n_folds, l_rate
+            global list_hidden, network, n_outputs, n_inputs, currentpage, list_hidden
+
+            self.datestr = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            self.networklist = network.copy()
+            self.n_outputlbl = n_outputs
+            self.n_inputlbl = n_inputs
+            self.filename = filename
+            self.type = type
+            self.n_epoch = n_epoch
+            self.n_folds = n_folds
+            self.l_rate = l_rate
+            self.dataerror = dataerror
+            self.list_hidden = list_hidden.copy()
+            leftpanellist.append(self)
+            currentpage = len(leftpanellist)
+            MyApp.establishbtnpages(self)
 
     #When btnError is pressed
     #The lbls on the left
@@ -945,24 +930,29 @@ class MyApp(App):
 
         lbldate= Label(text=leftpanelitem.datestr, markup=True, halign="left", size_hint=(1, .1))
         lbldate.bind(size=lbldate.setter('text_size'))
-        labelfile = (Label(text='[b] File: [/b][i]' + leftpanelitem.filename, markup=True, pos_hint={'center_x': .5, 'center_y': 0},
+        labelfile = (Label(text='[b] File: [/b][i]' + leftpanelitem.filename, markup=True, halign="left",
                            size_hint=(1, .1)))
+        labelfile.bind(size=labelfile.setter('text_size'))
         labeltype = (Label(text='[b] [color=4BDCFF]Test: [/b][/color]' + leftpanelitem.type, markup=True,
-                           pos_hint={'center_x': .5, 'center_y': 0},
+                           halign="left",
                            size_hint=(1, .1), color=(1, 1, 1)))
-
+        labeltype.bind(size=labeltype.setter('text_size'))
         labelcycles = (Label(text='[b] [color=D464EB]Cycles: [/b][/color]' + str(leftpanelitem.n_epoch), markup=True,
-                             pos_hint={'center_x': .5, 'center_y': 0},
+                             halign="left",
                              size_hint=(1, .1), color=(1, 1, 1)))
+        labelcycles.bind(size=labelcycles.setter('text_size'))
         labelrate = (Label(text='[b] [color=D464EB]Rate: [/b][/color]' + str(leftpanelitem.l_rate), markup=True,
-                           pos_hint={'center_x': .5, 'center_y': 0},
+                           halign="left",
                            size_hint=(1, .1), color=(1, 1, 1)))
+        labelrate.bind(size=labelrate.setter('text_size'))
         labelfolds = (Label(text='[b] [color=D464EB]Folds: [/b][/color]' + str(leftpanelitem.n_folds), markup=True,
-                            pos_hint={'center_x': .5, 'center_y': 0},
+                            halign="left",
                             size_hint=(1, .1), color=(1, 1, 1)))
+        labelfolds.bind(size=labelfolds.setter('text_size'))
         varerrorlayout = True
         labelaccuracy = (Label(text='[b] Accuracy: [/b]' + str("{:.2f}".format(leftpanelitem.dataerror)) + '%', markup=True,
-                                   pos_hint={'center_x': .5, 'center_y': 1}, size_hint=(1, .1)))
+                                   halign="left", size_hint=(1, .1)))
+        labelaccuracy.bind(size=labelaccuracy.setter('text_size'))
 
 
 
@@ -986,12 +976,14 @@ class MyApp(App):
         lblcurrentpage.text = ('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str("{:.0f}".format(len(leftpanellist))))
 
     def establishbtnpages(self):
-        btnplussidetext.disabled = False
-        btnlesssidetext.disabled = False
         if currentpage == 1:
             btnlesssidetext.disabled = True
+        else:
+            btnlesssidetext.disabled = False
         if currentpage == len(leftpanellist):
             btnplussidetext.disabled = True
+        else:
+            btnplussidetext.disabled = False
 
     #Change between pages
     def leflabelswitch(self, textlayout, dataerror, type, *largs):
@@ -999,15 +991,16 @@ class MyApp(App):
         if type == 'btnplus':
             currentpage += 1
             mydata = leftpanellist[currentpage -1]
-            MyApp.leftlabels(self, textlayout, mydata, *largs)
+            MyApp.drawinglblblackkv(self, textlayout, mydata)
         if type == 'btnless':
             currentpage -= 1
             mydata = leftpanellist[currentpage - 1]
-            MyApp.leftlabels(self, textlayout, mydata, *largs)
+            MyApp.drawinglblblackkv(self, textlayout, mydata)
         MyApp.establishbtnpages(self)
 
         lblcurrentpage.text = ('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str(
             "{:.0f}".format(len(leftpanellist))))
+
     #Plain drawing small size
     def drawingtryout(self, draw, titlelayout, *largs):
         global a, b, list_hidden, network, n_outputs, n_inputs, accuracylabel, progressbar
@@ -1640,7 +1633,9 @@ class MyApp(App):
 
             layoutinfotop.add_widget(btnBack)
             layoutinfotop.add_widget(btnSettings)
-            MyApp.drawinglblblackkv(self,layoutneuronmainscreen, layoutlabels, layoutinfomiddle)
+            mydata = MyApp.Lblleft(type='train', dataerror=0)
+            MyApp.drawinglblblackkv(self, layoutinfomiddle, mydata)
+
 
         def cancellayout(self):
             layout.remove_widget(btnTrain)
@@ -1673,7 +1668,7 @@ class MyApp(App):
 
             layoutinfotop.add_widget(btnBack)
             layoutinfotop.add_widget(btnSettings)
-            mydata = MyApp.createleftpanelitem(self, type='Find error', dataerror=accuracy)
+            mydata = MyApp.Lblleft(type='Find error', dataerror=accuracy)
             MyApp.leftlabels(self, layoutinfomiddle, mydata)
 
         def btnplusneuronpressed (btnplusneuron):
