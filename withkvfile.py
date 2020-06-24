@@ -11,6 +11,8 @@ from datetime import datetime
 from kivy.uix.gridlayout import GridLayout
 from kivy.config import Config
 from kivy.uix.textinput import TextInput
+from kivy.graphics.texture import  *
+from array import array
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.lang import Builder
 from kivy.uix.slider import Slider
@@ -355,6 +357,8 @@ class MyApp(App):
 
 
         numoutputs = mydata.n_outputlbl
+
+
         space = numdata * 35 + (numdata - 1) * 25
         spaceone =mydata.list_hidden[0] * 35 + (mydata.list_hidden[0] - 1) * 25
         spaceoutput = numoutputs * 35 + (numoutputs - 1) * 25
@@ -675,14 +679,31 @@ class MyApp(App):
                 #draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex + 196, c * 50 + (middley-34 - spaceoutput / 2)),color=(1, 1, 1, .9))
             c = c + 1
         # input layer
-        for x in range(numdata):
-            with draw.canvas:
-                Color(.6,.87,.89)
-                RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - space / 2)))
-                Color(0, 0, 0)
-                RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
-                                 radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                b = b + 1
+        if numdata < 10:
+            for x in range(numdata):
+                with draw.canvas:
+                    Color(.6, .87, .89)
+                    RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - space / 2)))
+                    Color(0, 0, 0)
+                    RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
+                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    b = b + 1
+        else:
+            for x in range(int(numdata / 2 - 1)):
+                with draw.canvas:
+                    Color(.6, .87, .89)
+                    RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - 575 / 2)))
+                    Color(0, 0, 0)
+                    RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - 575 / 2)),
+                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    Color(.6, .87, .89)
+                    RoundedRectangle(size=(35, 35), pos=(middlex - 240, (middley + 575 / 2) - b * 50 - 123))
+                    Color(0, 0, 0)
+                    RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, (middley + 2.5 + 575 / 2) - b * 50 - 123),
+                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    b = b + 1
+                    Color(.4 + b / 9, .67 + b / 9, .69 + b / 9)
+                    Ellipse(pos=(middlex - 225, middley - b * 20), size=(5, 5))
 
 
     #When btnOK is pressed. Plain normal size
@@ -700,7 +721,6 @@ class MyApp(App):
         l = 0
 
         draw.canvas.clear()
-
         numoutputs = n_outputs
         space = numdata * 35 + (numdata - 1) * 25
         spaceone = list_hidden[0] * 35 + (list_hidden[0] - 1) * 25
@@ -737,11 +757,20 @@ class MyApp(App):
                     RoundedRectangle(size=(30, 30), pos=(middlex+2.5, a * 50 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
                 i = 0
                 e = 0
-                for y in range(numdata):
-                    with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex, a * 50 + (middley+20 - spaceone / 2) ])
-                        i = i + 1
+
+                if numdata < 10:
+                    for y in range(numdata):
+                        with draw.canvas:
+                            Color(.5,.5,.5)
+                            Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex, a * 50 + (middley+20 - spaceone / 2) ])
+                            i = i + 1
+                else:
+                    for y in range(10):
+                        with draw.canvas:
+                            Color(.5,.5,.5)
+                            Line(points=[middlex - 205, i * 50 + (middley-10 - 575 / 2) + 30, middlex, a * 50 + (middley+20 - spaceone / 2) ])
+                            i = i + 1
+
                 for z in range(numoutputs):
                     with draw.canvas:
                         Color(.5,.5,.5)
@@ -765,11 +794,18 @@ class MyApp(App):
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                 i = 0
                 e = 0
-                for y in range(numdata):
-                    with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex-80, a * 50 + (middley + 20 - spaceone / 2) ])
-                        i = i + 1
+                if numdata < 10:
+                    for y in range(numdata):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex-80, a * 50 + (middley + 20 - spaceone / 2) ])
+                            i = i + 1
+                else:
+                    for y in range(10):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex - 205, i * 50 + (middley-10 - 575 / 2) + 30, middlex-80, a * 50 + (middley + 20 - spaceone / 2) ])
+                            i = i + 1
                 a = a + 1
 
             # hiddenlayertwo
@@ -815,12 +851,20 @@ class MyApp(App):
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                 i = 0
                 e = 0
-                for y in range(numdata):
-                    with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex-130,
+                if numdata < 10:
+                    for y in range(numdata):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex-130,
+                                     a * 50 + (middley+ 20 - spaceone / 2)  ])
+                            i = i + 1
+                else:
+                    for y in range(10):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex - 205, i * 50 + (middley-10 - 575 / 2) + 30, middlex-130,
                                      a * 50 + (middley+ 20 - spaceone / 2) ])
-                        i = i + 1
+                            i = i + 1
                 a = a + 1
 
             # hiddenlayertwo
@@ -891,14 +935,33 @@ class MyApp(App):
             c = c + 1
 
         # input layer
-        for x in range(numdata):
-            with draw.canvas:
-                Color(.6,.87,.89)
-                RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - space / 2)))
-                Color(0, 0, 0)
-                RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
-                                 radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                b = b + 1
+        if numdata < 10:
+            for x in range(numdata):
+                with draw.canvas:
+                    Color(.6,.87,.89)
+                    RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - space / 2)))
+                    Color(0, 0, 0)
+                    RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
+                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    b = b + 1
+        else:
+            for x in range(4):
+                with draw.canvas:
+                    Color(.6,.87,.89)
+                    RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - 575 / 2)))
+                    Color(0, 0, 0)
+                    RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - 575 / 2)),
+                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    Color(.6, .87, .89)
+                    RoundedRectangle(size=(35, 35), pos=(middlex - 240, (middley + 575 / 2) - b * 50 - 123 ))
+                    Color(0, 0, 0)
+                    RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, (middley + 2.5 +  575 / 2) - b * 50 - 123),
+                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    b = b + 1
+                    Color(.4+b/9,.67+b/9,.69+b/9)
+                    Ellipse(pos=(middlex - 225, middley-b*20),size= (5,5))
+                draw.add_widget(Label(text=str(numdata), pos=(middlex - 320, middley-96), size_hint=(None,None)))
+                    #Point(points=(200,200),pointsize=2)
 
     class Lblleft():
 
@@ -1019,6 +1082,7 @@ class MyApp(App):
 
         numoutputs = n_outputs
         numdata = n_inputs
+        numdata=40
         space = numdata * 20 + (numdata - 1) * 5
         spaceone = list_hidden[0] * 20 + (list_hidden[0] - 1) * 5
         spaceoutput = numoutputs * 20 + (numoutputs - 1) * 5
@@ -1047,11 +1111,18 @@ class MyApp(App):
                     RoundedRectangle(size=(15, 15), pos=(middlex+2.5, a * 30 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
                 i = 0
                 e = 0
-                for y in range(numdata):
-                    with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex - 220, i * 30 + (middley+10 - space / 2), middlex, a * 30 + (middley+10 - spaceone / 2) ])
-                        i = i + 1
+                if numdata < 10:
+                    for y in range(numdata):
+                        with draw.canvas:
+                            Color(.5,.5,.5)
+                            Line(points=[middlex - 220, i * 30 + (middley+10 - space / 2), middlex, a * 30 + (middley+10 - spaceone / 2) ])
+                            i = i + 1
+                else:
+                    for y in range(10):
+                        with draw.canvas:
+                            Color(.5,.5,.5)
+                            Line(points=[middlex - 220, i * 30 + (middley+10 - 245 / 2), middlex, a * 30 + (middley+10 - spaceone / 2) ])
+                            i = i + 1
                 for z in range(numoutputs):
                     with draw.canvas:
                         Color(.5,.5,.5)
@@ -1075,11 +1146,18 @@ class MyApp(App):
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                 i = 0
                 e = 0
-                for y in range(numdata):
-                    with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex - 220, i * 30 + (middley-20 - space / 2) + 30, middlex-80, a * 30 + (middley + 10 - spaceone / 2) ])
-                        i = i + 1
+                if numdata < 10:
+                    for y in range(numdata):
+                        with draw.canvas:
+                            Color(.5,.5,.5)
+                            Line(points=[middlex - 220, i * 30 + (middley-20 - space / 2) + 30, middlex-80, a * 30 + (middley + 10 - spaceone / 2) ])
+                            i = i + 1
+                else:
+                    for y in range(10):
+                        with draw.canvas:
+                            Color(.5,.5,.5)
+                            Line(points=[middlex - 220, i * 30 + (middley-20 - 245 / 2)+30, middlex-80, a * 30 + (middley+10 - spaceone / 2) ])
+                            i = i + 1
                 a = a + 1
 
             # hiddenlayertwo
@@ -1125,12 +1203,19 @@ class MyApp(App):
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                 i = 0
                 e = 0
-                for y in range(numdata):
-                    with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex - 220, i * 30 + (middley-20 - space / 2) + 30, middlex-130,
+                if numdata < 10:
+                    for y in range(numdata):
+                        with draw.canvas:
+                            Color(.5,.5,.5)
+                            Line(points=[middlex - 220, i * 30 + (middley-20 - space / 2) + 30, middlex-130,
                                      a * 30 + (middley+ 10 - spaceone / 2) ])
-                        i = i + 1
+                            i = i + 1
+                else:
+                    for y in range(10):
+                        with draw.canvas:
+                            Color(.5,.5,.5)
+                            Line(points=[middlex - 220, i * 30 + (middley -20 - 245 / 2) + 30, middlex - 130, a * 30 + (middley+10 - spaceone / 2) ])
+                            i = i + 1
                 a = a + 1
 
             # hiddenlayertwo
@@ -1195,14 +1280,33 @@ class MyApp(App):
                 RoundedRectangle(size=(15, 15), pos=(middlex + 232.5, c * 30 + (middley+2.5 - spaceoutput / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
             c = c + 1
         # input layer
-        for x in range(numdata):
-            with draw.canvas:
-                Color(.6,.87,.89)
-                RoundedRectangle(size=(20, 20), pos=(middlex - 240, b * 30 + (middley - space / 2)))
-                Color(0, 0, 0)
-                RoundedRectangle(size=(15, 15), pos=(middlex - 237.5, b * 30 + (middley + 2.5 - space / 2)),
-                                 radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                b = b + 1
+        if numdata < 10:
+            for x in range(numdata):
+                with draw.canvas:
+                    Color(.6,.87,.89)
+                    RoundedRectangle(size=(20, 20), pos=(middlex - 240, b * 30 + (middley - space / 2)))
+                    Color(0, 0, 0)
+                    RoundedRectangle(size=(15, 15), pos=(middlex - 237.5, b * 30 + (middley + 2.5 - space / 2)),
+                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    b = b + 1
+        else:
+            for x in range(4):
+                with draw.canvas:
+                    Color(.6,.87,.89)
+                    RoundedRectangle(size=(20, 20), pos=(middlex - 240, b * 30 + (middley - 245 / 2)))
+                    Color(0, 0, 0)
+                    RoundedRectangle(size=(15, 15), pos=(middlex - 237.5, b * 30 + (middley + 2.5 - 245 / 2)),
+                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    Color(.6, .87, .89)
+                    RoundedRectangle(size=(20, 20), pos=(middlex - 240, (middley + 245 / 2) - b * 30 +25 ))
+                    Color(0, 0, 0)
+                    RoundedRectangle(size=(15, 15), pos=(middlex - 237.5, (middley + 2.5 +  245 / 2) - b * 30 +25 ),
+                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    b = b + 1
+                    Color(.4+b/9,.67+b/9,.69+b/9)
+                    Ellipse(pos=(middlex - 233, middley-b*10+42),size= (4,4))
+                draw.add_widget(Label(text=str(numdata), pos=(middlex - 320, middley-30), size_hint=(None,None)))
+                    #Point(points=(200,200),pointsize=2)
 
     #Adding TextInputs
     def drawinginputs(self,draw,titlelayout, *largs):
@@ -1519,8 +1623,10 @@ class MyApp(App):
             layoutinfoleft.size_hint_x = 0.1
             layoutinforight.size_hint_x = 0.1
 
-            filename = 'seeds_dataset.csv'
+            #filename = 'seeds_dataset.csv'
             dataset = load_csv(filename)
+            print(filename)
+            print (dataset)
             for i in range(len(dataset[0]) - 1):
                 str_column_to_float(dataset, i)
             # convert class column to integers
@@ -1595,7 +1701,7 @@ class MyApp(App):
                 popupone = Popup(title='ERROR', content=container, size_hint=(.3,.3), separator_color = (.67,.57,.69,1), auto_dismiss = False)
                 popupbtn = Button(text='OK', on_press= popupone.dismiss, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png')
                 container.add_widget(popupbtn)
-                popupone.open() #declared
+                popupone.open()
             else:
                 layouttrainscreen.anchor_x = 'center'
                 layout.remove_widget(btnTrain)
@@ -1978,12 +2084,100 @@ class LayoutScreen(BoxLayout):
 
 class Filechooser(BoxLayout):
     def open(self, path, filenameselected):
-        global popup, filename, lblfilename
+        global popup
         with open(os.path.join(path, filenameselected)) as f:
             print(f.read())
+        popup.dismiss()
+        container = BoxLayout(orientation='vertical')
+        qstlayout = BoxLayout(orientation='horizontal', size_hint=(.9,.9), spacing = 10, pos_hint={'center_x':.5, 'center_y':.5})
+        popupone = Popup(title='FILE SETTINGS', content=container, size_hint=(.7, .7), separator_color=(.67, .57, .69, 1),
+                         auto_dismiss=False)
+        popupbtn = Button(text='OK', color=(0,0,0,1), background_normal='ButtonPlusB.png',
+                          background_down='ButtonDeactivated.png', size_hint=(1,.4))
+
+
+        btnimages = Button(text='Images dataset', font_size=20, background_normal='ButtonPlusP.png',
+                          background_down='ButtonDeactivated.png', size_hint=(.6,.6), pos_hint={'center_x':.5, 'center_y':.5})
+        btnimages.bind( on_press=lambda x:Filechooser().BtnImagesFncn(btnimages))
+        btnoutput = Button(text='Output on last column',font_size=20, background_normal='ButtonPlusP.png',
+                          background_down='ButtonDeactivated.png', size_hint=(.6,.6), pos_hint={'center_x':.5, 'center_y':.5})
+        btnoutput.bind(on_press=lambda x: Filechooser().BtnOutputFncn(btnoutput))
+        popupbtn.bind(on_press=(lambda x: Filechooser().PrepareFile(filenameselected,btnimages, btnoutput, popupone, path)))
+        container.add_widget(qstlayout)
+        qstlayout.add_widget(btnimages)
+        qstlayout.add_widget(btnoutput)
+        container.add_widget(popupbtn)
+        popupone.open()
+
+    def BtnImagesFncn(self,btnimages):
+        if btnimages.text == 'Numbers dataset':
+            btnimages.text = 'Images dataset'
+        else:
+            btnimages.text = 'Numbers dataset'
+    def BtnOutputFncn(self,btnimages):
+        if btnimages.text == 'Output on last column':
+            btnimages.text = 'Output on first column'
+        else:
+            btnimages.text = 'Output on last column'
+
+    def PrepareFile(self, filenameselected,btnimages, btnoutput, popupone, path):
+        global filename, lblfilename
         filename = filenameselected
         lblfilename.text = ('[b] Current file: [/b]' + '[i]' + str(basename(filenameselected)))
-        popup.dismiss()
+        popupone.dismiss()
+        containerbox = BoxLayout(orientation = 'vertical')
+        containershow = GridLayout()
+        popupshow = Popup(title='DATASET:', content=containerbox, separator_color=(.67, .57, .69, 1),
+                         auto_dismiss=False)
+        popupbtn = Button(text='OK', on_press=popupshow.dismiss, background_normal='ButtonPlusP.png',
+                          background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png', size_hint=(.3,.1), pos_hint={'center_y':.5, 'center_y':0})
+        file = open(os.path.join(path, filenameselected)).read()
+        if btnimages.text == 'Numbers dataset':
+            containershow.cols = len(filenameselected[0])
+            for row in filenameselected:
+                for column in range(len(filenameselected[0])):
+                    #print(open(os.path.join(path, filenameselected[0][0])).read())
+                    containershow.add_widget(Label(text=file[0]))
+            containerbox.add_widget(containershow)
+            containerbox.add_widget(popupbtn)
+            popupshow.open()
+        if btnimages.text == 'Images dataset':
+            containershow.cols= 1
+            imagedata = Widget()
+            imagedatakk = Button()
+            containershow.add_widget(imagedata)
+            containershow.add_widget(imagedatakk)
+            containerbox.add_widget(containershow)
+            containerbox.add_widget(popupbtn)
+            popupshow.open()
+            with imagedata.canvas:
+                Rectangle(size=(200,200), pos_hint=(imagedata.pos_hint), size_hint=(None,None))
+                Point(points=(self.x,self.y))
+
+            # texture = Texture.create(size=(64, 64))
+            #
+            # # create 64x64 rgb tab, and fill with values from 0 to 255
+            # # we'll have a gradient from black to white
+            # size = 64 * 64 * 3
+            # buf = [int(x * 255 / size) for x in range(size)]
+            #
+            # # then, convert the array to a ubyte string
+            # buf = b''.join(map(chr, buf))
+            #
+            # # then blit the buffer
+            # texture.blit_buffer(buf, colorfmt='rgb', bufferfmt='ubyte')
+            #
+            #
+            # # that's all ! you can use it in your graphics now :)
+            # # if self is a widget, you can do this
+            # with imagedata.canvas:
+            #     Rectangle(texture=texture, pos=self.pos, size=(64, 64))
+
+
+        #with popupshow.canvas:
+            #Rectangle(size=(popupshow.width,popupshow.height))
+
+
 
     def popupdismiss(self):
         global popup
