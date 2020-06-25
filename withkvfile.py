@@ -21,7 +21,7 @@ import numpy as np
 from kivy.graphics.vertex_instructions import *
 from random import seed
 from random import random
-from math import exp
+from math import exp, sqrt
 from csv import reader
 from random import randrange
 from math import exp
@@ -115,6 +115,14 @@ def load_csv(filename):
 				continue
 			dataset.append(row)
 	return dataset
+
+def datasetoutputfirstcolumn(mydataset):
+    for row in mydataset:
+        aux = row[-1]
+        row[-1] = row[0]
+        row[0] = aux
+    return mydataset
+
 # String to float
 def str_column_to_float(dataset, column):
 	for row in dataset:
@@ -417,12 +425,20 @@ class MyApp(App):
                 biaseslabels.append(nodeslabel)
                 i = 0
                 e = 0
-                for y in range(numdata):
-                    color = abs(mydata.networklist[0][a]['weights'][i]) / linecolorinput
-                    with draw.canvas:
-                        Color(color, color, color)
-                        Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex, a * 50 + (middley+20 - spaceone / 2) ])
-                        i = i + 1
+                if numdata < 10:
+                    for y in range(numdata):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex - 205, i * 50 + (middley - 10 - space / 2) + 30, middlex,
+                                         a * 50 + (middley + 20 - spaceone / 2)])
+                            i = i + 1
+                else:
+                    for y in range(10):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex - 205, i * 50 + (middley - 10 - 575 / 2) + 30, middlex,
+                                         a * 50 + (middley + 20 - spaceone / 2)])
+                            i = i + 1
                 for z in range(numoutputs):
                     color = abs(mydata.networklist[1][e]['weights'][a]) / linecoloroutput
                     with draw.canvas:
@@ -466,12 +482,20 @@ class MyApp(App):
                     draw.add_widget(draw.nodeslabel)
                 i = 0
                 e = 0
-                for y in range(numdata):
-                    color = abs(mydata.networklist[0][a]['weights'][i]) / linecolorinput
-                    with draw.canvas:
-                        Color(color, color, color)
-                        Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex-80, a * 50 + (middley + 20 - spaceone / 2) ])
-                        i = i + 1
+                if numdata < 10:
+                    for y in range(numdata):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex - 205, i * 50 + (middley - 10 - space / 2) + 30, middlex - 80,
+                                         a * 50 + (middley + 20 - spaceone / 2)])
+                            i = i + 1
+                else:
+                    for y in range(10):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex - 205, i * 50 + (middley - 10 - 575 / 2) + 30, middlex - 80,
+                                         a * 50 + (middley + 20 - spaceone / 2)])
+                            i = i + 1
                 a = a + 1
 
             # hiddenlayertwo
@@ -560,13 +584,20 @@ class MyApp(App):
                     draw.add_widget(draw.nodeslabel)
                 i = 0
                 e = 0
-                for y in range(numdata):
-                    color = abs(mydata.networklist[0][a]['weights'][i]) / linecolorinput
-                    with draw.canvas:
-                        Color(color, color, color)
-                        Line(points=[middlex - 205, i * 50 + (middley-10 - space / 2) + 30, middlex-130,
-                                     a * 50 + (middley+ 20 - spaceone / 2) ])
-                        i = i + 1
+                if numdata < 10:
+                    for y in range(numdata):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex - 205, i * 50 + (middley - 10 - space / 2) + 30, middlex - 130,
+                                         a * 50 + (middley + 20 - spaceone / 2)])
+                            i = i + 1
+                else:
+                    for y in range(10):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex - 205, i * 50 + (middley - 10 - 575 / 2) + 30, middlex - 130,
+                                         a * 50 + (middley + 20 - spaceone / 2)])
+                            i = i + 1
                 a = a + 1
 
             # hiddenlayertwo
@@ -2098,11 +2129,11 @@ class Filechooser(BoxLayout):
 
         btnimages = Button(text='Images dataset', font_size=20, background_normal='ButtonPlusP.png',
                           background_down='ButtonDeactivated.png', size_hint=(.6,.6), pos_hint={'center_x':.5, 'center_y':.5})
-        btnimages.bind( on_press=lambda x:Filechooser().BtnImagesFncn(btnimages))
+        btnimages.bind( on_press=lambda x:self.BtnImagesFncn(btnimages))
         btnoutput = Button(text='Output on last column',font_size=20, background_normal='ButtonPlusP.png',
                           background_down='ButtonDeactivated.png', size_hint=(.6,.6), pos_hint={'center_x':.5, 'center_y':.5})
-        btnoutput.bind(on_press=lambda x: Filechooser().BtnOutputFncn(btnoutput))
-        popupbtn.bind(on_press=(lambda x: Filechooser().PrepareFile(filenameselected,btnimages, btnoutput, popupone, path)))
+        btnoutput.bind(on_press=lambda x: self.BtnOutputFncn(btnoutput))
+        popupbtn.bind(on_press=(lambda x: self.PrepareFile(filenameselected,btnimages, btnoutput, popupone, path)))
         container.add_widget(qstlayout)
         qstlayout.add_widget(btnimages)
         qstlayout.add_widget(btnoutput)
@@ -2120,13 +2151,60 @@ class Filechooser(BoxLayout):
         else:
             btnimages.text = 'Output on last column'
 
+
+
     def PrepareFile(self, filenameselected,btnimages, btnoutput, popupone, path):
+
+        class WidgetTexture(Widget):
+            def __init__(self, imagebits, **kwargs):
+                super(WidgetTexture, self).__init__(**kwargs)
+
+                sidesquare = sqrt(len(imagebits)-1)
+                intsidesquare = int(sidesquare)
+                self.texture = Texture.create(size=(sidesquare, sidesquare))
+
+
+                buf = list(imagebits)
+                buf.pop(-1)
+                arr = list()
+                for value in reversed(buf):
+                    arr.append(int(value))
+
+                i = 0
+                newarr = list()
+                for valuerow in range(intsidesquare):
+                    thisrow=arr[valuerow*intsidesquare : (valuerow+1) * intsidesquare]
+                    thisrow.reverse()
+                    newarr.append(thisrow)
+                revarr = list()
+                for l in newarr:
+                    revarr += l
+
+                bufbytes = array('B', revarr)
+                # then blit the buffer
+                self.texture.blit_buffer(bufbytes, colorfmt='luminance', bufferfmt='ubyte')
+
+
+                # that's all ! you can use it in your graphics now :)
+                # if self is a widget, you can do this
+                with self.canvas:
+                    self.rect=Rectangle(texture=self.texture, pos=self.pos, size=(sidesquare, sidesquare))
+
+                self.bind(pos=self.update_rect,
+                          size=self.update_rect)
+
+            def update_rect(self, *args):
+                self.rect.pos = self.pos
+
+
+
+
         global filename, lblfilename
         filename = filenameselected
         lblfilename.text = ('[b] Current file: [/b]' + '[i]' + str(basename(filenameselected)))
         popupone.dismiss()
         containerbox = BoxLayout(orientation = 'vertical')
-        containershow = GridLayout()
+
         popupshow = Popup(title='DATASET:', content=containerbox, separator_color=(.67, .57, .69, 1),
                          auto_dismiss=False)
         popupbtn = Button(text='OK', on_press=popupshow.dismiss, background_normal='ButtonPlusP.png',
@@ -2141,37 +2219,20 @@ class Filechooser(BoxLayout):
             containerbox.add_widget(containershow)
             containerbox.add_widget(popupbtn)
             popupshow.open()
-        if btnimages.text == 'Images dataset':
-            containershow.cols= 1
-            imagedata = Widget()
-            imagedatakk = Button()
-            containershow.add_widget(imagedata)
-            containershow.add_widget(imagedatakk)
+        elif btnimages.text == 'Images dataset':
+            mytexturedataset = load_csv(filenameselected)
+            mytexturedataset = datasetoutputfirstcolumn(mytexturedataset)
+            containershow = GridLayout(cols=10)
+            for rowtexture in mytexturedataset:
+                imagedata = WidgetTexture(rowtexture)
+                containershow.add_widget(imagedata)
             containerbox.add_widget(containershow)
             containerbox.add_widget(popupbtn)
             popupshow.open()
-            with imagedata.canvas:
-                Rectangle(size=(200,200), pos_hint=(imagedata.pos_hint), size_hint=(None,None))
-                Point(points=(self.x,self.y))
+            # with imagedata.canvas.after:
+            #     Rectangle(size=(imagedata.size), pos=(imagedata.pos))
 
-            # texture = Texture.create(size=(64, 64))
-            #
-            # # create 64x64 rgb tab, and fill with values from 0 to 255
-            # # we'll have a gradient from black to white
-            # size = 64 * 64 * 3
-            # buf = [int(x * 255 / size) for x in range(size)]
-            #
-            # # then, convert the array to a ubyte string
-            # buf = b''.join(map(chr, buf))
-            #
-            # # then blit the buffer
-            # texture.blit_buffer(buf, colorfmt='rgb', bufferfmt='ubyte')
-            #
-            #
-            # # that's all ! you can use it in your graphics now :)
-            # # if self is a widget, you can do this
-            # with imagedata.canvas:
-            #     Rectangle(texture=texture, pos=self.pos, size=(64, 64))
+
 
 
         #with popupshow.canvas:
