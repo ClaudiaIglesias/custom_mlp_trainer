@@ -1113,7 +1113,6 @@ class MyApp(App):
 
         numoutputs = n_outputs
         numdata = n_inputs
-        numdata=40
         space = numdata * 20 + (numdata - 1) * 5
         spaceone = list_hidden[0] * 20 + (list_hidden[0] - 1) * 5
         spaceoutput = numoutputs * 20 + (numoutputs - 1) * 5
@@ -2152,7 +2151,6 @@ class Filechooser(BoxLayout):
             btnimages.text = 'Output on last column'
 
 
-
     def PrepareFile(self, filenameselected,btnimages, btnoutput, popupone, path):
 
         class WidgetTexture(Widget):
@@ -2167,22 +2165,12 @@ class Filechooser(BoxLayout):
                 buf = list(imagebits)
                 buf.pop(-1)
                 arr = list()
-                for value in reversed(buf):
+                for value in buf:
                     arr.append(int(value))
 
-                i = 0
-                newarr = list()
-                for valuerow in range(intsidesquare):
-                    thisrow=arr[valuerow*intsidesquare : (valuerow+1) * intsidesquare]
-                    thisrow.reverse()
-                    newarr.append(thisrow)
-                revarr = list()
-                for l in newarr:
-                    revarr += l
-
-                bufbytes = array('B', revarr)
-                # then blit the buffer
+                bufbytes = array('B', arr)
                 self.texture.blit_buffer(bufbytes, colorfmt='luminance', bufferfmt='ubyte')
+                self.texture.flip_vertical()
 
 
                 # that's all ! you can use it in your graphics now :)
@@ -2194,7 +2182,8 @@ class Filechooser(BoxLayout):
                           size=self.update_rect)
 
             def update_rect(self, *args):
-                self.rect.pos = self.pos
+                self.rect.pos = (self.center_x - self.rect.size[0] / 2, self.center_y - self.rect.size[1] / 2)
+
 
 
 
@@ -2223,8 +2212,8 @@ class Filechooser(BoxLayout):
             mytexturedataset = load_csv(filenameselected)
             mytexturedataset = datasetoutputfirstcolumn(mytexturedataset)
             containershow = GridLayout(cols=10)
-            for rowtexture in mytexturedataset:
-                imagedata = WidgetTexture(rowtexture)
+            for rowtexture in range(15):
+                imagedata = WidgetTexture(mytexturedataset[rowtexture])
                 containershow.add_widget(imagedata)
             containerbox.add_widget(containershow)
             containerbox.add_widget(popupbtn)
