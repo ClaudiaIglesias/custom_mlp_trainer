@@ -61,6 +61,8 @@ l_rate = 0.3
 n_epoch = 20
 prediction = False
 varerrorlayout = False
+mytexturedataset = ''
+outputchanged = False
 a = 0
 b = 0
 c = 0
@@ -70,6 +72,7 @@ g = 0
 i = 0
 j = 0
 l = 0
+pagenum = 1
 valuepb = 0
 valuetrain = 0
 accuracylabel =''
@@ -118,9 +121,16 @@ def load_csv(filename):
 
 def datasetoutputfirstcolumn(mydataset):
     for row in mydataset:
-        aux = row[-1]
-        row[-1] = row[0]
-        row[0] = aux
+        aux = row[0]
+        row.pop(0)
+        row.append(aux)
+    return mydataset
+
+def datasetoutputlastcolumn(mydataset):
+    for row in mydataset:
+        aux = row[0]
+        row.pop(0)
+        row.append(aux)
     return mydataset
 
 # String to float
@@ -2113,31 +2123,138 @@ class LayoutScreen(BoxLayout):
     pass
 
 class Filechooser(BoxLayout):
+
     def open(self, path, filenameselected):
-        global popup
+        global popup, filename, pagenum, mytexturedataset
+
+        def btnactivation(mytexturedataset):
+            if pagenum == 1:
+                btnpreviouspage.disabled = True
+            elif pagenum == len(mytexturedataset) / 14:
+                btnnextpage.disabled = True
+            else:
+                btnnextpage.disabled = False
+                btnpreviouspage.disabled = False
+
+
+        def Numberdataset(checkbox, value):
+            global pagenum, mytexturedataset
+            mainlayout.clear_widgets()
+            if checkbox == 'plusbtn':
+                pagenum += 1
+                btnactivation(mytexturedataset)
+            else:
+                if checkbox == 'lessbtn':
+                    pagenum -= 1
+                    btnactivation(mytexturedataset)
+                else:
+                    pass
+            if numberdatabox.active == True:
+                for rowtexture in range(14):
+                    mystrrow = ''
+                    for number in mytexturedataset[rowtexture+pagenum*14]:
+                        mainlayout.cols = len(mytexturedataset[rowtexture])
+                        mystrrow = number + ' '
+                        datalbl = Label(text =mystrrow)
+                        mainlayout.add_widget(datalbl)
+                lblpage.text = 'Page:' + str(pagenum) + '/' + str(len(mytexturedataset) / 14)
+
+            else:
+                pass
+
+        def Outputdataset(checkbox, value):
+            global mytexturedataset, outputchanged
+            if outputfirstbox.active == True and outputchanged == False:
+                mytexturedataset = datasetoutputfirstcolumn(mytexturedataset)
+                Numberdataset(0, 0)
+                outputchanged = True
+            elif outputlastbox.active == True and outputchanged == True:
+                mytexturedataset = datasetoutputlastcolumn(mytexturedataset)
+                Numberdataset(0, 0)
+                outputchanged = False
+            else:
+                pass
+
         with open(os.path.join(path, filenameselected)) as f:
             print(f.read())
         popup.dismiss()
-        container = BoxLayout(orientation='vertical')
-        qstlayout = BoxLayout(orientation='horizontal', size_hint=(.9,.9), spacing = 10, pos_hint={'center_x':.5, 'center_y':.5})
-        popupone = Popup(title='FILE SETTINGS', content=container, size_hint=(.7, .7), separator_color=(.67, .57, .69, 1),
-                         auto_dismiss=False)
-        popupbtn = Button(text='OK', color=(0,0,0,1), background_normal='ButtonPlusB.png',
-                          background_down='ButtonDeactivated.png', size_hint=(1,.4))
+
+        filename = filenameselected
+        lblfilename.text = ('[b] Current file: [/b]' + '[i]' + str(basename(filenameselected)))
+        popup.dismiss()
+        mytexturedataset = load_csv(filenameselected)
+
+        pagenum = 1
+        containerbox = BoxLayout(orientation='vertical')
+        popupshow = Popup(title='DATASET:', content=containerbox, separator_color=(.67, .57, .69, 1),
+                          auto_dismiss=False)
+        popupbtn = Button(text='OK', on_press=popupshow.dismiss, background_normal='ButtonPlusP.png',
+                          background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png',
+                          pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(.4,1))
+        mainlayout = GridLayout(cols=1)
+        middlelayout = BoxLayout(orientation = 'horizontal')
+        btnnextpage = Button(text='[b]>', markup=True, size_hint=(.05, .2),
+                         pos_hint={'center_x': 1, 'center_y': .5},
+                         background_normal='ButtonPlusP.png',
+                         background_down='ButtonDeactivated.png',
+                         background_disabled_normal='ButtonDeactivated.png', font_size=20)
+        btnpreviouspage = Button(text='[b]<', markup=True, size_hint=(.05, .2),
+                             pos_hint={'center_x': 1, 'center_y': .5},
+                             background_normal='ButtonPlusP.png',
+                             background_down='ButtonDeactivated.png',
+                             background_disabled_normal='ButtonDeactivated.png', font_size=20)
+        btnlayout = BoxLayout(orientation='horizontal', size_hint=(1,.1))
+        typelayout = GridLayout( cols = 4)
+        imagedatabox = CheckBox(group = 'typeobject', size_hint=(.4,1))
+        lblimagedatabox = Label(text='Images dataset',halign="left")
+        lblimagedatabox.bind(size=lblimagedatabox.setter('text_size'))
+        numberdatabox = CheckBox(group = 'typeobject', size_hint=(.4,1))
+        lblnumberdatabox = Label(text='Numbers dataset',halign="left")
+        lblnumberdatabox.bind(size=lblnumberdatabox.setter('text_size'))
+        outputfirstbox = CheckBox(group='output', size_hint=(.4,1))
+        lbloutputfirstbox = Label(text='Outputs on first column',halign="left")
+        lbloutputfirstbox.bind(size=lbloutputfirstbox.setter('text_size'))
+        outputlastbox = CheckBox(group='output', size_hint=(.4,1))
+        lbloutputlastbox = Label(text='Outputs on last column',halign="left")
+        lbloutputlastbox.bind(size=lbloutputlastbox.setter('text_size'))
+        separator= Widget(size_hint=(1,.05))
+        lblpage = Label(text = 'Page:' + str(pagenum) + '/' + '0', pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1,.1))
+
+        numberdatabox.active = True
+        outputlastbox.active = True
+        outputchanged = False
+        btnpreviouspage.disabled = True
+        btnnextpage.disabled = False
+        btnnextpage.bind(on_press=lambda x:Numberdataset('plusbtn',self))
+        btnpreviouspage.bind(on_press=lambda x: Numberdataset('lessbtn', self))
+        outputfirstbox.bind(on_press=lambda x: Outputdataset(0, self))
+        numberdatabox.bind(active=Numberdataset)
+
+        typelayout.add_widget(numberdatabox)
+        typelayout.add_widget(lblnumberdatabox)
+        typelayout.add_widget(outputlastbox)
+        typelayout.add_widget(lbloutputlastbox)
+        typelayout.add_widget(imagedatabox)
+        typelayout.add_widget(lblimagedatabox)
+        typelayout.add_widget(outputfirstbox)
+        typelayout.add_widget(lbloutputfirstbox)
+        btnlayout.add_widget(popupbtn)
+        btnlayout.add_widget(typelayout)
+        middlelayout.add_widget(btnpreviouspage)
+        middlelayout.add_widget(mainlayout)
+        middlelayout.add_widget(btnnextpage)
+        containerbox.add_widget(middlelayout)
+        containerbox.add_widget(lblpage)
+        containerbox.add_widget(separator)
+        containerbox.add_widget(btnlayout)
+        popupshow.open()
 
 
-        btnimages = Button(text='Images dataset', font_size=20, background_normal='ButtonPlusP.png',
-                          background_down='ButtonDeactivated.png', size_hint=(.6,.6), pos_hint={'center_x':.5, 'center_y':.5})
-        btnimages.bind( on_press=lambda x:self.BtnImagesFncn(btnimages))
-        btnoutput = Button(text='Output on last column',font_size=20, background_normal='ButtonPlusP.png',
-                          background_down='ButtonDeactivated.png', size_hint=(.6,.6), pos_hint={'center_x':.5, 'center_y':.5})
-        btnoutput.bind(on_press=lambda x: self.BtnOutputFncn(btnoutput))
-        popupbtn.bind(on_press=(lambda x: self.PrepareFile(filenameselected,btnimages, btnoutput, popupone, path)))
-        container.add_widget(qstlayout)
-        qstlayout.add_widget(btnimages)
-        qstlayout.add_widget(btnoutput)
-        container.add_widget(popupbtn)
-        popupone.open()
+        #Esto obv hay que cambiarlo
+        if len(mytexturedataset) > 20:
+            Numberdataset(numberdatabox,numberdatabox)
+        else:
+            Numberdataset(numberdatabox,numberdatabox)
 
     def BtnImagesFncn(self,btnimages):
         if btnimages.text == 'Numbers dataset':
@@ -2188,17 +2305,6 @@ class Filechooser(BoxLayout):
 
 
 
-        global filename, lblfilename
-        filename = filenameselected
-        lblfilename.text = ('[b] Current file: [/b]' + '[i]' + str(basename(filenameselected)))
-        popupone.dismiss()
-        containerbox = BoxLayout(orientation = 'vertical')
-
-        popupshow = Popup(title='DATASET:', content=containerbox, separator_color=(.67, .57, .69, 1),
-                         auto_dismiss=False)
-        popupbtn = Button(text='OK', on_press=popupshow.dismiss, background_normal='ButtonPlusP.png',
-                          background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png', size_hint=(.3,.1), pos_hint={'center_y':.5, 'center_y':0})
-        file = open(os.path.join(path, filenameselected)).read()
         if btnimages.text == 'Numbers dataset':
             containershow.cols = len(filenameselected[0])
             for row in filenameselected:

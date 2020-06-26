@@ -1,0 +1,187 @@
+
+
+# Load a CSV file
+import sys
+from csv import reader
+from math import sqrt
+from os.path import basename
+
+from mnist_reader import load_mnist
+
+
+def load_csv(filename):
+    dataset = list()
+    try:
+        with open(filename, 'r') as file:
+            csv_reader = reader(file)
+            for row in csv_reader:
+                if not row:
+                    continue
+                dataset.append(row)
+        return dataset
+    except:
+        return None
+
+
+def datasetoutputfirsttolastcolumn(mydataset):
+    for row in mydataset:
+        value = row.pop(0)
+        row.append(value)
+    return mydataset
+
+
+# String to float
+def str_column_to_float(dataset, column):
+    for row in dataset:
+        row[column] = float(row[column].strip())
+
+
+# string to integer
+def str_column_to_int(dataset, column):
+    class_values = [row[column] for row in dataset]
+    unique = set(class_values)
+    lookup = dict()
+    for i, value in enumerate(unique):
+        lookup[value] = i
+    for row in dataset:
+        row[column] = lookup[row[column]]
+    return lookup
+
+
+# max and min value of each column
+def dataset_minmax(dataset):
+    minmax = list()
+    stats = [[min(column), max(column)] for column in zip(*dataset)]
+    return stats
+
+
+def gess_output_column(mydataset):
+    last = -1
+    first = 0
+    outputslast = ([row[last] for row in mydataset])
+    setoutputslast = set(outputslast)
+    n_outputslast = len(setoutputslast)
+    outputsfirst = ([row[0] for row in mydataset])
+    setoutputsfirst = set(outputsfirst)
+    n_outputsfirst = len(setoutputsfirst)
+    # more than 1 output
+    if (n_outputslast == 1):
+        return first
+    if (n_outputsfirst == 1):
+        return last
+
+    # no float as output
+    for row in setoutputslast:
+        floatvalue = float(row.strip())
+        intvalue = float(int(row.strip()))
+        # if floatvalue is not an integer
+        if (floatvalue != intvalue):
+            return first
+    for row in setoutputsfirst:
+        floatvalue = float(row.strip())
+        intvalue = float(int(floatvalue))
+        # if floatvalue is not an integer
+        if (floatvalue != intvalue):
+            return last
+    return last
+
+def gess_is_type_image(mydataset):
+    inputfirst = len(mydataset[0])
+    if (inputfirst > 20):
+        sidesquare = sqrt(inputfirst - 1)
+        intsidesquare = float(int(sidesquare))
+        # if sidesquare is an integer
+        if (sidesquare == intsidesquare):
+            return True
+    return False
+
+# range 0-1
+def normalize_dataset(dataset, minmax):
+    for row in dataset:
+        for i in range(len(row) - 1):
+            if minmax[i][1] != minmax[i][0]:
+                row[i] = (row[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
+
+def showdataset(filenamepath, forceisimage=None, forceoutputcolumn=None):
+    filename = basename(filenamepath)
+    if filename.find('idx') != -1:
+        images, labels = load_mnist(filenamepath)
+        if images is None or labels is None:
+            return None, None
+        # to float
+        i = 0
+        for floatrow in images:
+            images.append(labels[i])
+            i += 1
+        return True, images
+    else:
+        mydataset = load_csv(filenamepath)
+        if mydataset is None:
+            return None, None
+        if forceoutputcolumn is None:
+            outputcolumn = gess_output_column(mydataset)
+        else:
+            outputcolumn = forceoutputcolumn
+        if isimage is None:
+            isimage = gess_is_type_image(mydataset)
+        else:
+            isimage = forceisimage
+        if outputcolumn == 0:
+            mydataset = datasetoutputfirsttolastcolumn(mydataset)
+        return isimage, mydataset
+
+def readdataset(filenamepath, forceisimage=None, forceoutputcolumn=None):
+    filename = basename(filenamepath)
+    if filename.find('idx') != -1:
+        images, labels = load_mnist(filenamepath)
+        if images is None or labels is None:
+            return None
+        # to float
+        floatimages=list()
+        for row in images:
+            floatimages.append([float(col) for col in row])
+        # normalize
+        minmax = dataset_minmax(floatimages)
+        i = 0
+        for floatrow in floatimages:
+            floatrow.append(labels[i])
+            i += 1
+        normalize_dataset(floatimages, minmax)
+        if forceisimage is None:
+            isimage = True
+        else:
+            isimage = forceisimage
+        return isimage, floatimages
+    else:
+        mydataset = load_csv(filenamepath)
+        if mydataset is None:
+            return None
+        if forceoutputcolumn is None:
+            outputcolumn = gess_output_column(mydataset)
+        else:
+            outputcolumn = forceoutputcolumn
+        if forceisimage is None:
+            isimage = gess_is_type_image(mydataset)
+        else:
+            isimage = forceisimage
+        if outputcolumn == 0:
+            mydataset = datasetoutputfirsttolastcolumn(mydataset)
+        for i in range(len(mydataset[0]) - 1):
+            str_column_to_float(mydataset, i)
+            # convert class column to integers
+        str_column_to_int(mydataset, len(mydataset[0]) - 1)
+        # normalize input variables
+        minmax = dataset_minmax(mydataset)
+        normalize_dataset(mydataset, minmax)
+        return isimage, mydataset
+
+# def main():
+#     # print command line arguments
+#
+#     for arg in sys.argv[1:]:
+#         isimage, dataset = readdataset(arg)
+#         print ("isimage {0},  rows {1}" .format(isimage, len(dataset)))
+#
+#
+# if __name__ == '__main__':
+#     main()
