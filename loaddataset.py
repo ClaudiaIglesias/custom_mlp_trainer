@@ -122,7 +122,7 @@ def showdataset(filenamepath, forceisimage=None, forceoutputcolumn=None):
             outputcolumn = gess_output_column(mydataset)
         else:
             outputcolumn = forceoutputcolumn
-        if isimage is None:
+        if forceisimage is None:
             isimage = gess_is_type_image(mydataset)
         else:
             isimage = forceisimage
@@ -135,7 +135,7 @@ def readdataset(filenamepath, forceisimage=None, forceoutputcolumn=None):
     if filename.find('idx') != -1:
         images, labels = load_mnist(filenamepath)
         if images is None or labels is None:
-            return None
+            return None, None
         # to float
         floatimages=list()
         for row in images:
