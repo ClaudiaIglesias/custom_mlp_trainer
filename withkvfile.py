@@ -2176,20 +2176,24 @@ class Filechooser(BoxLayout):
 
             #Show Images
             else:
-                cols = int((Window.width - 200) / int(sqrt(len(mytexturedataset[0]))))
-                mainlayout.cols = cols
-                rows = int((Window.height - 200) / int(sqrt(len(mytexturedataset[0]))))
-                mainlayout.rows = rows # /(cols*rows))
-                pags = (len(mytexturedataset) / (cols * rows))
-                check = is_whole(pags)
-                if check == True:
-                    pags = "{:.0f}".format(pags)
-                else:
-                    pags = int("{:.0f}".format(pags))
+                points = sqrt(len(mytexturedataset[0]) - 1)
+                cols = int((Window.width - 200) / points)
+                mainlayout.cols = int(cols)
+                rows = int((Window.height - 200) / points)
+                mainlayout.rows = int (rows)
+                nitemsperpage = (mainlayout.cols * mainlayout.rows)
+                pagsfloat = (len(mytexturedataset) / nitemsperpage)
+                pagsaux = float(int(pagsfloat))
+                pags = int(pagsfloat)
+                if pagsaux != pagsfloat:
                     pags += 1
+
                 lblpage.text = 'Page:' + str(pagenum) + '/' + str(pags)
-                for rowtexture in range(100): #in range cols * rows
-                    imagedata = WidgetTexture(mytexturedataset[rowtexture+(pagenum-1)*40])
+                for rowtexture in range(nitemsperpage): #in range cols * rows
+                    index = rowtexture+(pagenum-1)*nitemsperpage
+                    if index >= len(mytexturedataset):
+                        break
+                    imagedata = WidgetTexture(mytexturedataset[index])
                     mainlayout.add_widget(imagedata)
 
         def Outputdataset(checkbox, value):
