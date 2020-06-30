@@ -111,7 +111,7 @@ def showdataset(filenamepath, forceisimage=None, forceoutputcolumn=None):
         # to float
         i = 0
         for floatrow in images:
-            images.append(labels[i])
+            floatrow.append(labels[i])
             i += 1
         return True, images
     else:

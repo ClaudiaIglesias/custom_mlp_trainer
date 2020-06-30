@@ -44,7 +44,13 @@ def load_mnist(filenamepath):
             num_of_colums = int.from_bytes(imgpath.read(4), byteorder="big")
             images = np.frombuffer(imgpath.read(), dtype=np.uint8,
                                    offset=0).reshape(num_of_labels, num_of_rows * num_of_colums)
+            imagesarr = list()
+            for myarray in images:
+                myarrayitem=list()
+                for myitem in myarray:
+                    myarrayitem.append(myitem)
+                imagesarr.append(myarrayitem)
 
-        return images, labels
+        return imagesarr, labels
     except:
         return None, None

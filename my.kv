@@ -227,11 +227,11 @@
     id: idfilechooser
     BoxLayout:
         orientation:'vertical'
-        FileChooserIconView:
+        FileChooserListView:
             id: filechooserbox
             path: '.'
-            on_selection: text_input.text = self.selection and self.selection[0] or ''
-            #on_selection: idfilechooser.selected(filechooserbox.selection)
+            #on_selection: text_input.text = os.path.basename(self.selection[0])
+            on_selection: self.selection and self.selection[0] and idfilechooser.myselected(self.path, self.selection[0]) or ''
 
 
         BoxLayout:
