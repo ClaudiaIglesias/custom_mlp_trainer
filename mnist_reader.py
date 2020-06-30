@@ -44,13 +44,10 @@ def load_mnist(filenamepath):
             num_of_colums = int.from_bytes(imgpath.read(4), byteorder="big")
             images = np.frombuffer(imgpath.read(), dtype=np.uint8,
                                    offset=0).reshape(num_of_labels, num_of_rows * num_of_colums)
-            imagesarr = list()
-            for myarray in images:
-                myarrayitem=list()
-                for myitem in myarray:
-                    myarrayitem.append(myitem)
-                imagesarr.append(myarrayitem)
+            imagesarr = images.tolist()
+            labelsarr = labels.tolist()
 
-        return imagesarr, labels
+        return imagesarr, labelsarr
     except:
+        print("Unexpected error loading mnist file:", sys.exc_info()[0])
         return None, None

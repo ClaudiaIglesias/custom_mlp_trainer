@@ -2151,30 +2151,22 @@ class Filechooser(BoxLayout):
 
                 if len(mytexturedataset[0]) > 20:
                     mainlayout.cols = 11
-                    for rowtexture in range(14):
-                        index = rowtexture + (pagenum - 1) * 14
-                        i = 0
+                    linesperpage = 14
+                    for rowtexture in range(linesperpage):
+                        index = rowtexture + (pagenum - 1) * linesperpage
+                        pos = 0
                         if index >= len(mytexturedataset):
                             break
-                        for number in mytexturedataset[rowtexture + (pagenum-1) * 13]:
-                            if i == 5:
-                                pass
-                            else:
-                                mystrrow = number + ' '
-                                datalbl = Label(text=mystrrow)
+                        firstline = mytexturedataset[rowtexture + (pagenum-1) * linesperpage]
+                        for number in firstline:
+                            if pos < 5 or pos >= (len(firstline) - 5):
+
+                                datalbl = Label(text=str(number))
                                 mainlayout.add_widget(datalbl)
-                                i += 1
-                        datalbl = Label(text='...')
-                        mainlayout.add_widget(datalbl)
-                        i = 0
-                        for number in mytexturedataset[rowtexture + (pagenum-1) * 9]:
-                            if i == 5:
-                                pass
-                            else:
-                                mystrrow = number + ' '
-                                datalbl = Label(text=mystrrow)
+                            elif pos == 5 :
+                                datalbl = Label(text='...')
                                 mainlayout.add_widget(datalbl)
-                                i += 1
+                            pos += 1
                 else:
                     mainlayout.cols = len(mytexturedataset[0])
                     for rowtexture in range(14):
@@ -2234,12 +2226,19 @@ class Filechooser(BoxLayout):
             outputbox.add_widget(outputlblbox)
 
             outputslast = ([row[-1] for row in mytexturedataset])
-            setoutputslast = set(outputslast)
+            setoutputslast = sorted(set(outputslast))
             for number in setoutputslast:
-                lbloutput = Label(text=number)
+                lbloutput = Label(text=str(number))
                 outputlblbox.add_widget(lbloutput)
             if imagedatabox.active == True:
                 outputimagebox = BoxLayout(orientation='vertical')
+                for number in setoutputslast:
+                    for row in mytexturedataset:
+                        if row[-1] == number:
+                            imagedata = WidgetTexture(row)
+                            outputimagebox.add_widget(imagedata)
+                            break
+
                 outputbox.add_widget(outputimagebox)
             containeroutput.add_widget(outputbox)
             containeroutput.add_widget(popupoutputbtn)
@@ -2255,7 +2254,7 @@ class Filechooser(BoxLayout):
             containererror = BoxLayout(orientation='vertical')
             popuperror = Popup(title='DATASET:', content=containererror, separator_color=(.6,1,1, 1),
                               auto_dismiss=False, size_hint=(.5,.5))
-            lblerror = Label(text='Wrong file type. Only text file accpeted')
+            lblerror = Label(text='{} : Wrong file format' .format(filenameselected))
             popuperrorbtn = Button(text='OK', on_press=popuperror.dismiss, background_normal='ButtonPlusP.png',
                               background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png',
                               pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1,.5))
