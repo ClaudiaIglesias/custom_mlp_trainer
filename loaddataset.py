@@ -7,7 +7,7 @@ from math import sqrt
 from os.path import basename
 
 from mnist_reader import load_mnist
-
+import re
 
 def load_csv(filename):
     dataset = list()
@@ -54,8 +54,22 @@ def dataset_minmax(dataset):
     stats = [[min(column), max(column)] for column in zip(*dataset)]
     return stats
 
+def optional_output_column(mydataset, columnselected):
+    last = -1
+    first = 0
+    if columnselected == first:
+        column = last
+    else:
+        column = first
+    outputs = ([row[column] for row in mydataset])
+    setoutputs = set(outputs)
+    n_outputs = len(setoutputs)
+    if n_outputs == 1 or n_outputs > 20:
+        return False
+    else:
+        return True
 
-def gess_output_column(mydataset):
+def guess_output_column(mydataset):
     last = -1
     first = 0
     outputslast = ([row[last] for row in mydataset])
@@ -85,7 +99,7 @@ def gess_output_column(mydataset):
             return last
     return last
 
-def gess_is_type_image(mydataset):
+def guess_is_type_image(mydataset):
     inputfirst = len(mydataset[0])
     if (inputfirst > 20):
         sidesquare = sqrt(inputfirst - 1)
@@ -102,37 +116,37 @@ def normalize_dataset(dataset, minmax):
             if minmax[i][1] != minmax[i][0]:
                 row[i] = (row[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
 
-def showdataset(filenamepath, forceisimage=None, forceoutputcolumn=None):
+def showdataset(filenamepath):
     filename = basename(filenamepath)
-    if filename.find('idx') != -1:
+    if re.compile('\.*csv').search(filename) is None and filename.find('idx') != -1:
         images, labels = load_mnist(filenamepath)
         if images is None or labels is None:
-            return None, None
+            return None, None, None, None
         # to float
         i = 0
         for floatrow in images:
             floatrow.append(labels[i])
             i += 1
-        return True, images
+        return False, True, True, images
     else:
         mydataset = load_csv(filenamepath)
         if mydataset is None:
-            return None, None
-        if forceoutputcolumn is None:
-            outputcolumn = gess_output_column(mydataset)
+            return None, None, None, None
+        outputcolumn = guess_output_column(mydataset)
+        outputoptional = optional_output_column(mydataset, outputcolumn)
+        isimage = guess_is_type_image(mydataset)
+        if isimage == False:
+            imageoptional = False
         else:
-            outputcolumn = forceoutputcolumn
-        if forceisimage is None:
-            isimage = gess_is_type_image(mydataset)
-        else:
-            isimage = forceisimage
+            imageoptional = True
+
         if outputcolumn == 0:
             mydataset = datasetoutputfirsttolastcolumn(mydataset)
-        return isimage, mydataset
+        return outputoptional, imageoptional, isimage, mydataset
 
 def readdataset(filenamepath, forceisimage=None, forceoutputcolumn=None):
     filename = basename(filenamepath)
-    if filename.find('idx') != -1:
+    if re.compile('\.*csv').search(filename) is None and filename.find('idx') != -1:
         images, labels = load_mnist(filenamepath)
         if images is None or labels is None:
             return None, None
@@ -155,13 +169,13 @@ def readdataset(filenamepath, forceisimage=None, forceoutputcolumn=None):
     else:
         mydataset = load_csv(filenamepath)
         if mydataset is None:
-            return None
+            return None, None
         if forceoutputcolumn is None:
-            outputcolumn = gess_output_column(mydataset)
+            outputcolumn = guess_output_column(mydataset)
         else:
             outputcolumn = forceoutputcolumn
         if forceisimage is None:
-            isimage = gess_is_type_image(mydataset)
+            isimage = guess_is_type_image(mydataset)
         else:
             isimage = forceisimage
         if outputcolumn == 0:

@@ -2,6 +2,7 @@
 
 
 from kivy.app import App
+from kivy.storage.jsonstore import JsonStore
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.checkbox import CheckBox
@@ -46,7 +47,6 @@ from os.path import dirname, join, basename, exists, expanduser
 
 from loaddataset import showdataset, readdataset, str_column_to_float
 
-numdata = 2
 numoutputs = 1
 n_outputs = 1
 n_inputs = 2
@@ -63,15 +63,6 @@ varerrorlayout = False
 mytexturedataset = ''
 outputchanged = False
 pags = 1
-a = 0
-b = 0
-c = 0
-d = 0
-e = 1
-g = 0
-i = 0
-j = 0
-l = 0
 pagenum = 1
 valuepb = 0
 valuetrain = 0
@@ -310,12 +301,6 @@ class MyApp(App):
         a = 0
         b = 0
         c = 0
-        d = 0
-        e = 0
-        g = 0
-        i = 0
-        j = 0
-        l = 0
         prediction = True
 
         draw = parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
@@ -329,6 +314,7 @@ class MyApp(App):
 
         numoutputs = mydata.n_outputlbl
 
+        numdata = mydata.n_inputlbl
 
         space = numdata * 35 + (numdata - 1) * 25
         spaceone =mydata.list_hidden[0] * 35 + (mydata.list_hidden[0] - 1) * 25
@@ -359,17 +345,17 @@ class MyApp(App):
             hiddenlayeronelabelone.pos = (middletitlex - 28, middletitley - 50)
             titlelayout.add_widget(hiddenlayeronelabelone)
             for x in range(mydata.list_hidden[0]):
-                if valuefloat < abs(network[0][a]['weights'][-1]):
-                    valuefloat = abs(network[0][a]['weights'][-1])
+                if valuefloat < abs(mydata.networklist[0][a]['weights'][-1]):
+                    valuefloat = abs(mydata.networklist[0][a]['weights'][-1])
                 e = 0
                 i = 0
                 for y in range(numdata):
-                    if linecolorinput < abs(network[0][a]['weights'][i]):
-                        linecolorinput = abs(network[0][a]['weights'][i])
+                    if linecolorinput < abs(mydata.networklist[0][a]['weights'][i]):
+                        linecolorinput = abs(mydata.networklist[0][a]['weights'][i])
                     i = i + 1
                 for z in range(numoutputs):
-                    if linecoloroutput < abs(network[1][e]['weights'][a]):
-                        linecoloroutput = abs(network[1][e]['weights'][a])
+                    if linecoloroutput < abs(mydata.networklist[1][e]['weights'][a]):
+                        linecoloroutput = abs(mydata.networklist[1][e]['weights'][a])
                     e = e + 1
                 a = a + 1
             a = 0
@@ -683,7 +669,7 @@ class MyApp(App):
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     b = b + 1
         else:
-            for x in range(int(numdata / 2 - 1)):
+            for x in range(4):
                 with draw.canvas:
                     Color(.6, .87, .89)
                     RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - 575 / 2)))
@@ -698,7 +684,7 @@ class MyApp(App):
                     b = b + 1
                     Color(.4 + b / 9, .67 + b / 9, .69 + b / 9)
                     Ellipse(pos=(middlex - 225, middley - b * 20), size=(5, 5))
-
+            draw.add_widget(Label(text=str(numdata), pos=(middlex - 320, middley - 96), size_hint=(None, None)))
 
     #When btnOK is pressed. Plain normal size
     def drawingblank(self, draw, titlelayout, *largs):
@@ -707,13 +693,8 @@ class MyApp(App):
         a = 0
         b = 0
         c = 0
-        d = 0
-        e = 0
-        g = 0
-        i = 0
-        j = 0
-        l = 0
 
+        numdata = n_inputs
         draw.canvas.clear()
         numoutputs = n_outputs
         space = numdata * 35 + (numdata - 1) * 25
@@ -974,9 +955,7 @@ class MyApp(App):
             self.l_rate = l_rate
             self.dataerror = dataerror
             self.list_hidden = list_hidden.copy()
-            leftpanellist.append(self)
-            currentpage = len(leftpanellist)
-            MyApp.establishbtnpages(self)
+
 
     #When btnError is pressed
     #The lbls on the left
@@ -987,7 +966,7 @@ class MyApp(App):
 
         lbldate= Label(text=leftpanelitem.datestr, markup=True, halign="left", size_hint=(1, .1))
         lbldate.bind(size=lbldate.setter('text_size'))
-        labelfile = (Label(text='[b] File: [/b][i]' + leftpanelitem.filename, markup=True, halign="left",
+        labelfile = (Label(text='[b] File: [/b][i]' + basename(leftpanelitem.filename), markup=True, halign="left",
                            size_hint=(1, .1)))
         labelfile.bind(size=labelfile.setter('text_size'))
         labeltype = (Label(text='[b] [color=4BDCFF]Test: [/b][/color]' + leftpanelitem.type, markup=True,
@@ -1043,8 +1022,8 @@ class MyApp(App):
             btnplussidetext.disabled = False
 
     #Change between pages
-    def leflabelswitch(self, textlayout, dataerror, type, *largs):
-        global currentpage, btnplussidetext, btnlesssidetext
+    def leftlabelswitch(self, textlayout, dataerror, type, *largs):
+        global currentpage
         if type == 'btnplus':
             currentpage += 1
             mydata = leftpanellist[currentpage -1]
@@ -1065,11 +1044,6 @@ class MyApp(App):
         a = 0
         b = 0
         c = 0
-        d = 0
-        e = 0
-        g = 0
-        i = 0
-        l = 0
 
 
         draw.canvas.clear()
@@ -1332,6 +1306,38 @@ class MyApp(App):
         titlelayout.remove_widget(outputlabel)
         titlelayout.remove_widget(inputlabel)
 
+    def storeleftpanellist(self):
+        mystore = JsonStore('neuroncfg.json')
+        mystore.clear()
+        mystore.put('leftpanelhistorycount', name="numberofitems", value=len(leftpanellist))
+        i = 0
+        for panel in leftpanellist:
+            mystore.put('leftpanelhistory' + str(i), name="lelftpanellist", value=panel.__dict__)
+            i += 1
+
+    def restoreleftpanellist(self):
+        global currentpage, leftpanellist
+        mystore = JsonStore('neuroncfg.json')
+        if mystore.exists('leftpanelhistorycount'):
+            mynumberofitems = mystore.get('leftpanelhistorycount')['value']
+            for index in range(mynumberofitems):
+                mydatadict = mystore.get('leftpanelhistory' + str(index))['value']
+                mydataclasss = MyApp.Lblleft(type='', dataerror=0)
+                for key in mydatadict:
+                    setattr(mydataclasss, key, mydatadict[key])
+                leftpanellist.append(mydataclasss)
+                currentpage = len(leftpanellist)
+                MyApp.establishbtnpages(self)
+
+
+
+    def addclasstopanel(self, mypannelclass):
+        global currentpage
+        leftpanellist.append(mypannelclass)
+        currentpage = len(leftpanellist)
+        MyApp.establishbtnpages(self)
+        MyApp.storeleftpanellist(self)
+
     def build(self):
         global layoutneuronmainscreen, layoutlabels, parentlayout, myevent, lblfilename, btnlesssidetext, btnplussidetext, lblcurrentpage
         class MyEventDispatcher(EventDispatcher):
@@ -1527,7 +1533,7 @@ class MyApp(App):
         lblfolds = Label(text='[b]FOLDS:',markup=True, font_size=(11), pos_hint={'center_x': .5, 'center_y': .5})
         numfolds = Label(text=str(n_folds))
 
-
+        MyApp.restoreleftpanellist(self)
 
         btnplussidetext.disabled = True
         btnlesssidetext.disabled = True
@@ -1618,15 +1624,7 @@ class MyApp(App):
 
             #filename = 'seeds_dataset.csv'
             isimage, dataset = readdataset(filename)
-            print(filename)
-            print (dataset)
-            for i in range(len(dataset[0]) - 1):
-                str_column_to_float(dataset, i)
-            # convert class column to integers
-            str_column_to_int(dataset, len(dataset[0]) - 1)
-            # normalize input variables
-            minmax = dataset_minmax(dataset)
-            normalize_dataset(dataset, minmax)
+
             n_inputs = len(dataset[0]) - 1
             numdata = n_inputs
             n_outputs = len(set([row[-1] for row in dataset]))
@@ -1733,6 +1731,7 @@ class MyApp(App):
             layoutinfotop.add_widget(btnBack)
             layoutinfotop.add_widget(btnSettings)
             mydata = MyApp.Lblleft(type='train', dataerror=0)
+            MyApp.addclasstopanel(self, mydata)
             MyApp.drawinglblblackkv(self, layoutinfomiddle, mydata)
 
 
@@ -1768,6 +1767,7 @@ class MyApp(App):
             layoutinfotop.add_widget(btnBack)
             layoutinfotop.add_widget(btnSettings)
             mydata = MyApp.Lblleft(type='Find error', dataerror=accuracy)
+            MyApp.addclasstopanel(self, mydata)
             MyApp.leftlabels(self, layoutinfomiddle, mydata)
 
         def btnplusneuronpressed (btnplusneuron):
@@ -2053,8 +2053,8 @@ class MyApp(App):
         btnplusrate.bind(on_press=btnplusratepressed)
         btnlessrate.bind(on_press=btnlessratepressed)
         btnOpen.bind(on_press=filechooserfunction)
-        btnplussidetext.bind(on_press=lambda x:MyApp().leflabelswitch(layoutinfomiddle, 0,'btnplus'))
-        btnlesssidetext.bind(on_press=lambda x:MyApp().leflabelswitch(layoutinfomiddle, 0, 'btnless'))
+        btnplussidetext.bind(on_press=lambda x:MyApp().leftlabelswitch(layoutinfomiddle, 0, 'btnplus'))
+        btnlesssidetext.bind(on_press=lambda x:MyApp().leftlabelswitch(layoutinfomiddle, 0, 'btnless'))
 
 
         return parentlayout
@@ -2248,7 +2248,7 @@ class Filechooser(BoxLayout):
 
         filename = os.path.join(path, filenameselected)
         lblfilename.text = ('[b] Current file: [/b]' + '[i]' + filenameselected)
-        isimage, mytexturedataset = showdataset(filename)
+        optionaloutput, optionalimage, isimage, mytexturedataset = showdataset(filename)
 
         if mytexturedataset == None:
             containererror = BoxLayout(orientation='vertical')
@@ -2328,14 +2328,18 @@ class Filechooser(BoxLayout):
             numberdatabox.bind(active=Numberdataset)
             btnnoutputs.bind(on_press=Outputoptions)
 
-            typelayout.add_widget(numberdatabox)
-            typelayout.add_widget(lblnumberdatabox)
-            typelayout.add_widget(outputlastbox)
-            typelayout.add_widget(lbloutputlastbox)
-            typelayout.add_widget(imagedatabox)
-            typelayout.add_widget(lblimagedatabox)
-            typelayout.add_widget(outputfirstbox)
-            typelayout.add_widget(lbloutputfirstbox)
+            if optionalimage == True:
+                typelayout.add_widget(numberdatabox)
+                typelayout.add_widget(lblnumberdatabox)
+            if optionaloutput == True:
+                typelayout.add_widget(outputlastbox)
+                typelayout.add_widget(lbloutputlastbox)
+            if optionalimage == True:
+                typelayout.add_widget(imagedatabox)
+                typelayout.add_widget(lblimagedatabox)
+            if optionaloutput == True:
+                typelayout.add_widget(outputfirstbox)
+                typelayout.add_widget(lbloutputfirstbox)
             btnlayout.add_widget(popupbtn)
             btnlayout.add_widget(typelayout)
             middlelayout.add_widget(btnpreviouspage)
@@ -2366,44 +2370,6 @@ class Filechooser(BoxLayout):
             btnimages.text = 'Output on first column'
         else:
             btnimages.text = 'Output on last column'
-
-
-    def PrepareFile(self, filenameselected,btnimages, btnoutput, popupone, path):
-
-
-
-
-
-
-
-        if btnimages.text == 'Numbers dataset':
-            containershow.cols = len(filenameselected[0])
-            for row in filenameselected:
-                for column in range(len(filenameselected[0])):
-                    #print(open(os.path.join(path, filenameselected[0][0])).read())
-                    containershow.add_widget(Label(text=file[0]))
-            containerbox.add_widget(containershow)
-            containerbox.add_widget(popupbtn)
-            popupshow.open()
-        elif btnimages.text == 'Images dataset':
-            isimage, mytexturedataset = showdataset(filenameselected)
-            mytexturedataset = datasetoutputfirstcolumn(mytexturedataset)
-            containershow = GridLayout(cols=10)
-            for rowtexture in range(15):
-                imagedata = WidgetTexture(mytexturedataset[rowtexture])
-                containershow.add_widget(imagedata)
-            containerbox.add_widget(containershow)
-            containerbox.add_widget(popupbtn)
-            popupshow.open()
-            # with imagedata.canvas.after:
-            #     Rectangle(size=(imagedata.size), pos=(imagedata.pos))
-
-
-
-
-        #with popupshow.canvas:
-            #Rectangle(size=(popupshow.width,popupshow.height))
-
 
 
     def popupdismiss(self):
