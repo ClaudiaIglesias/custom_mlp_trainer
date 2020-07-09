@@ -55,6 +55,7 @@ dataset = 1
 list_hidden = list()
 listinputs = list()
 input = list()
+outputimageslist = list()
 network = []
 n_folds = 5
 l_rate = 0.3
@@ -410,10 +411,10 @@ class MyApp(App):
                     Color(0,0,0,1)
                     RoundedRectangle(size=(13, 13), pos=(middlex+2.5, a * 25 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
                 biases = "{:.2f}".format(value)
-                nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 25 + (middley-31.5 - spaceone / 2)),
-                                        color=(1,1,1, 0.25 + colorlayerone/1.33))
-                draw.add_widget(nodeslabel)
-                biaseslabels.append(nodeslabel)
+                #nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 25 + (middley-31.5 - spaceone / 2)),
+                                        #color=(1,1,1, 0.25 + colorlayerone/1.33))
+                #draw.add_widget(nodeslabel)
+                #biaseslabels.append(nodeslabel)
                 i = 0
                 e = 0
                 if numdata < 10:
@@ -639,12 +640,12 @@ class MyApp(App):
                     #draw.add_widget(draw.nodeslabel)
 
                 for l in range(mydata.list_hidden[1]):
-                    mypoints = [middlex+18, l * 25 + (middley+20 - spacetwo / 2), middlex+130, d * 25 + (middley+20 - spacethree / 2)]
+                    mypoints = [middlex+18, l * 25 + (middley+9 - spacetwo / 2), middlex+130, d * 25 + (middley+9 - spacethree / 2)]
                     MyApp.listoflinesappend(self, 2, d, l, linecolorinput, draw.canvas, mydata.networklist, mypoints)
 
             for e in range(numoutputs):
                 for d in range(mydata.list_hidden[2]):
-                    mypoints = [middlex+148, d * 25 + (middley+9 - spacethree / 2), middlex+230, e * 50 + (middley+20 - spaceoutput / 2)]
+                    mypoints = [middlex+148, d * 25 + (middley + 9 - spacethree / 2), middlex+230, e * 50 + (middley + 20 - spaceoutput / 2)]
                     MyApp.listoflinesappend(self, 3, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
 
         # output layer
@@ -661,6 +662,14 @@ class MyApp(App):
                 RoundedRectangle(size=(30, 30), pos=(middlex + 232.5, c * 50 + (middley+2.5 - spaceoutput / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
                 biases = "{:.2f}".format(value)
                 #draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex + 196, c * 50 + (middley-34 - spaceoutput / 2)),color=(1, 1, 1, .9))
+        c = 0
+        for row in mydata.outputimageslist:
+            image = Filechooser.WidgetTexture(row)
+            draw.add_widget(image)
+            image.pos = middlex - 115, c * 50 + (middley - spaceoutput / 2) - 240
+            c += 1
+
+
 
         # input layer
         if numdata < 10:
@@ -695,7 +704,7 @@ class MyApp(App):
 
         def __init__(self, type, dataerror):
             global dataset, scores, varerrorlayout, n_epoch, n_folds, l_rate
-            global list_hidden, network, n_outputs, n_inputs, currentpage, list_hidden
+            global list_hidden, network, n_outputs, n_inputs, currentpage, list_hidden, outputimageslist
 
             self.datestr = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             self.networklist = network.copy()
@@ -708,6 +717,7 @@ class MyApp(App):
             self.l_rate = l_rate
             self.dataerror = dataerror
             self.list_hidden = list_hidden.copy()
+            self.outputimageslist = outputimageslist.copy()
 
     class LineParam():
         def __init__(self, layer, hidden, offset, maximum, value, color, linewidget, canvas):
@@ -1893,39 +1903,37 @@ class Filechooser(BoxLayout):
     def myselected(self, path, filenameselected):
         self.ids.text_input.text = basename(filenameselected)
 
+    class WidgetTexture(Widget):
+        def __init__(self, imagebits, **kwargs):
+            super(Filechooser.WidgetTexture, self).__init__(**kwargs)
 
+            sidesquare = sqrt(len(imagebits) - 1)
+            intsidesquare = int(sidesquare)
+            self.texture = Texture.create(size=(sidesquare, sidesquare))
+
+            buf = list(imagebits)
+            buf.pop(-1)
+            arr = list()
+            for value in buf:
+                arr.append(int(value))
+
+            bufbytes = array('B', arr)
+            self.texture.blit_buffer(bufbytes, colorfmt='luminance', bufferfmt='ubyte')
+            self.texture.flip_vertical()
+
+
+            with self.canvas:
+                Color(1,1,1)
+                self.rect = Rectangle(texture=self.texture, pos=self.pos, size=(sidesquare, sidesquare))
+
+            self.bind(pos=self.update_rect,
+                      size=self.update_rect)
+
+        def update_rect(self, *args):
+            self.rect.pos = (self.center_x - self.rect.size[0] / 2, self.center_y - self.rect.size[1] / 2)
     def open(self, path, filenameselected):
         global popup, filename, pagenum, mytexturedataset
-        class WidgetTexture(Widget):
-            def __init__(self, imagebits, **kwargs):
-                super(WidgetTexture, self).__init__(**kwargs)
 
-                sidesquare = sqrt(len(imagebits)-1)
-                intsidesquare = int(sidesquare)
-                self.texture = Texture.create(size=(sidesquare, sidesquare))
-
-
-                buf = list(imagebits)
-                buf.pop(-1)
-                arr = list()
-                for value in buf:
-                    arr.append(int(value))
-
-                bufbytes = array('B', arr)
-                self.texture.blit_buffer(bufbytes, colorfmt='luminance', bufferfmt='ubyte')
-                self.texture.flip_vertical()
-
-
-                # that's all ! you can use it in your graphics now :)
-                # if self is a widget, you can do this
-                with self.canvas:
-                    self.rect=Rectangle(texture=self.texture, pos=self.pos, size=(sidesquare, sidesquare))
-
-                self.bind(pos=self.update_rect,
-                          size=self.update_rect)
-
-            def update_rect(self, *args):
-                self.rect.pos = (self.center_x - self.rect.size[0] / 2, self.center_y - self.rect.size[1] / 2)
 
 
         def btnactivation(mytexturedataset):
@@ -1940,7 +1948,7 @@ class Filechooser(BoxLayout):
                 btnnextpage.disabled = False
 
         def Numberdataset(checkbox, value):
-            global pagenum, mytexturedataset, pags
+            global pagenum, mytexturedataset, pags, outputimageslist
             mainlayout.clear_widgets()
             if checkbox == 'plusbtn':
                 pagenum += 1
@@ -2010,8 +2018,16 @@ class Filechooser(BoxLayout):
                     index = rowtexture+(pagenum-1)*nitemsperpage
                     if index >= len(mytexturedataset):
                         break
-                    imagedata = WidgetTexture(mytexturedataset[index])
+                    imagedata = Filechooser.WidgetTexture(mytexturedataset[index])
                     mainlayout.add_widget(imagedata)
+                outputslast = ([row[-1] for row in mytexturedataset])
+                setoutputslast = sorted(set(outputslast))
+                outputimageslist = list()
+                for number in setoutputslast:
+                    for row in mytexturedataset:
+                        if row[-1] == number:
+                            outputimageslist.append(row)
+                            break
             btnactivation(mytexturedataset)
 
         def Outputdataset(checkbox, value):
@@ -2027,16 +2043,22 @@ class Filechooser(BoxLayout):
             else:
                 pass
 
+        def popupoutputsdismiss(self, outputbox, popupoutputs):
+            popupoutputs.dismiss()
+            for row in outputimageslist:
+                image = Filechooser.WidgetTexture(row)
+                outputbox.remove_widget(image)
         def Outputoptions(self):
+            global outputimageslist
             containeroutput = BoxLayout(orientation='vertical')
             outputbox = GridLayout()
+            outputbox.clear_widgets()
             popupoutputs = Popup(title='OUTPUTS:', content=containeroutput, separator_color=(.6,1,1, 1),
                           auto_dismiss=False, size_hint=(.6,.8))
-            popupoutputbtn = Button(text='OK', on_press=popupoutputs.dismiss, background_normal='ButtonPlusP.png',
+            popupoutputbtn = Button(text='OK', background_normal='ButtonPlusP.png',
                                     background_down='ButtonDeactivated.png',
-                                    background_disabled_normal='ButtonDeactivated.png',
-                                    pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1, .2))
-
+                                    background_disabled_normal='ButtonDeactivated.png', pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1, .2))
+            popupoutputbtn.bind(on_press= lambda x:popupoutputsdismiss(self,outputbox,popupoutputs) )
             outputslast = ([row[-1] for row in mytexturedataset])
             setoutputslast = sorted(set(outputslast))
 
@@ -2046,12 +2068,16 @@ class Filechooser(BoxLayout):
                 outputbox.rows = len(setoutputslast)
 
             if imagedatabox.active == True:
-                for number in setoutputslast:
-                    for row in mytexturedataset:
-                        if row[-1] == number:
-                            imagedata = WidgetTexture(row)
-                            outputbox.add_widget(imagedata)
-                            break
+                # for number in setoutputslast:
+                #     for row in mytexturedataset:
+                #         if row[-1] == number:
+                #             imagedata = WidgetTexture(row)
+                #             outputbox.add_widget(imagedata)
+                #             break
+                for row in outputimageslist:
+                    image = Filechooser.WidgetTexture(row)
+                    outputbox.remove_widget(image)
+                    outputbox.add_widget(image)
 
             for number in setoutputslast:
                 lbloutput = Label(text=str(number))
@@ -2177,6 +2203,9 @@ class Filechooser(BoxLayout):
             else:
                 numberdatabox.active = True
             Numberdataset(numberdatabox,numberdatabox)
+
+
+
 
     def BtnImagesFncn(self,btnimages):
         if btnimages.text == 'Numbers dataset':
