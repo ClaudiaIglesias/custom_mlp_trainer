@@ -8,6 +8,9 @@ from os.path import basename
 
 from mnist_reader import load_mnist
 import re
+import settings
+from datetime import datetime
+
 
 def load_csv(filename):
     dataset = list()
@@ -115,7 +118,7 @@ def normalize_dataset(dataset, minmax):
         for i in range(len(row) - 1):
             if minmax[i][1] != minmax[i][0]:
                 row[i] = (row[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
-
+    
 def showdataset(filenamepath):
     filename = basename(filenamepath)
     if re.compile('\.*csv').search(filename) is None and filename.find('idx') != -1:
@@ -145,26 +148,33 @@ def showdataset(filenamepath):
         return outputoptional, imageoptional, isimage, mydataset
 
 def readdataset(filenamepath, forceisimage=None, forceoutputcolumn=None):
+
+    settings.myevent.evreaddataset(5, None, None)
+
     filename = basename(filenamepath)
     if re.compile('\.*csv').search(filename) is None and filename.find('idx') != -1:
         images, labels = load_mnist(filenamepath)
         if images is None or labels is None:
             return None, None
         # to float
+        settings.myevent.evreaddataset(10,  None, None)
         floatimages=list()
         for row in images:
             floatimages.append([float(col) for col in row])
         # normalize
+        settings.myevent.evreaddataset(30,  None, None)
         minmax = dataset_minmax(floatimages)
         i = 0
         for floatrow in floatimages:
             floatrow.append(labels[i])
             i += 1
+        settings.myevent.evreaddataset(50,  None, None)
         normalize_dataset(floatimages, minmax)
         if forceisimage is None:
             isimage = True
         else:
             isimage = forceisimage
+        settings.myevent.evreaddataset(100, isimage, floatimages)
         return isimage, floatimages
     else:
         mydataset = load_csv(filenamepath)
@@ -180,13 +190,23 @@ def readdataset(filenamepath, forceisimage=None, forceoutputcolumn=None):
             isimage = forceisimage
         if outputcolumn == 0:
             mydataset = datasetoutputfirsttolastcolumn(mydataset)
+
+        settings.myevent.evreaddataset(10,  None, None)
         for i in range(len(mydataset[0]) - 1):
             str_column_to_float(mydataset, i)
-            # convert class column to integers
+
+        # convert class column to integers
+        settings.myevent.evreaddataset(30, None, None)
         str_column_to_int(mydataset, len(mydataset[0]) - 1)
+
         # normalize input variables
+        settings.myevent.evreaddataset(50, None, None)
         minmax = dataset_minmax(mydataset)
+
+        settings.myevent.evreaddataset(70, None, None)
         normalize_dataset(mydataset, minmax)
+
+        settings.myevent.evreaddataset(100, isimage, mydataset)
         return isimage, mydataset
 
 # def main():

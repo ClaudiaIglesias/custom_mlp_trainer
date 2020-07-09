@@ -157,25 +157,17 @@
                 id:idLayoutNeuron
                 size_hint_x: 0.6
 
-            BoxLayout:
+            AnchorLayout:
                 id: idboxlayoutright
                 size_hint_x: 0.2                   #Info right
-                canvas.before:
-                    Color:
-                        rgba: 0, 0, 0, 0
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
-                BoxLayout:
-                    id: idlayoutrightmiddle
-                    orientation: 'vertical'
-                    size_hint: (.9,.9)
-                    pos_hint: {'center_x':.5, 'center_y':.5}
-                BoxLayout:
-                    id: idlayoutrightdown
-                    orientation: 'vertical'
-                    spacing: 10
-                    size_hint: (1,.1)
+                anchor_x: 'right'
+                anchor_y: 'bottom'
+                Label:
+                    id: idlabelfilename
+                    text: '[b] Current file: [/b]' + '[i] no file selected'
+                    text_size: self.size
+                    markup: True
+
 
 
 
@@ -229,7 +221,8 @@
         orientation:'vertical'
         FileChooserListView:
             id: filechooserbox
-            path: '.'
+            path: 'data'
+            rootpath: 'data'
             #on_selection: text_input.text = os.path.basename(self.selection[0])
             on_selection: self.selection and self.selection[0] and idfilechooser.myselected(self.path, self.selection[0]) or ''
 
