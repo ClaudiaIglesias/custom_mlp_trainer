@@ -42,7 +42,7 @@ def str_column_to_float(dataset, column):
 # string to integer
 def str_column_to_int(dataset, column):
     class_values = [row[column] for row in dataset]
-    unique = set(class_values)
+    unique = sorted(set(class_values))
     lookup = dict()
     for i, value in enumerate(unique):
         lookup[value] = i
