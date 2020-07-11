@@ -118,14 +118,21 @@ def cross_validation_split(dataset, n_folds):
 	return dataset_split
 
 #Create the list of weights and biases
-def initialize_network(n_inputs, n_hidden, n_outputs):
+def initialize_network(n_inputs, n_hidden, n_outputs, transfer_f, transfer_derfivative_f):
     network = list()
     weightspernode=n_inputs
     for nodesinhidden in n_hidden:
-        network.append ( [{'weights': [random() for i in range(weightspernode + 1)]} for i in range(nodesinhidden)] )
+        layer = list()
+        for i in range(nodesinhidden):
+            layer.append({'weights': [random() * sqrt(1 / weightspernode) for j in range(weightspernode + 1)],
+                 'transfer': transfer_f, 'transfer_derivative': transfer_derfivative_f})
+        network.append(layer)
         weightspernode=nodesinhidden
 
-    output_layer = [{'weights': [random() for i in range(nodesinhidden + 1)]} for i in range(n_outputs)]
+    output_layer = list()
+    for i in range(n_outputs):
+        output_layer.append({'weights':[ random() * sqrt(1 / nodesinhidden) for j in range(nodesinhidden + 1) ],
+            'transfer': transfer_sigmoid, 'transfer_derivative': transfer_sigmoid_derivative})
     network.append(output_layer)
     return network
 
@@ -148,8 +155,20 @@ def activate(weights, inputs):
     return activation
 
 # Transfer neuron activation
-def transfer(activation):
+def transfer_rectified(output):
+   return output * (output > 0)
+
+def transfer_sigmoid(activation):
     return 1.0 / (1.0 + exp(-activation))
+
+
+# Calculate the derivative of an neuron output
+def transfer_rectified_derivative(output):
+    return 1. * (output > 0)
+
+
+def transfer_sigmoid_derivative(output):
+    return output * (1.0 - output)
 
 # Forward propagate input to a network output
 def forward_propagate(network, row):
@@ -158,14 +177,10 @@ def forward_propagate(network, row):
         new_inputs = []
         for neuron in layer:
             activation = activate(neuron['weights'], inputs)
-            neuron['output'] = transfer(activation)
+            neuron['output'] = neuron['transfer'](activation)
             new_inputs.append(neuron['output'])
         inputs = new_inputs
     return inputs
-
-# Calculate the derivative of an neuron output
-def transfer_derivative(output):
-    return output * (1.0 - output)
 
 # Backpropagate error and store in neurons
 def backward_propagate_error(network, expected):
@@ -184,7 +199,7 @@ def backward_propagate_error(network, expected):
                 errors.append(expected[j] - neuron['output'])
         for j in range(len(layer)):
             neuron = layer[j]
-            neuron['delta'] = errors[j] * transfer_derivative(neuron['output'])
+            neuron['delta'] = errors[j] * neuron['transfer_derivative'](neuron['output'])
 
 # Update network weights with error
 def update_weights(network, row, l_rate):
@@ -237,17 +252,9 @@ def accuracy_metric(actual, predicted):
             correct += 1
     return (correct / float(len(actual))) * 100.0
 
-#ProgressBar
-def layoutpbnext(self):
-    global valuepb
-    global progressbar
-    progressbar.value = valuepb
-def layoutpbtrainnext(self):
-    global valuetrain
-    global progressbar
-    global parentlayout
+
+def auxlayoutpb(valuetrain):
     global valuemydata, printth
-    progressbar.value = valuetrain
     if valuetrain > printth:
         for layer in valuemydata.networklist:
             print(layer)
@@ -269,6 +276,20 @@ def layoutpbtrainnext(self):
         nchanges += myline.change()
     print ('number of changes {} \n' .format(nchanges))
 
+#ProgressBar
+def layoutpbnext(self):
+    global valuepb
+    global progressbar
+    progressbar.value = valuepb
+    auxlayoutpb(valuepb)
+def layoutpbtrainnext(self):
+    global valuetrain
+    global progressbar
+    global parentlayout
+    progressbar.value = valuetrain
+    auxlayoutpb(valuetrain)
+
+
     #MyApp.drawinglblblackkv(self, parentlayout.ids.idlayoutmiddle, valuemydata)
 
 
@@ -279,7 +300,7 @@ def back_propagation(train, test, l_rate, n_epoch, n_hidden):
 
     n_inputs = len(train[0]) - 1
     n_outputs = len(set([row[-1] for row in train]))
-    network = initialize_network(n_inputs, n_hidden, n_outputs)
+    network = initialize_network(n_inputs, n_hidden, n_outputs, transfer_sigmoid, transfer_sigmoid_derivative)
     train_network(network, train, l_rate, n_epoch, n_outputs, 'backp')
     predictions = list()
     for row in test:
@@ -360,11 +381,18 @@ class MyApp(App):
 
         numdata = mydata.n_inputlbl
 
-        space = numdata * 35 + (numdata - 1) * 25
-        spaceone =mydata.list_hidden[0] * 18 + (mydata.list_hidden[0] - 1) * 7
-        spaceoutput = numoutputs * 35 + (numoutputs - 1) * 25
+        if numdata < 11:
+            space = numdata * 35 + (numdata - 1) * 15
+        else:
+            space = 10 * 35 + (10 - 1) * 15
+
+        if mydata.list_hidden[0] < 21:
+            spaceone =mydata.list_hidden[0] * 18 + (mydata.list_hidden[0] - 1) * 7
+        else:
+            spaceone = 20 * 18 + (mydata.list_hidden[0] - 1) * 7
+        spaceoutput = numoutputs * 35 + (numoutputs - 1) * 15
         middlex = draw.width/2
-        middley = draw.height/2
+        middley = draw.height/2 - 20
         middletitlex = titlelayout.width / 2
         middletitley = titlelayout.height / 2
 
@@ -401,47 +429,89 @@ class MyApp(App):
                     if linecoloroutput < abs(mydata.networklist[1][e]['weights'][a]):
                         linecoloroutput = abs(mydata.networklist[1][e]['weights'][a])
 
-
-            for a in range(mydata.list_hidden[0]):
-                with draw.canvas:
-                    value = mydata.networklist[0][a]['weights'][-1]
-                    colorlayerone = abs(value) / valuefloat
-                    Color(1,1,1, 0.25 + colorlayerone/1.33)
-                    RoundedRectangle(size=(18, 18), pos=(middlex, a * 25 + (middley - spaceone / 2)))
-                    Color(0,0,0,1)
-                    RoundedRectangle(size=(13, 13), pos=(middlex+2.5, a * 25 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
-                biases = "{:.2f}".format(value)
-                #nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 25 + (middley-31.5 - spaceone / 2)),
-                                        #color=(1,1,1, 0.25 + colorlayerone/1.33))
-                #draw.add_widget(nodeslabel)
-                #biaseslabels.append(nodeslabel)
-                i = 0
-                e = 0
-                if numdata < 10:
-                    for d in range(numdata):
-                        mypoints = [middlex - 205, d * 50 + (middley - 10 - space / 2) + 30, middlex,
-                                  a * 25 + (middley + 9 - spaceone / 2)]
-                        MyApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
-
-
-                else:
-                    for d in range(10):
-                        mypoints = [middlex - 205, d * 50 + (middley - 10 - 575 / 2) + 30, middlex,
-                                         a * 25 + (middley + 9 - spaceone / 2)]
-                        MyApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+            if mydata.list_hidden[0] < 21:
+                for a in range(mydata.list_hidden[0]):
+                    with draw.canvas:
+                        value = mydata.networklist[0][a]['weights'][-1]
+                        colorlayerone = abs(value) / valuefloat
+                        Color(1,1,1, 0.25 + colorlayerone/1.33)
+                        RoundedRectangle(size=(18, 18), pos=(middlex, a * 25 + (middley - spaceone / 2)))
+                        Color(0,0,0,1)
+                        RoundedRectangle(size=(13, 13), pos=(middlex+2.5, a * 25 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
+                    biases = "{:.2f}".format(value)
+                    #nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 25 + (middley-31.5 - spaceone / 2)),
+                                            #color=(1,1,1, 0.25 + colorlayerone/1.33))
+                    #draw.add_widget(nodeslabel)
+                    #biaseslabels.append(nodeslabel)
+                    i = 0
+                    e = 0
+                    if numdata < 11:
+                        for d in range(numdata):
+                            mypoints = [middlex - 205, d * 50 + (middley - space / 2) + 17.5, middlex,
+                                      a * 25 + (middley + 9 - spaceone / 2)]
+                            MyApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
 
 
+                    else:
+                        for d in range(10):
+                            mypoints = [middlex - 205, d * 50 + (middley - space / 2) + 17.5, middlex,
+                                             a * 25 + (middley + 9 - spaceone / 2)]
+                            MyApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+
+            else:
+                for a in range(20):
+                    if a < 8 or a > 11:
+                        with draw.canvas:
+                            value = mydata.networklist[0][a]['weights'][-1]
+                            colorlayerone = abs(value) / valuefloat
+                            Color(1,1,1, 0.25 + colorlayerone/1.33)
+                            RoundedRectangle(size=(18, 18), pos=(middlex, a * 25 + (middley - spaceone / 2)))
+                            Color(0,0,0,1)
+                            RoundedRectangle(size=(13, 13), pos=(middlex+2.5, a * 25 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
+                        biases = "{:.2f}".format(value)
+                        #nodeslabel = Label(text=biases, size_hint=(None,None), font_size=9, pos=(middlex-31.5, a * 25 + (middley-31.5 - spaceone / 2)),
+                                                #color=(1,1,1, 0.25 + colorlayerone/1.33))
+                        #draw.add_widget(nodeslabel)
+                        #biaseslabels.append(nodeslabel)
+                        i = 0
+                        e = 0
+                    else:
+                        with draw.canvas:
+                            Ellipse(pos=(middlex + 7, a * 25 + (middley - spaceone / 2) + 9), size=(5, 5))
+
+                    if numdata < 10:
+                        for d in range(numdata):
+                            mypoints = [middlex - 205, d * 50 + (middley - 10 - space / 2) + 30, middlex,
+                                      a * 25 + (middley + 9 - spaceone / 2)]
+                            MyApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+
+
+                    else:
+                        for d in range(10):
+                            mypoints = [middlex - 205, d * 50 + (middley - 10 - 575 / 2) + 30, middlex,
+                                             a * 25 + (middley + 9 - spaceone / 2)]
+                            MyApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+            draw.add_widget(Label(text = str(mydata.list_hidden[0]), pos = (middlex - 40 , middley+220), size_hint=(None,None), font_size=13))
 
             for e in range(numoutputs):
-                for a in range(mydata.list_hidden[0]):
-                    mypoints =[middlex+18, a * 25 + (middley  - spaceone / 2)+ 9, middlex+230,
-                                     e * 50 + (middley+ 20 - spaceoutput / 2) ]
-                    MyApp.listoflinesappend(self, 1, e, a, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
+                if mydata.list_hidden[0] < 21:
+                    for a in range(mydata.list_hidden[0]):
+                        mypoints =[middlex+18, a * 25 + (middley  - spaceone / 2)+ 9, middlex+230,
+                                         e * 50 + (middley+ 20 - spaceoutput / 2) ]
+                        MyApp.listoflinesappend(self, 1, e, a, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
+                else:
+                    for a in range(20):
+                        mypoints =[middlex+18, a * 25 + (middley  - spaceone / 2)+ 9, middlex+230,
+                                         e * 50 + (middley+ 20 - spaceoutput / 2) ]
+                        MyApp.listoflinesappend(self, 1, e, a, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
 
 
         if len(mydata.list_hidden) == 2:
             # hiddenlayerone
-            spacetwo = mydata.list_hidden[1] * 18 + (mydata.list_hidden[1] - 1) * 7
+            if mydata.list_hidden[1] < 21:
+                spacetwo = mydata.list_hidden[1] * 18 + (mydata.list_hidden[1] - 1) * 7
+            else:
+                spacetwo = 20 * 18 + (mydata.list_hidden[1] - 1) * 7
             valuefloat = 0
             linecoloroutput = 0
             linecolorinput = 0
@@ -454,35 +524,68 @@ class MyApp(App):
                 for i in range(numdata):
                     if linecolorinput < abs(mydata.networklist[0][a]['weights'][i]):
                         linecolorinput = abs(mydata.networklist[0][a]['weights'][i])
+            if mydata.list_hidden[0] < 21:
+                for a in range(mydata.list_hidden[0]):
+                    with draw.canvas:
+                        value = mydata.networklist[0][a]['weights'][-1]
+                        colorlayerone = abs(mydata.networklist[0][a]['weights'][-1]) / valuefloat
+                        Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
+                        RoundedRectangle(size=(18, 18), pos=(middlex-80, a * 25 + (middley - spaceone / 2)))
+                        Color(0,0,0,1)
+                        RoundedRectangle(size=(13, 13), pos=(middlex + 2.5 - 80, a * 25 + (middley + 2.5 - spaceone / 2)),
+                                         radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                        biases = "{:.2f}".format(value)
+                        #draw.nodeslabel = Label(text=biases,size_hint=(None,None),font_size=10, pos=(middlex-111.5, a * 50 + (middley-31.5 - spaceone / 2)),
+                                                #color=(1,1,1, 0.25 + colorlayerone/1.33))
+                        #draw.add_widget(draw.nodeslabel)
+
+                    if numdata < 10:
+                        for i in range(numdata):
+                            mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 80,
+                                             a * 25 + (middley + 9 - spaceone / 2)]
+                            MyApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
+                                                    mypoints)
+
+                    else:
+                        for i in range(10):
+                            mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 80,
+                                             a * 25 + (middley + 9 - spaceone / 2)]
+                            MyApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+            else:
+                for a in range(20):
+                    if a < 8 or a > 11:
+                        with draw.canvas:
+                            value = mydata.networklist[0][a]['weights'][-1]
+                            colorlayerone = abs(mydata.networklist[0][a]['weights'][-1]) / valuefloat
+                            Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
+                            RoundedRectangle(size=(18, 18), pos=(middlex - 80, a * 25 + (middley - spaceone / 2)))
+                            Color(0, 0, 0, 1)
+                            RoundedRectangle(size=(13, 13),
+                                             pos=(middlex + 2.5 - 80, a * 25 + (middley + 2.5 - spaceone / 2)),
+                                             radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                            biases = "{:.2f}".format(value)
+                            # draw.nodeslabel = Label(text=biases,size_hint=(None,None),font_size=10, pos=(middlex-111.5, a * 50 + (middley-31.5 - spaceone / 2)),
+                            # color=(1,1,1, 0.25 + colorlayerone/1.33))
+                            # draw.add_widget(draw.nodeslabel)
+                    else:
+                        with draw.canvas:
+                            Ellipse(pos=(middlex - 73, a * 25 + (middley - spaceone / 2) + 9), size=(5, 5))
 
 
-            for a in range(mydata.list_hidden[0]):
-                with draw.canvas:
-                    value = mydata.networklist[0][a]['weights'][-1]
-                    colorlayerone = abs(mydata.networklist[0][a]['weights'][-1]) / valuefloat
-                    Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
-                    RoundedRectangle(size=(18, 18), pos=(middlex-80, a * 25 + (middley - spaceone / 2)))
-                    Color(0,0,0,1)
-                    RoundedRectangle(size=(13, 13), pos=(middlex + 2.5 - 80, a * 25 + (middley + 2.5 - spaceone / 2)),
-                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                    biases = "{:.2f}".format(value)
-                    #draw.nodeslabel = Label(text=biases,size_hint=(None,None),font_size=10, pos=(middlex-111.5, a * 50 + (middley-31.5 - spaceone / 2)),
-                                            #color=(1,1,1, 0.25 + colorlayerone/1.33))
-                    #draw.add_widget(draw.nodeslabel)
+                    if numdata < 10:
+                        for i in range(numdata):
+                            mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 80,
+                                        a * 25 + (middley + 9 - spaceone / 2)]
+                            MyApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
+                                                    mypoints)
 
-                if numdata < 10:
-                    for i in range(numdata):
-                        mypoints = [middlex - 205, i * 50 + (middley - 10 - space / 2) + 30, middlex - 80,
-                                         a * 25 + (middley + 9 - spaceone / 2)]
-                        MyApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
-                                                mypoints)
-
-                else:
-                    for i in range(10):
-                        mypoints = [middlex - 205, i * 50 + (middley - 10 - 575 / 2) + 30, middlex - 80,
-                                         a * 25 + (middley + 9 - spaceone / 2)]
-                        MyApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist, mypoints)
-
+                    else:
+                        for i in range(10):
+                            mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 80,
+                                        a * 25 + (middley + 9 - spaceone / 2)]
+                            MyApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
+                                                    mypoints)
+            draw.add_widget(Label(text=str(mydata.list_hidden[0]), pos=(middlex - 121, middley + 220), size_hint=(None, None),font_size=13))
             # hiddenlayertwo
             valuefloat = 0
             linecoloroutput = 0
@@ -493,39 +596,73 @@ class MyApp(App):
             for d in range(mydata.list_hidden[1]):
                 if valuefloat < abs(mydata.networklist[1][d]['weights'][-1]):
                     valuefloat = abs(mydata.networklist[1][d]['weights'][-1])
-
-                for j in range(mydata.list_hidden[0]):
-                    if linecolorinput < abs(mydata.networklist[1][d]['weights'][j]):
-                        linecolorinput = abs(mydata.networklist[1][d]['weights'][j])
-                    j = j + 1
+                    for j in range(mydata.list_hidden[0]):
+                        if linecolorinput < abs(mydata.networklist[1][d]['weights'][j]):
+                            linecolorinput = abs(mydata.networklist[1][d]['weights'][j])
+                        j = j + 1
             for e in range(numoutputs):
                 for d in range(mydata.list_hidden[1]):
                     if linecoloroutput < abs(mydata.networklist[2][e]['weights'][d]):
                         linecoloroutput = abs(mydata.networklist[2][e]['weights'][d])
-            for d in range(mydata.list_hidden[1]):
-                with draw.canvas:
-                    value = mydata.networklist[1][d]['weights'][-1]
-                    colorlayerone = abs(mydata.networklist[1][d]['weights'][-1]) / valuefloat
-                    Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
-                    RoundedRectangle(size=(18, 18), pos=(middlex + 80, d * 25 + (middley - spacetwo / 2)))
-                    Color(0,0,0,1)
-                    RoundedRectangle(size=(13, 13), pos=(middlex + 82.5, d * 25 + (middley + 2.5 - spacetwo / 2)),
-                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                    biases = "{:.2f}".format(value)
-                    #draw.nodeslabel = Label(text=biases, font_size=10,size_hint=(None,None), pos=(middlex +49, d * 50 + (middley-31.5 - spacetwo / 2)),
-                                            #color=(1,1,1, 0.25 + colorlayerone/1.33))
-                    #draw.add_widget(draw.nodeslabel)
 
-                for j in range(mydata.list_hidden[0]):
-                    mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
-                    MyApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
-
-
-            for e in range(numoutputs):
+            if mydata.list_hidden[1] < 21:
                 for d in range(mydata.list_hidden[1]):
-                    mypoints = [middlex+98, d * 25 + (middley+9 - spacetwo / 2), middlex + 230, e * 50 + (middley +20 - spaceoutput / 2)]
-                    MyApp.listoflinesappend(self, 2, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
-
+                    with draw.canvas:
+                        value = mydata.networklist[1][d]['weights'][-1]
+                        colorlayerone = abs(mydata.networklist[1][d]['weights'][-1]) / valuefloat
+                        Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
+                        RoundedRectangle(size=(18, 18), pos=(middlex + 80, d * 25 + (middley - spacetwo / 2)))
+                        Color(0,0,0,1)
+                        RoundedRectangle(size=(13, 13), pos=(middlex + 82.5, d * 25 + (middley + 2.5 - spacetwo / 2)),
+                                         radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                        biases = "{:.2f}".format(value)
+                        #draw.nodeslabel = Label(text=biases, font_size=10,size_hint=(None,None), pos=(middlex +49, d * 50 + (middley-31.5 - spacetwo / 2)),
+                                                #color=(1,1,1, 0.25 + colorlayerone/1.33))
+                        #draw.add_widget(draw.nodeslabel)
+                    if mydata.list_hidden[0] < 21:
+                        for j in range(mydata.list_hidden[0]):
+                            mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
+                            MyApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                    else:
+                        for j in range(20):
+                            mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
+                            MyApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+            else:
+                for d in range(20):
+                    if d < 8 or d > 11:
+                        with draw.canvas:
+                            value = mydata.networklist[1][d]['weights'][-1]
+                            colorlayerone = abs(mydata.networklist[1][d]['weights'][-1]) / valuefloat
+                            Color(1, 1, 1, 0.25 + colorlayerone / 1.33)
+                            RoundedRectangle(size=(18, 18), pos=(middlex + 80, d * 25 + (middley - spacetwo / 2)))
+                            Color(0,0,0,1)
+                            RoundedRectangle(size=(13, 13), pos=(middlex + 82.5, d * 25 + (middley + 2.5 - spacetwo / 2)),
+                                             radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                            biases = "{:.2f}".format(value)
+                            #draw.nodeslabel = Label(text=biases, font_size=10,size_hint=(None,None), pos=(middlex +49, d * 50 + (middley-31.5 - spacetwo / 2)),
+                                                    #color=(1,1,1, 0.25 + colorlayerone/1.33))
+                            #draw.add_widget(draw.nodeslabel)
+                        if mydata.list_hidden[0] < 21:
+                            for j in range(mydata.list_hidden[0]):
+                                mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
+                                MyApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                        else:
+                            for j in range(20):
+                                mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
+                                MyApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                    else:
+                        with draw.canvas:
+                            Ellipse(pos=(middlex + 87, d * 25 + (middley - spacetwo / 2) + 9), size=(5, 5))
+            for e in range(numoutputs):
+                if mydata.list_hidden[1] < 21:
+                    for d in range(mydata.list_hidden[1]):
+                        mypoints = [middlex+98, d * 25 + (middley+9 - spacetwo / 2), middlex + 230, e * 50 + (middley +20 - spaceoutput / 2)]
+                        MyApp.listoflinesappend(self, 2, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
+                else:
+                    for d in range(20):
+                        mypoints = [middlex + 98, d * 25 + (middley + 9 - spacetwo / 2), middlex + 230,e * 50 + (middley + 20 - spaceoutput / 2)]
+                        MyApp.listoflinesappend(self, 2, e, d, linecoloroutput, draw.canvas, mydata.networklist,mypoints)
+            draw.add_widget(Label(text=str(mydata.list_hidden[1]), pos=(middlex + 38, middley + 220), size_hint=(None, None),font_size=13))
 
         if len(mydata.list_hidden) == 3:
             # hiddenlayerone
@@ -559,14 +696,14 @@ class MyApp(App):
 
                 if numdata < 10:
                     for i in range(numdata):
-                        mypoints = [middlex - 205, i * 50 + (middley - 10 - space / 2) + 30, middlex - 130,
+                        mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 130,
                                          a * 25 + (middley + 9 - spaceone / 2)]
                         MyApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
                                                 mypoints)
 
                 else:
                     for i in range(10):
-                        mypoints = [middlex - 205, i * 50 + (middley - 10 - 575 / 2) + 30, middlex - 130,
+                        mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 130,
                                          a * 25 + (middley + 9 - spaceone / 2)]
                         MyApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
                                                 mypoints)
@@ -668,11 +805,11 @@ class MyApp(App):
             draw.add_widget(image)
             image.pos = middlex - 115, c * 50 + (middley - spaceoutput / 2) - 240
             c += 1
-
+        draw.add_widget(Label(text=str(numoutputs), pos=(middlex + 220, middley + 200), size_hint=(None, None)))
 
 
         # input layer
-        if numdata < 10:
+        if numdata < 11:
             for b in range(numdata):
                 with draw.canvas:
                     Color(.6, .87, .89)
@@ -680,24 +817,21 @@ class MyApp(App):
                     Color(0, 0, 0)
                     RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-
         else:
-            for b in range(4):
-                with draw.canvas:
-                    Color(.6, .87, .89)
-                    RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - 575 / 2)))
-                    Color(0, 0, 0)
-                    RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - 575 / 2)),
-                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                    Color(.6, .87, .89)
-                    RoundedRectangle(size=(35, 35), pos=(middlex - 240, (middley + 575 / 2) - b * 50 - 123))
-                    Color(0, 0, 0)
-                    RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, (middley + 2.5 + 575 / 2) - b * 50 - 123),
-                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-
-                    Color(.4 + b / 9, .67 + b / 9, .69 + b / 9)
-                    Ellipse(pos=(middlex - 225, middley - b * 20), size=(5, 5))
-            draw.add_widget(Label(text=str(numdata), pos=(middlex - 320, middley - 96), size_hint=(None, None)))
+            for b in range(10):
+                if b < 4 or b > 6:
+                    print(b)
+                    with draw.canvas:
+                        Color(.6, .87, .89)
+                        RoundedRectangle(size=(35, 35), pos=(middlex - 240, b * 50 + (middley - space / 2)))
+                        Color(0, 0, 0)
+                        RoundedRectangle(size=(30, 30), pos=(middlex - 237.5, b * 50 + (middley + 2.5 - space / 2)),
+                                         radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                else:
+                    with draw.canvas:
+                        Color(.4 + b / 9, .67 + b / 9, .69 + b / 9)
+                        Ellipse(pos=(middlex - 225, b * 50 + (middley - space / 2)+ 17.5), size=(5, 5))
+        draw.add_widget(Label(text=str(numdata), pos=(middlex - 270, middley + 220), size_hint=(None, None)))
 
 
     class Lblleft():
@@ -1102,28 +1236,34 @@ class MyApp(App):
         titlelayout.remove_widget(inputlabel)
 
     def storeleftpanellist(self):
-        mystore = JsonStore('neuroncfg.json')
-        mystore.clear()
-        mystore.put('leftpanelhistorycount', name="numberofitems", value=len(leftpanellist))
-        i = 0
-        for panel in leftpanellist:
-            mystore.put('leftpanelhistory' + str(i), name="lelftpanellist", value=panel.__dict__)
-            i += 1
+        try:
+            mystore = JsonStore('neuroncfg.json')
+            mystore.clear()
+            mystore.put('leftpanelhistorycount', name="numberofitems", value=len(leftpanellist))
+            i = 0
+            for panel in leftpanellist:
+                mystore.put('leftpanelhistory' + str(i), name="lelftpanellist", value=panel.__dict__)
+                i += 1
+        except:
+            os.remove('neuroncfg.json')
 
     def restoreleftpanellist(self):
         global currentpage, leftpanellist
-        mystore = JsonStore('neuroncfg.json')
-        if mystore.exists('leftpanelhistorycount'):
-            mynumberofitems = mystore.get('leftpanelhistorycount')['value']
-            leftpanellist.clear()
-            for index in range(mynumberofitems):
-                mydatadict = mystore.get('leftpanelhistory' + str(index))['value']
-                mydataclasss = MyApp.Lblleft(type='', dataerror=0)
-                for key in mydatadict:
-                    setattr(mydataclasss, key, mydatadict[key])
-                leftpanellist.append(mydataclasss)
-                currentpage = len(leftpanellist)
-                MyApp.establishbtnpages(self)
+        try:
+            mystore = JsonStore('neuroncfg.json')
+            if mystore.exists('leftpanelhistorycount'):
+                mynumberofitems = mystore.get('leftpanelhistorycount')['value']
+                leftpanellist.clear()
+                for index in range(mynumberofitems):
+                    mydatadict = mystore.get('leftpanelhistory' + str(index))['value']
+                    mydataclasss = MyApp.Lblleft(type='', dataerror=0)
+                    for key in mydatadict:
+                        setattr(mydataclasss, key, mydatadict[key])
+                    leftpanellist.append(mydataclasss)
+                    currentpage = len(leftpanellist)
+                    MyApp.establishbtnpages(self)
+        except:
+            os.remove('neuroncfg.json')
 
     def addclasstopanel(self, mypannelclass):
         global currentpage
@@ -1199,10 +1339,8 @@ class MyApp(App):
                     n_outputs = len(set([row[-1] for row in dataset]))
                     network = initialize_network_no_weights(n_inputs, list_hidden, n_outputs)
                     MyApp.drawinglblblackkv(self, layoutinfomiddle, MyApp.Lblleft(type='train', dataerror=0))
-                    layout.add_widget(btnTrain)
-                    layout.add_widget(btnError)
-                    layout.add_widget(btnPredict)
-                    layoutinfotop.add_widget(btnSettings)
+                    layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
+                    layoutprogressbar.remove_widget(progressbar)
 
         list_hidden.append(6)
         numlayers = str(len(list_hidden))
@@ -1460,7 +1598,14 @@ class MyApp(App):
             layout.remove_widget(layoutsettingsvertical)
             layout.remove_widget(btnCancel)
             layout.remove_widget(btnnewinput)
+            layout.remove_widget(btnTrain)
+            layout.remove_widget(btnError)
+            layout.remove_widget(btnPredict)
+            layout.add_widget(btnTrain)
+            layout.add_widget(btnError)
+            layout.add_widget(btnPredict)
             layoutinfotop.remove_widget(btnSettings)
+            layoutinfotop.add_widget(btnSettings)
             layoutinfotop.remove_widget(btnBack)
             btnSettings.disabled = False
             btnBack.disabled = False
@@ -1594,13 +1739,13 @@ class MyApp(App):
 
         def btnplusneuronpressed (btnplusneuron):
             btnlessneuron.disabled = False
-            if list_hidden[0] >= 20:
-                list_hidden[0] = 20
+            if list_hidden[0] >= 40:
+                list_hidden[0] = 40
             else:
                 list_hidden[0] = list_hidden[0] + 1
                 self.drawingtryout(layoutneuronmainscreen, layoutlabels)
                 lblhiddenlayer.text = str(list_hidden[0])
-                if list_hidden[0] == 20:
+                if list_hidden[0] == 40:
                     btnplusneuron.disabled = True
         def btnlessneuronpressed(btnlessneuron):
             btnplusneuron.disabled = False
@@ -1616,13 +1761,13 @@ class MyApp(App):
         def btnplusneurontwopressed(btnplusneurontwo):
             btnlessneurontwo.disabled = False
 
-            if list_hidden[1] >= 20:
-                list_hidden[1] = 20
+            if list_hidden[1] >= 40:
+                list_hidden[1] = 40
             else:
                 list_hidden[1] = list_hidden[1] + 1
                 lblhiddenlayertwo.text = str(list_hidden[1])
                 self.drawingtryout(layoutneuronmainscreen, layoutlabels)
-                if list_hidden[1] == 20:
+                if list_hidden[1] == 40:
                     btnplusneurontwo.disabled = True
         def btnlessneurontwopressed(btnlessneurontwo):
             btnplusneurontwo.disabled = False
@@ -1638,13 +1783,13 @@ class MyApp(App):
         def btnplusneuronthreepressed(btnplusneuronthree):
             btnlessneuronthree.disabled = False
 
-            if list_hidden[2] >= 20:
-                list_hidden[2] = 20
+            if list_hidden[2] >= 40:
+                list_hidden[2] = 40
             else:
                 list_hidden[2] = list_hidden[2] + 1
                 lblhiddenlayerthree.text = str(list_hidden[2])
                 self.drawingtryout(layoutneuronmainscreen, layoutlabels)
-                if list_hidden[2] == 20:
+                if list_hidden[2] == 40:
                     btnplusneuronthree.disabled = True
         def btnlessneuronthreepressed(btnlessneuronthree):
             btnplusneuronthree.disabled = False
@@ -1800,7 +1945,7 @@ class MyApp(App):
             stoptrainning = False
             printth = 0
             trainclock = Clock.schedule_interval(layoutpbtrainnext, 1 / 10)
-            network = initialize_network(n_inputs, list_hidden, n_outputs)
+            network = initialize_network(n_inputs, list_hidden, n_outputs, transfer_sigmoid, transfer_sigmoid_derivative)
             threading.Thread(target=train_network, args=(network, dataset, l_rate, n_epoch, n_outputs, 'train')).start()
 
             #train_network(network, dataset, l_rate, n_epoch, n_outputs)
@@ -1813,6 +1958,7 @@ class MyApp(App):
             global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata, valuepb
             global network, n_inputs, n_outputs, n_folds, dataset, list_hidden, trainclock, stoptrainning
             layoutprogressbar = parentlayout.ids.mainseparatorprogressbar
+            layoutprogressbar.remove_widget(progressbar)
             layoutprogressbar.add_widget(progressbar)
             progressbar.value = 0
             valuepb = 0
