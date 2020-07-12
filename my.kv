@@ -259,3 +259,16 @@
     BoxLayout:
         orientation: 'vertical'
         LayoutScreen:
+
+
+
+<PopupLoading>:
+    id: popuploadingid
+    text: 'Loading...'
+    font_size: 30
+    canvas:
+        Color:
+            rgb: 0.5,0.5,0.5
+        Line:
+            circle:self.center_x, self.center_y, 90, self.angleb % 360, self.anglef % 360
+            width: 8
