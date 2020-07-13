@@ -76,7 +76,9 @@ labelcycles = (Label(text='[b] [color=D464EB]Cycles: [/b][/color]', markup=True,
 labelfolds = (Label(text='[b] [color=D464EB]Folds: [/b][/color]' , markup=True,
                             halign="left",
                             size_hint=(1, .1), color=(1, 1, 1)))
-sum_error = 0
+mean_qerror = 0
+
+inputimagelist = ''
 
 valuepb = 0
 currentcycle = 0
@@ -211,7 +213,7 @@ def update_weights(network, row, l_rate):
 # Train a network for a fixed number of epochs
 def train_network(network, train, l_rate, n_epoch, n_outputs, type, eventp, myapp):
     global valuepb, valuetrain, valuemydata, timestart, timeleft, currentcycle, currentfold
-    global n_folds, sum_error
+    global n_folds, mean_qerror
     step = 100.0/(n_folds*n_epoch*len(train))
     steptrain = 100.0/ n_epoch
     currentfold += 1
@@ -223,15 +225,19 @@ def train_network(network, train, l_rate, n_epoch, n_outputs, type, eventp, myap
         currentcycle += 1
         if stoptrainning:
             break
+        i = 1
         for row in train:
             valuepb += step
             outputs = forward_propagate(network, row)
             expected = [0 for i in range(n_outputs)]
             expected[row[-1]] = 1
             sum_error += sum([(expected[i] - outputs[i]) ** 2 for i in range(len(expected))])
+            mean_qerror = sum_error / i
+            i += 1
             backward_propagate_error(network, expected)
             update_weights(network, row, l_rate)
         print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, sum_error))
+       
     if type == 'train':
         eventp.trainnetwork(myapp)
 
@@ -255,6 +261,7 @@ def accuracy_metric(actual, predicted):
 
 def auxlayoutpb(valuetrain):
     global valuemydata, printth
+    global dataset, imageinput
     if valuetrain > printth:
         for layer in valuemydata.networklist:
             print(layer)
@@ -277,6 +284,9 @@ def auxlayoutpb(valuetrain):
     for myline in listoflines:
         nchanges += myline.change()
     print ('number of changes {} \n' .format(nchanges))
+    indeximageinput = int(random() * len(inputimagelist))
+    imageinput.update_texture(inputimagelist[indeximageinput])
+
 #Error progress
 def layoutpbnext(self):
     global valuepb, lbltimeleft, timestart, timeleft, sum_error, currentcycle, currentfold
@@ -299,7 +309,7 @@ def layoutpbnext(self):
             lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(left)) + ' seconds'
     progressbar.value = valuepb
     auxlayoutpb(valuepb)
-    errorlbl.text = '[b] [color=D464EB]Error: [/b][/color]' + str("{:.2f}".format(sum_error))
+    errorlbl.text = '[b] [color=D464EB]Mean quadratic error: [/b][/color]' + str("{:.4f}".format(mean_qerror))
     labelcycles.text = '[b] [color=D464EB]Cycles: [/b][/color]' + str(currentcycle) + '/' + str(n_epoch)
     labelfolds.text =  '[b] [color=D464EB]Folds: [/b][/color]' + str(currentfold) + '/' + str(n_folds)
 #Train progress
@@ -396,7 +406,7 @@ class MyApp(App):
     # When Train is pressed
     def drawinglblblackkv(self, textlayout, mydata):
         global accuracylabel, progressbar, prediction, biaseslabels
-        global n_epoch, n_folds, l_rate
+        global n_epoch, n_folds, l_rate, imageinput, inputimagelist
         global listoflines
         global valuemydata
         valuemydata = MyApp.Lblleft(mydata.type, mydata.dataerror)
@@ -404,11 +414,11 @@ class MyApp(App):
         listoflines.clear()
         prediction = True
 
+
         draw = self.parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
         titlelayout = self.parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idLabelsLayoutNeuronMainScreen
 
         draw.canvas.clear()
-
 
         MyApp.leftlabels(self, textlayout, mydata)
 
@@ -442,7 +452,6 @@ class MyApp(App):
         titlelayout.remove_widget(self.inputlabel)
         titlelayout.add_widget(self.outputlabel)
         titlelayout.add_widget(self.inputlabel)
-
 
 
         if len(mydata.list_hidden) == 1:
@@ -960,9 +969,14 @@ class MyApp(App):
         c = 0
         for row in mydata.outputimageslist:
             image = Filechooser.WidgetTexture(row)
+            image.size_hint = (None, None)
+            image.pos = middlex + 237 , c * 50 + (middley - 30 - spaceoutput / 2)
             draw.add_widget(image)
-            image.pos = middlex - 115, c * 50 + (middley - spaceoutput / 2) - 240
             c += 1
+        imageinput = Filechooser.WidgetTexture(inputimagelist[0])
+        imageinput.pos = middlex - 320 , middley - 50
+        imageinput.size_hint=(None, None)
+        draw.add_widget(imageinput)
         draw.add_widget(Label(text=str(numoutputs), pos=(middlex + 200, middley + 220), size_hint=(None, None)))
 
 
@@ -990,6 +1004,7 @@ class MyApp(App):
                         Ellipse(pos=(middlex - 225, b * 50 + (middley - space / 2)+ .7), size=(5, 5))
                         Ellipse(pos=(middlex - 225, b * 50 + (middley - space / 2) + 27.3), size=(5, 5))
         draw.add_widget(Label(text=str(numdata), pos=(middlex - 270, middley + 220), size_hint=(None, None)))
+
 
 
     class Lblleft():
@@ -2294,7 +2309,6 @@ class Filechooser(BoxLayout):
             self.texture.blit_buffer(bufbytes, colorfmt='luminance', bufferfmt='ubyte')
             self.texture.flip_vertical()
 
-
             with self.canvas:
                 Color(1,1,1)
                 self.rect = Rectangle(texture=self.texture, pos=self.pos, size=(sidesquare, sidesquare))
@@ -2304,6 +2318,17 @@ class Filechooser(BoxLayout):
 
         def update_rect(self, *args):
             self.rect.pos = (self.center_x - self.rect.size[0] / 2, self.center_y - self.rect.size[1] / 2)
+
+        def update_texture(self, imagebits):
+            buf = list(imagebits)
+            buf.pop(-1)
+            arr = list()
+            for value in buf:
+                arr.append(int(value))
+
+            bufbytes = array('B', arr)
+            self.texture.blit_buffer(bufbytes, colorfmt='luminance', bufferfmt='ubyte')
+            self.texture.flip_vertical()
 
     def filechoosershowdatasetcont(self, filenameselected):
 
@@ -2424,7 +2449,7 @@ class Filechooser(BoxLayout):
 
 
     def numberdatasetfunc(self, plusless):
-        global outputimageslist
+        global outputimageslist, inputimagelist
 
         self.mainlayout.clear_widgets()
         if plusless == 'plusbtn':
@@ -2504,6 +2529,11 @@ class Filechooser(BoxLayout):
                     if row[-1] == number:
                         self.myoutputimageslist.append(row)
                         break
+            if len(self.mytexturedataset) > 100:
+                inputimagelist = list(self.mytexturedataset[10:100])
+            else:
+                inputimagelist = list(self.mytexturedataset[:-1])
+
             outputimageslist = self.myoutputimageslist.copy()
         self.btnactivation()
 
