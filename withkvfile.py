@@ -65,8 +65,22 @@ prediction = False
 varerrorlayout = False
 
 
+timestart = None
+timeleft = ''
+lbltimeleft = Label(text='time left:', markup = True)
+
+errorlbl = Label(text = '', markup = True)
+labelcycles = (Label(text='[b] [color=D464EB]Cycles: [/b][/color]', markup=True,
+                             halign="left",
+                             size_hint=(1, .1), color=(1, 1, 1)))
+labelfolds = (Label(text='[b] [color=D464EB]Folds: [/b][/color]' , markup=True,
+                            halign="left",
+                            size_hint=(1, .1), color=(1, 1, 1)))
+sum_error = 0
 
 valuepb = 0
+currentcycle = 0
+currentfold = 0
 valuetrain = 0
 stoptrainning = False
 valuemydata = None
@@ -196,18 +210,21 @@ def update_weights(network, row, l_rate):
 
 # Train a network for a fixed number of epochs
 def train_network(network, train, l_rate, n_epoch, n_outputs, type, eventp, myapp):
-    global valuepb, valuetrain, valuemydata, timestart, timeleft
-    global n_folds
-    step = 100.0/(n_folds*n_epoch)
+    global valuepb, valuetrain, valuemydata, timestart, timeleft, currentcycle, currentfold
+    global n_folds, sum_error
+    step = 100.0/(n_folds*n_epoch*len(train))
     steptrain = 100.0/ n_epoch
+    currentfold += 1
+    currentcycle = 0
     for epoch in range(n_epoch):
         sum_error = 0
-        valuepb += step
         valuetrain += steptrain
         valuemydata = MyApp.Lblleft(type=type, dataerror=0)
+        currentcycle += 1
         if stoptrainning:
             break
         for row in train:
+            valuepb += step
             outputs = forward_propagate(network, row)
             expected = [0 for i in range(n_outputs)]
             expected[row[-1]] = 1
@@ -243,6 +260,8 @@ def auxlayoutpb(valuetrain):
             print(layer)
         printth += 20
     # calculate new maxs
+    if valuemydata is None:
+        return
     for layer in range(len(valuemydata.networklist)):
         max = 0.0
         for myline in listoflines:
@@ -258,16 +277,9 @@ def auxlayoutpb(valuetrain):
     for myline in listoflines:
         nchanges += myline.change()
     print ('number of changes {} \n' .format(nchanges))
-
-
-
-timestart = None
-timeleft = ''
-lbltimeleft = Label(text='time left:', markup = True)
-
-#ProgressBar
+#Error progress
 def layoutpbnext(self):
-    global valuepb, lbltimeleft, timestart, timeleft
+    global valuepb, lbltimeleft, timestart, timeleft, sum_error, currentcycle, currentfold
     global progressbar
 
     timenow = time.monotonic()
@@ -276,22 +288,43 @@ def layoutpbnext(self):
         lbltimeleft.text = 'estimating...'
     else:
         left = (elapse / valuepb) * (100.0 - valuepb)
-        lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.2f}".format(left)) + 'seconds'
+        if left > 3600:
+            hours = divmod(left, 3600)
+            minutes = hours[1]/60
+            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(hours[0])) + ' hours ' + str("{:.0f}".format(minutes) + ' minutes')
+        elif left > 60:
+            minutes = left / 60
+            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(minutes)) + ' minutes'
+        else:
+            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(left)) + ' seconds'
     progressbar.value = valuepb
     auxlayoutpb(valuepb)
-
+    errorlbl.text = '[b] [color=D464EB]Error: [/b][/color]' + str("{:.2f}".format(sum_error))
+    labelcycles.text = '[b] [color=D464EB]Cycles: [/b][/color]' + str(currentcycle) + '/' + str(n_epoch)
+    labelfolds.text =  '[b] [color=D464EB]Folds: [/b][/color]' + str(currentfold) + '/' + str(n_folds)
+#Train progress
 def layoutpbtrainnext(self):
-    global valuetrain, lbltimeleft, timestart, timeleft
-    global progressbar
+    global valuetrain, lbltimeleft, timestart, timeleft, labelcycles, labelfolds
+    global progressbar, currentcycle, currentfold
     timenow = time.monotonic()
     elapse = timenow - timestart
-    if valuepb == 0:
+    if valuetrain == 0:
         lbltimeleft.text = 'estimating...'
     else:
-        left = (elapse / valuepb) * (100.0 - valuepb)
-        lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.2f}".format(left)) + 'seconds'
+        left = (elapse / valuetrain) * (100.0 - valuetrain)
+        if left > 3600:
+            hours = divmod(left, 3600)
+            minutes = hours[1] / 60
+            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(hours[0])) + ' hours ' + str("{:.0f}".format(minutes) + ' minutes')
+        elif left > 60:
+            minutes = left / 60
+            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(minutes)) + ' minutes'
+        else:
+            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(left)) + ' seconds'
     progressbar.value = valuetrain
     auxlayoutpb(valuetrain)
+    labelcycles.text = '[b] [color=D464EB]Cycles: [/b][/color]' + str(currentcycle) + '/' + str(n_epoch)
+    labelfolds.text = '[b] [color=D464EB]Folds: [/b][/color]' + str(n_folds)
 
 
     #MyApp.drawinglblblackkv(self, self.parentlayout.ids.idlayoutmiddle, valuemydata)
@@ -1013,7 +1046,7 @@ class MyApp(App):
     #When self.btnError is pressed
     #The lbls on the left
     def leftlabels(self, textlayout, leftpanelitem, *largs):
-        global scores, varerrorlayout, n_epoch, n_folds, l_rate
+        global scores, varerrorlayout, n_epoch, n_folds, l_rate, labelcycles, labelfolds, errorlbl
         global list_hidden, network, n_outputs, n_inputs, currentpage
 
 
@@ -1026,18 +1059,16 @@ class MyApp(App):
                            halign="left",
                            size_hint=(1, .1), color=(1, 1, 1)))
         labeltype.bind(size=labeltype.setter('text_size'))
-        labelcycles = (Label(text='[b] [color=D464EB]Cycles: [/b][/color]' + str(leftpanelitem.n_epoch), markup=True,
-                             halign="left",
-                             size_hint=(1, .1), color=(1, 1, 1)))
+        labelcycles.text = '[b] [color=D464EB]Cycles: [/b][/color]' + str(leftpanelitem.n_epoch)
         labelcycles.bind(size=labelcycles.setter('text_size'))
         labelrate = (Label(text='[b] [color=D464EB]Rate: [/b][/color]' + str(leftpanelitem.l_rate), markup=True,
                            halign="left",
                            size_hint=(1, .1), color=(1, 1, 1)))
         labelrate.bind(size=labelrate.setter('text_size'))
-        labelfolds = (Label(text='[b] [color=D464EB]Folds: [/b][/color]' + str(leftpanelitem.n_folds), markup=True,
-                            halign="left",
-                            size_hint=(1, .1), color=(1, 1, 1)))
+        labelfolds.text = '[b] [color=D464EB]Folds: [/b][/color]' + str(leftpanelitem.n_folds)
         labelfolds.bind(size=labelfolds.setter('text_size'))
+        errorlbl.text = ''
+        errorlbl.bind(size=errorlbl.setter('text_size'))
         varerrorlayout = True
         labelaccuracy = (Label(text='[b] Accuracy: [/b]' + str("{:.2f}".format(leftpanelitem.dataerror)) + '%', markup=True,
                                    halign="left", size_hint=(1, .1)))
@@ -1059,7 +1090,9 @@ class MyApp(App):
         textlayout.add_widget(labelcycles)
         textlayout.add_widget(labelrate)
         textlayout.add_widget(labelfolds)
+        textlayout.add_widget(errorlbl)
         textlayout.add_widget(labelaccuracy)
+
 
 
         self.lblcurrentpage.text = ('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str("{:.0f}".format(len(leftpanellist))))
@@ -1417,10 +1450,14 @@ class MyApp(App):
         self.clear(layoutneuronmainscreen, layoutlabels)
         self.layout.add_widget(self.layoutsettingsvertical)
 
+        self.btnTrain.disabled = True
+        self.btnError.disabled = True
+        self.btnPredict.disabled = True
+
     def btnTrainpressed(self):
             global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata, valuetrain
             global network, n_inputs, n_outputs, n_folds, dataset, list_hidden, trainclock
-            global printth, stoptrainning
+            global printth, stoptrainning, currentfold, currentcycle, timestart
             layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
             layoutprogressbar.remove_widget(progressbar)
             layoutprogressbar.add_widget(progressbar)
@@ -1442,10 +1479,13 @@ class MyApp(App):
                        [3, 2, 2, 3],
                        [0, 1, 2, 0]]'''
 
+            currentfold = 0
+            currentcycle = 0
             progressbar.value = 0
             valuetrain = 0
             stoptrainning = False
             printth = 0
+            timestart = time.monotonic()
             trainclock = Clock.schedule_interval(layoutpbtrainnext, 1 / 10)
             network = initialize_network(n_inputs, list_hidden, n_outputs, transfer_sigmoid, transfer_sigmoid_derivative)
             threading.Thread(target=train_network, args=(network, dataset, l_rate, n_epoch, n_outputs, 'train', myevent, self)).start()
@@ -1460,7 +1500,7 @@ class MyApp(App):
     def btnErrorpressed(self):
             global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata, valuepb, printth
             global network, n_inputs, n_outputs, n_folds, dataset, list_hidden, trainclock, stoptrainning
-            global myevent, timestart
+            global myevent, timestart, errorlbl
             layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
             layoutprogressbar.remove_widget(progressbar)
             layoutprogressbar.add_widget(progressbar)
@@ -1845,6 +1885,7 @@ class MyApp(App):
         global layoutneuronmainscreen, layoutlabels, lblfilename, currentpage
         global myevent
         class MyEventDispatcher(EventDispatcher):
+            global lbltimeleft
             def __init__(self, **kwargs):
                 self.register_event_type('on_test')
                 self.register_event_type('on_trainfinished')
@@ -1866,7 +1907,7 @@ class MyApp(App):
                 print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
                 accuracylabel = (sum(scores) / float(len(scores)))
                 myapp.errorlayout(accuracylabel)
-                self.layout.remove_widget(lbltimeleft)
+                myapp.layout.remove_widget(lbltimeleft)
 
             @mainthread
             def trainnetwork(self, myapp):
@@ -1879,7 +1920,7 @@ class MyApp(App):
                 trainclock.cancel()
                 myapp.layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
                 myapp.layoutprogressbar.remove_widget(progressbar)
-                self.layout.remove_widget(lbltimeleft)
+                myapp.layout.remove_widget(lbltimeleft)
                 progressbar.value = 0
                 myapp.trainlayout()
                 for layer in network:
@@ -1913,7 +1954,10 @@ class MyApp(App):
                     myapp.drawinglblblackkv(myapp.layoutinfomiddle, MyApp.Lblleft(type='train', dataerror=0))
                     myapp.layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
                     myapp.layoutprogressbar.remove_widget(progressbar)
-                    self.layout.remove_widget(lbltimeleft)
+                    myapp.layout.remove_widget(lbltimeleft)
+                    myapp.btnTrain.disabled = False
+                    myapp.btnError.disabled = False
+                    myapp.btnPredict.disabled = False
             @mainthread
             def evshowfile(self, filechooser, filenameselected):
                 self.dispatch('on_evshowfile', filechooser, filenameselected)
@@ -1981,7 +2025,7 @@ class MyApp(App):
 
         self.btnPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='ButtonDeactivated.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
         self.btnProcessPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='ButtonDeactivated.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
-        self.btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png', size_hint=(.95,.9),
+        self.btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png', size_hint=(.95,.9), background_disabled_normal='ButtonDeactivated.png',
                        pos_hint={'center_x':.5, 'center_y':.5}, color = (1,1,1,1), font_size=18)
         self.btnError = Button(text='[b]ERROR', markup=True, background_normal='ButtonPlusP.png',
                           background_down='ButtonDeactivated.png', size_hint=(.95, .9),
