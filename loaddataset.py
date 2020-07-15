@@ -6,6 +6,7 @@ from csv import reader
 from math import sqrt
 from os.path import basename
 
+from batch_reader import load_batch
 from mnist_reader import load_mnist
 import re
 
@@ -109,7 +110,12 @@ def guess_is_type_image(mydataset):
         intsidesquare = float(int(sidesquare))
         # if sidesquare is an integer
         if (sidesquare == intsidesquare):
-            return True
+            return 'luminance'
+        sidesquare = sqrt((inputfirst - 1)/3)
+        intsidesquare = float(int(sidesquare))
+        # if sidesquare is an integer
+        if (sidesquare == intsidesquare):
+            return 'rgb'
     return False
 
 # range 0-1
@@ -121,16 +127,28 @@ def normalize_dataset(dataset, minmax):
     
 def showdataset(filenamepath):
     filename = basename(filenamepath)
-    if re.compile('\.*csv').search(filename) is None and filename.find('idx') != -1:
-        images, labels = load_mnist(filenamepath)
-        if images is None or labels is None:
-            return None, None, None, None
-        # to float
-        i = 0
-        for floatrow in images:
-            floatrow.append(labels[i])
-            i += 1
-        return False, True, True, images
+    if re.compile('\.*csv').search(filename) is None and (filename.find('idx') != -1 or filename.find('batch') != -1):
+        if filename.find('idx') != -1:
+            images, labels = load_mnist(filenamepath)
+            if images is None or labels is None:
+                return None, None, None, None
+            # to float
+            i = 0
+            for floatrow in images:
+                floatrow.append(labels[i])
+                i += 1
+            return False, True, guess_is_type_image(images), images
+        else:
+            images, labels = load_batch(filenamepath)
+            if images is None or labels is None:
+                return None, None, None, None
+
+            i = 0
+            for floatrow in images:
+                floatrow.append(labels[i])
+                i += 1
+            return False, True, guess_is_type_image(images), images
+
     else:
         mydataset = load_csv(filenamepath)
         if mydataset is None:

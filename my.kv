@@ -254,6 +254,43 @@
                 background_down: 'ButtonDeactivated.png'
                 color: 0,0,0,1
 
+<FilechooserPredict>:
+    id: idfilechooser
+    BoxLayout:
+        orientation:'vertical'
+        FileChooserListView:
+            id: filechooserbox
+            path: 'data'
+            rootpath: 'data'
+            #on_selection: text_input.text = os.path.basename(self.selection[0])
+            on_selection: self.selection and self.selection[0] and idfilechooser.myselected(self.path, self.selection[0]) or ''
+
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: None,.065
+            width: self.parent.width
+            TextInput:
+                id: text_input
+                size_hint_y: None
+                height: 30
+                multiline: False
+                pos_hint: {'center_x': .5, 'center_y': .5}
+            Button:
+                text: 'Cancel'
+                on_press: idfilechooser.popupdismiss()
+                size_hint_x: .2
+                pos_hint: {'center_x': .5, 'center_y': .5}
+                background_normal: 'ButtonPlusP.png'
+                background_down: 'ButtonDeactivated.png'
+            Button:
+                text: 'Open'
+                on_press: idfilechooser.open(filechooserbox.path, text_input.text)
+                size_hint_x: .2
+                pos_hint: {'center_x': .5, 'center_y': .5}
+                background_normal: 'ButtonPlusB.png'
+                background_down: 'ButtonDeactivated.png'
+                color: 0,0,0,1
 
 
 <MyApp>:
