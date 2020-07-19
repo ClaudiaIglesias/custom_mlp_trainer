@@ -189,7 +189,7 @@ def readdataset(filenamepath, myevent, myapp, forceisimage=None, forceoutputcolu
         myevent.evreaddataset(50,  None, floatimages, myapp)
         normalize_dataset(floatimages, minmax)
         if forceisimage is None:
-            isimage = True
+            isimage = guess_is_type_image(floatimages)
         else:
             isimage = forceisimage
         myevent.evreaddataset(100, isimage, floatimages, myapp)
@@ -202,12 +202,12 @@ def readdataset(filenamepath, myevent, myapp, forceisimage=None, forceoutputcolu
             outputcolumn = guess_output_column(mydataset)
         else:
             outputcolumn = forceoutputcolumn
+        if outputcolumn == 0:
+            mydataset = datasetoutputfirsttolastcolumn(mydataset)
         if forceisimage is None:
             isimage = guess_is_type_image(mydataset)
         else:
             isimage = forceisimage
-        if outputcolumn == 0:
-            mydataset = datasetoutputfirsttolastcolumn(mydataset)
 
         myevent.evreaddataset(10, isimage, mydataset, myapp)
         for i in range(len(mydataset[0]) - 1):

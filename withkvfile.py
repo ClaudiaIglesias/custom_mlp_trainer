@@ -45,8 +45,6 @@ from kivy.uix.popup import Popup
 import os
 from os.path import dirname, join, basename, exists, expanduser
 from kivy.animation import Animation
-
-
 from loaddataset import showdataset, readdataset, str_column_to_float
 
 numoutputs = 1
@@ -97,9 +95,10 @@ ti2 = TextInput(size=(40, 30), size_hint=(None, None))
 ti3 = TextInput(size=(40, 30), size_hint=(None, None))
 progressbar = ProgressBar()
 popupfilechooser = None
-popupfilechooserpredict = None
 currentpage = 0
 myevent=None
+
+
 
 
 
@@ -243,7 +242,6 @@ def train_network(network, train, l_rate, n_epoch, n_outputs, type, eventp, myap
     if type == 'train':
         eventp.trainfinished(myapp)
 
-
 #Works with btnGo
 def predict(network, row):
     outputs = forward_propagate(network, row)
@@ -251,7 +249,6 @@ def predict(network, row):
     print('..........')
     print(outputs.index(max(outputs)))
     return outputs.index(max(outputs))
-
 #accuracy
 def accuracy_metric(actual, predicted):
     correct = 0
@@ -1401,6 +1398,7 @@ class MyApp(App):
         self.btnTrain.disabled = True
         self.btnError.disabled = True
         self.btnPredict.disabled = True
+        self.onpredictlayout = False
 
     def btnTrainpressed(self):
             global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata, valuetrain
@@ -1472,6 +1470,13 @@ class MyApp(App):
         self.layoutinfoleft.size_hint_x = 0.1
         self.layoutinforight.size_hint_x = 0.1
 
+        if self.onpredictlayout:
+            dataset = self.savedataset
+            network = self.savenetwork
+            filename = self.savedfilename
+            lblfilename = self.parentlayout.ids.idlabelfilename
+            lblfilename.text = ('[b] Current file: [/b]' + '[i]' + basename(filename))
+
 
         self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
         self.layouttrainscreen.anchor_x = 'center'
@@ -1490,6 +1495,7 @@ class MyApp(App):
         self.layoutinfotop.remove_widget(self.btnBack)
         self.btnSettings.disabled = False
         self.btnBack.disabled = False
+        self.onpredictlayout = False
         self.layout.remove_widget(self.btnProcessPredict)
         layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
         layoutprogressbar.remove_widget(progressbar)
@@ -1504,9 +1510,14 @@ class MyApp(App):
             self.btnPredict.disabled = False
 
     def predictlayout(self):
+        global dataset, network, myevent
         self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
         self.layouttrainscreen.anchor_x = 'center'
-        self.filechooserfunctionPredict()
+        self.savedataset = dataset.copy()
+        self.savenetwork = network.copy()
+        self.savedfilename = filename
+        self.filechooserfunction()
+        myevent.drawingmainlayout
         self.layout.remove_widget(self.btnTrain)
         self.layout.remove_widget(self.btnError)
         self.layout.remove_widget(self.btnPredict)
@@ -1516,6 +1527,7 @@ class MyApp(App):
         self.layout.remove_widget(self.btnnewinput)
         self.btnSettings.disabled = False
         self.btnBack.disabled = False
+        self.onpredictlayout = True
 
         self.layout.add_widget(self.btnProcessPredict)
         self.layoutinfotop.add_widget(self.btnBack)
@@ -1530,7 +1542,7 @@ class MyApp(App):
         inputs = list()
         for row in dataset:
             inputs.append(row[0:-2])
-        predict(dataset,inputs)
+        predict(network,inputs)
 
     def trainlayout(self):
         self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
@@ -1547,6 +1559,7 @@ class MyApp(App):
         progressbar.value=0
         self.btnSettings.disabled = False
         self.btnBack.disabled = False
+        self.onpredictlayout = False
 
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
@@ -1582,6 +1595,7 @@ class MyApp(App):
         progressbar.value = 0
         self.btnSettings.disabled = False
         self.btnBack.disabled = False
+        self.onpredictlayout = False
 
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
@@ -1765,11 +1779,11 @@ class MyApp(App):
         popupfilechooser.open()
 
     def filechooserfunctionPredict(self):
-        global popupfilechooserpredict
-        content = FilechooserPredict()
-        popupfilechooserpredict = Popup(title="Load file", content=content,
+        global popupfilechooser
+        content = Filechooser()
+        popupfilechooser = Popup(title="Load file", content=content,
                             size_hint=(0.9, 0.9),auto_dismiss= False, separator_color= (.67,.57,.69))
-        popupfilechooserpredict.open()
+        popupfilechooser.open()
 
     def btncancelpressed(self):
         global stoptrainning
@@ -1885,6 +1899,7 @@ class MyApp(App):
                 progressbar.value = progressvarvalue
                 if progressvarvalue == 100:
                     progressbar.value = 100.0
+                    myapp.isimage = myisimage
                     dataset = mydataset
                     n_inputs = len(dataset[0]) - 1
                     n_outputs = len(set([row[-1] for row in dataset]))
@@ -1910,6 +1925,8 @@ class MyApp(App):
         list_hidden.append(6)
         numlayers = str(len(list_hidden))
         myevent = MyEventDispatcher()
+
+        self.onpredictlayout = False
 
         self.parentlayout = LayoutScreen()
         layoutneuronmainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idLayoutNeuronMainScreen.ids.idrelativelayoutneuronmainscreen
@@ -2563,353 +2580,6 @@ class Filechooser(BoxLayout):
     def popupdismiss(self):
         popupfilechooser.dismiss()
 
-class FilechooserPredict(BoxLayout):
-
-    def myselected(self, path, filenameselected):
-        self.ids.text_input.text = basename(filenameselected)
-
-    class WidgetTexture(Widget):
-        def __init__(self, imagebits, **kwargs):
-            super(FilechooserPredict.WidgetTexture, self).__init__(**kwargs)
-
-            sidesquare = sqrt(len(imagebits) - 1)
-            intsidesquare = int(sidesquare)
-            self.texture = Texture.create(size=(sidesquare, sidesquare))
-
-            buf = list(imagebits)
-            buf.pop(-1)
-            arr = list()
-            for value in buf:
-                arr.append(int(value))
-
-            bufbytes = array('B', arr)
-            self.texture.blit_buffer(bufbytes, colorfmt='luminance', bufferfmt='ubyte')
-            self.texture.flip_vertical()
-
-            with self.canvas:
-                Color(1,1,1)
-                self.rect = Rectangle(texture=self.texture, pos=self.pos, size=(sidesquare, sidesquare))
-
-            self.bind(pos=self.update_rect,
-                      size=self.update_rect)
-
-        def update_rect(self, *args):
-            self.rect.pos = (self.center_x - self.rect.size[0] / 2, self.center_y - self.rect.size[1] / 2)
-
-        def update_texture(self, imagebits):
-            buf = list(imagebits)
-            buf.pop(-1)
-            arr = list()
-            for value in buf:
-                arr.append(int(value))
-
-            bufbytes = array('B', arr)
-            self.texture.blit_buffer(bufbytes, colorfmt='luminance', bufferfmt='ubyte')
-            self.texture.flip_vertical()
-
-    def filechoosershowdatasetcont(self, filenameselected):
-
-        if self.mytexturedataset == None:
-            containererror = BoxLayout(orientation='vertical')
-            popuperror = Popup(title='DATASET:', content=containererror, separator_color=(.6,1,1, 1),
-                              auto_dismiss=False, size_hint=(.5,.5))
-            lblerror = Label(text='{} : Wrong file format' .format(filenameselected))
-            popuperrorbtn = Button(text='OK', on_press=popuperror.dismiss, background_normal='ButtonPlusP.png',
-                              background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png',
-                              pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1,.5))
-            containererror.add_widget(lblerror)
-            containererror.add_widget(popuperrorbtn)
-            popuperror.open()
-        else:
-            self.popup.dismiss()
-            self.pagenum = 1
-            self.pags = 0
-            containerbox = BoxLayout(orientation='vertical', spacing = 10)
-            popupshow = Popup(title='DATASET:', content=containerbox, separator_color=(.6,1,1, 1),
-                              auto_dismiss=False)
-            popupbtn = Button(text='OK', on_press=popupshow.dismiss, background_normal='ButtonPlusP.png',
-                              background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png',
-                              pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(.4,1))
-            self.mainlayout = GridLayout(cols=1)
-            middlelayout = BoxLayout(orientation = 'horizontal')
-            self.btnnextpage = Button(text='[b]>', markup=True, size_hint=(.05, .2),
-                             pos_hint={'center_x': 1, 'center_y': .5},
-                             background_normal='ButtonPlusP.png',
-                             background_down='ButtonDeactivated.png',
-                             background_disabled_normal='ButtonDeactivated.png', font_size=20)
-            self.btnpreviouspage = Button(text='[b]<', markup=True, size_hint=(.05, .2),
-                                 pos_hint={'center_x': 1, 'center_y': .5},
-                                 background_normal='ButtonPlusP.png',
-                                 background_down='ButtonDeactivated.png',
-                                 background_disabled_normal='ButtonDeactivated.png', font_size=20)
-            mybtnlayout = BoxLayout(orientation='horizontal', size_hint=(1,.1))
-            typelayout = GridLayout( cols = 4)
-            infolayout = BoxLayout(orientation='horizontal', size_hint=(1,.1))
-            self.imagedatabox = CheckBox(group = 'typeobject', size_hint=(.4,1))
-            lblimagedatabox = Label(text='Images dataset',halign="left")
-            lblimagedatabox.bind(size=lblimagedatabox.setter('text_size'))
-            self.numberdatabox = CheckBox(group = 'typeobject', size_hint=(.4,1))
-            lblnumberdatabox = Label(text='Numbers dataset',halign="left")
-            lblnumberdatabox.bind(size=lblnumberdatabox.setter('text_size'))
-            self.outputfirstbox = CheckBox(group='output', size_hint=(.4,1))
-            lbloutputfirstbox = Label(text='Outputs on first column',halign="left")
-            lbloutputfirstbox.bind(size=lbloutputfirstbox.setter('text_size'))
-            self.outputlastbox = CheckBox(group='output', size_hint=(.4,1))
-            lbloutputlastbox = Label(text='Outputs on last column',halign="left")
-            lbloutputlastbox.bind(size=lbloutputlastbox.setter('text_size'))
-
-            self.lblpage = Label(text='', markup = True, pos_hint={'center_x': .5, 'center_y': .5},
-                            size_hint=(1, .1), color=(.7,.9,.9))
-            outputslast = ([row[-1] for row in self.mytexturedataset])
-            setoutputslast = set(outputslast)
-
-            self.btnnoutputs = Button(text='[b]nº outputs: [/b]' + str(len(setoutputslast)),markup = True, pos_hint={'center_x': .5, 'center_y': .5},
-                            size_hint=(1, .9), background_normal='ButtonPlusP.png',
-                             background_down='ButtonDeactivated.png')
-            lblnelements = Label(text='[b]nº elements: [/b]' + str(len(outputslast)), markup = True, pos_hint={'center_x': .5, 'center_y': .5},
-                            size_hint=(.8, .1))
-
-            self.lblelementsize = Label(text='', markup = True, pos_hint={'center_x': .5, 'center_y': .5},
-                            size_hint=(.8, .1))
-
-
-
-
-            self.outputlastbox.active = True
-            self.outputchanged = False
-            self.btnpreviouspage.disabled = True
-            self.btnnextpage.disabled = False
-            self.btnnextpage.bind(on_press=lambda x:self.numberdatasetfunc('plusbtn'))
-            self.btnpreviouspage.bind(on_press=lambda x:self.numberdatasetfunc('lessbtn'))
-            self.outputfirstbox.bind(on_press=lambda x:self.outputdatasetfunc())
-            self.numberdatabox.bind(active=lambda x,y:self.resetandnumberdatasetfunc(''))
-            self.btnnoutputs.bind(on_press=lambda x:self.outputoptionsfunc())
-
-            if self.optionalimage == True:
-                typelayout.add_widget(self.numberdatabox)
-                typelayout.add_widget(lblnumberdatabox)
-            if self.optionaloutput == True:
-                typelayout.add_widget(self.outputlastbox)
-                typelayout.add_widget(lbloutputlastbox)
-            if self.optionalimage == True:
-                typelayout.add_widget(self.imagedatabox)
-                typelayout.add_widget(lblimagedatabox)
-            if self.optionaloutput == True:
-                typelayout.add_widget(outputfirstbox)
-                typelayout.add_widget(lbloutputfirstbox)
-            mybtnlayout.add_widget(popupbtn)
-            mybtnlayout.add_widget(typelayout)
-            middlelayout.add_widget(self.btnpreviouspage)
-            middlelayout.add_widget(self.mainlayout)
-            middlelayout.add_widget(self.btnnextpage)
-            containerbox.add_widget(middlelayout)
-            containerbox.add_widget(infolayout)
-            infolayout.add_widget(self.btnnoutputs)
-            infolayout.add_widget(lblnelements)
-            infolayout.add_widget(self.lblelementsize)
-            infolayout.add_widget(self.lblpage)
-            containerbox.add_widget(mybtnlayout)
-            popupshow.open()
-
-            if self.isimage is not None:
-                self.imagedatabox.active = True
-            else:
-                self.numberdatabox.active = True
-            self.numberdatasetfunc('')
-
-    def filechoosershowdataset(self, path, filenameselected, eventp):
-        global myevent, filename
-        filename = os.path.join(path, filenameselected)
-        lblfilename.text = ('[b] Current file: [/b]' + '[i]' + filenameselected)
-        self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filename)
-        eventp.evshowfile(self, filenameselected)
-
-    def numberdatasetfunc(self, plusless):
-        global outputimageslist, inputimagelist
-
-        self.mainlayout.clear_widgets()
-        if plusless == 'plusbtn':
-            self.pagenum += 1
-        elif plusless == 'lessbtn':
-            self.pagenum -= 1
-
-        self.btnactivation()
-
-        #Show number
-        if self.numberdatabox.active == True:
-            nitemsperpage = 14
-            pagsfloat = (len(self.mytexturedataset) / nitemsperpage)
-            pagsaux = float(int(pagsfloat))
-            self.pags = int(pagsfloat)
-            if pagsaux != pagsfloat:
-                self.pags += 1
-            self.lblelementsize.text = '[b]element size: [/b]' + str(len(self.mytexturedataset[0]))
-            self.lblpage.text = '[b]Page: [/b]' + str(self.pagenum) + '/' + str(self.pags)
-
-            if len(self.mytexturedataset[0]) > 20:
-                self.mainlayout.cols = 11
-                linesperpage = 14
-                for rowtexture in range(linesperpage):
-                    index = rowtexture + (self.pagenum - 1) * linesperpage
-                    pos = 0
-                    if index >= len(self.mytexturedataset):
-                        break
-                    firstline = self.mytexturedataset[rowtexture + (self.pagenum-1) * linesperpage]
-                    for number in firstline:
-                        if pos < 5 or pos >= (len(firstline) - 5):
-                            datalbl = Label(text=str(number))
-                            self.mainlayout.add_widget(datalbl)
-                        elif pos == 5 :
-                            datalbl = Label(text='...')
-                            self.mainlayout.add_widget(datalbl)
-                        pos += 1
-            else:
-                self.mainlayout.cols = len(self.mytexturedataset[0])
-                for rowtexture in range(14):
-                    pos = rowtexture+(self.pagenum-1)*14
-                    if pos >= len(self.mytexturedataset):
-                        break
-                    for number in self.mytexturedataset[pos]:
-                        mystrrow = number + ' '
-                        datalbl = Label(text =mystrrow)
-                        self.mainlayout.add_widget(datalbl)
-
-
-        #Show Images
-        else:
-            cols = int((Window.width - 200) / points)
-            self.mainlayout.cols = int(cols)
-            rows = int((Window.height - 200) / points)
-            self.mainlayout.rows = int (rows)
-            nitemsperpage = (self.mainlayout.cols * self.mainlayout.rows)
-            pagsfloat = (len(self.mytexturedataset) / nitemsperpage)
-            pagsaux = float(int(pagsfloat))
-            self.pags = int(pagsfloat)
-            self.lblelementsize.text = '[b]image size: [/b]' + str(int(points)) + ' x ' + str(int(points))
-            if pagsaux != pagsfloat:
-                self.pags += 1
-
-            self.lblpage.text = '[b]Page: [/b]' + str(self.pagenum) + '/' + str(self.pags)
-            for rowtexture in range(nitemsperpage): #in range cols * rows
-                index = rowtexture+(self.pagenum-1)*nitemsperpage
-                if index >= len(self.mytexturedataset):
-                    break
-                imagedata = self.WidgetTexture(self.mytexturedataset[index])
-                self.mainlayout.add_widget(imagedata)
-            outputslast = ([row[-1] for row in self.mytexturedataset])
-            setoutputslast = sorted(set(outputslast))
-            self.myoutputimageslist = list()
-            for number in setoutputslast:
-                for row in self.mytexturedataset:
-                    if row[-1] == number:
-                        self.myoutputimageslist.append(row)
-                        break
-            if len(self.mytexturedataset) > 100:
-                inputimagelist = list(self.mytexturedataset[10:100])
-            else:
-                inputimagelist = list(self.mytexturedataset[:-1])
-
-            outputimageslist = self.myoutputimageslist.copy()
-        self.btnactivation()
-
-    def resetandnumberdatasetfunc(self, plusless):
-        self.pagenum = 1
-        self.numberdatasetfunc(plusless)
-
-    def outputdatasetfunc(self):
-
-        if self.outputfirstbox.active == True and self.outputchanged == False:
-            self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filenameselected)
-            self.numberdatasetfunc('')
-            self.outputchanged = True
-        elif self.outputlastbox.active == True and self.outputchanged == True:
-            self.mytexturedataset = datasetoutputlastcolumn(self.mytexturedataset)
-            self.numberdatasetfunc('')
-            self.outputchanged = False
-        else:
-            pass
-
-    def outputoptionsfunc(self):
-        containeroutput = BoxLayout(orientation='vertical')
-        outputbox = GridLayout()
-        outputbox.clear_widgets()
-        self.popupoutputs = Popup(title='OUTPUTS:', content=containeroutput, separator_color=(.6,1,1, 1),
-                      auto_dismiss=False, size_hint=(.6,.8))
-        popupoutputbtn = Button(text='OK', background_normal='ButtonPlusP.png',
-                                background_down='ButtonDeactivated.png',
-                                background_disabled_normal='ButtonDeactivated.png', pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1, .2))
-        popupoutputbtn.bind(on_press= lambda x:self.popupoutputsdismiss() )
-        outputslast = ([row[-1] for row in self.mytexturedataset])
-        setoutputslast = sorted(set(outputslast))
-
-        if self.imagedatabox.active == True:
-            outputbox.cols = len(setoutputslast)
-        else:
-            outputbox.rows = len(setoutputslast)
-
-        if self.imagedatabox.active == True:
-            # for number in setoutputslast:
-            #     for row in self.mytexturedataset:
-            #         if row[-1] == number:
-            #             imagedata = WidgetTexture(row)
-            #             outputbox.add_widget(imagedata)
-            #             break
-            for row in self.myoutputimageslist:
-                image = FilechooserPredict.WidgetTexture(row)
-                outputbox.remove_widget(image)
-                outputbox.add_widget(image)
-
-        for number in setoutputslast:
-            lbloutput = Label(text=str(number))
-            outputbox.add_widget(lbloutput)
-
-
-        containeroutput.add_widget(outputbox)
-        containeroutput.add_widget(popupoutputbtn)
-
-        self.popupoutputs.open()
-
-    def btnactivation(self):
-        if self.pagenum <= 1:
-            self.btnpreviouspage.disabled = True
-        else:
-            self.btnpreviouspage.disabled = False
-        if self.pagenum >= int(self.pags):
-            self.btnnextpage.disabled = True
-        else:
-            self.btnnextpage.disabled = False
-
-    def popupoutputsdismiss(self):
-        self.popupoutputs.dismiss()
-
-    def open(self, path, filenameselected):
-        global popupfilechooserpredict
-        global myevent
-
-        popuploading = PopupLoading()
-        self.popup = Popup(title=filenameselected, content=popuploading,
-                      size_hint=(0.9, 0.9), auto_dismiss=False, separator_color=(.67, .57, .69))
-        self.popup.open()
-
-        popuploading.start()
-
-        threading.Thread(target=FilechooserPredict.filechoosershowdataset, args=(self, path, filenameselected, myevent)).start()
-        popupfilechooserpredict.dismiss()
-
-    def BtnImagesFncn(self,btnimages):
-        if btnimages.text == 'Numbers dataset':
-            btnimages.text = 'Images dataset'
-        else:
-            btnimages.text = 'Numbers dataset'
-    def BtnOutputFncn(self,btnimages):
-        if btnimages.text == 'Output on last column':
-            btnimages.text = 'Output on first column'
-        else:
-            btnimages.text = 'Output on last column'
-
-
-    def popupdismiss(self):
-        popupfilechooserpredict.dismiss()
 
 
 
