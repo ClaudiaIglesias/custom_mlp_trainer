@@ -45,7 +45,12 @@ from kivy.uix.popup import Popup
 import os
 from os.path import dirname, join, basename, exists, expanduser
 from kivy.animation import Animation
+
+from filechooser import Filechooser
 from loaddataset import showdataset, readdataset, str_column_to_float
+from neuralnet import initialize_network_no_weights, train_network, back_propagation, \
+    initialize_network, transfer_sigmoid, transfer_sigmoid_derivative
+from widgettexture import WidgetTexture
 
 numoutputs = 1
 n_outputs = 1
@@ -55,9 +60,6 @@ list_hidden = list()
 input = list()
 outputimageslist = list()
 network = []
-n_folds = 5
-l_rate = 0.3
-n_epoch = 20
 prediction = False
 varerrorlayout = False
 
@@ -80,8 +82,6 @@ inputimagelist = ''
 valuepb = 0
 currentcycle = 0
 currentfold = 0
-valuetrain = 0
-stoptrainning = False
 valuemydata = None
 accuracylabel =''
 scores = list()
@@ -94,276 +94,143 @@ ti = TextInput(size=(40, 30), size_hint=(None, None))
 ti2 = TextInput(size=(40, 30), size_hint=(None, None))
 ti3 = TextInput(size=(40, 30), size_hint=(None, None))
 progressbar = ProgressBar()
-popupfilechooser = None
 currentpage = 0
-myevent=None
 
 
+class Lblleft():
+
+    def __init__(self, myapp, type, dataerror):
+        global scores, varerrorlayout, n_epoch, n_folds, l_rate
+        global list_hidden, network, n_outputs, n_inputs, currentpage, list_hidden, outputimageslist
+
+        self.datestr = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        self.networklist = network.copy()
+        self.n_outputlbl = n_outputs
+        self.n_inputlbl = n_inputs
+        self.filename = filename
+        self.type = type
+        self.n_epoch = myapp.n_epoch
+        self.n_folds = myapp.n_folds
+        self.l_rate = myapp.l_rate
+        self.dataerror = dataerror
+        self.list_hidden = list_hidden.copy()
+        self.outputimageslist = outputimageslist.copy()
 
 
+class LineParam():
+    def __init__(self, layer, hidden, offset, maximum, value, color, linewidget, canvas):
+        self.layer = layer
+        self.hidden = hidden
+        self.offset = offset
+        self.maximum = maximum
+        self.linewidget = linewidget
+        self.canvas = canvas
+        self.value = value
+        self.color = color
 
-def cross_validation_split(dataset, n_folds):
-	dataset_split = list()
-	dataset_copy = list(dataset)
-	fold_size = int(len(dataset) / n_folds)
-	for i in range(n_folds):
-		fold = list()
-		while len(fold) < fold_size:
-			index = randrange(len(dataset_copy))
-			fold.append(dataset_copy.pop(index))
-		dataset_split.append(fold)
-	return dataset_split
+    def remove(self):
+        self.canvas.remove(self.linewidget)
 
-#Create the list of weights and biases
-def initialize_network(n_inputs, n_hidden, n_outputs, transfer_f, transfer_derfivative_f):
-    network = list()
-    weightspernode=n_inputs
-    for nodesinhidden in n_hidden:
-        layer = list()
-        for i in range(nodesinhidden):
-            layer.append({'weights': [random() * sqrt(1 / weightspernode) for j in range(weightspernode + 1)],
-                 'transfer': transfer_f, 'transfer_derivative': transfer_derfivative_f})
-        network.append(layer)
-        weightspernode=nodesinhidden
-
-    output_layer = list()
-    for i in range(n_outputs):
-        output_layer.append({'weights':[ random() * sqrt(1 / nodesinhidden) for j in range(nodesinhidden + 1) ],
-            'transfer': transfer_sigmoid, 'transfer_derivative': transfer_sigmoid_derivative})
-    network.append(output_layer)
-    return network
-
-def initialize_network_no_weights(n_inputs, n_hidden, n_outputs):
-    network = list()
-    weightspernode=n_inputs
-    defaultweight = 1.0
-    for nodesinhidden in n_hidden:
-        network.append ( [{'weights': [defaultweight for i in range(weightspernode + 1)]} for i in range(nodesinhidden)] )
-        weightspernode=nodesinhidden
-
-    output_layer = [{'weights': [defaultweight for i in range(nodesinhidden + 1)]} for i in range(n_outputs)]
-    network.append(output_layer)
-    return network
-# Calculate neuron activation for an input
-def activate(weights, inputs):
-    activation = weights[-1]
-    for i in range(len(weights) - 1):
-        activation += weights[i] * inputs[i]
-    return activation
-
-# Transfer neuron activation
-def transfer_rectified(output):
-   return output * (output > 0)
-
-def transfer_sigmoid(activation):
-    return 1.0 / (1.0 + exp(-activation))
-
-
-# Calculate the derivative of an neuron output
-def transfer_rectified_derivative(output):
-    return 1. * (output > 0)
-
-
-def transfer_sigmoid_derivative(output):
-    return output * (1.0 - output)
-
-# Forward propagate input to a network output
-def forward_propagate(network, row):
-    inputs = row
-    for layer in network:
-        new_inputs = []
-        for neuron in layer:
-            activation = activate(neuron['weights'], inputs)
-            neuron['output'] = neuron['transfer'](activation)
-            new_inputs.append(neuron['output'])
-        inputs = new_inputs
-    return inputs
-
-# Backpropagate error and store in neurons
-def backward_propagate_error(network, expected):
-    for i in reversed(range(len(network))):
-        layer = network[i]
-        errors = list()
-        if i != len(network) - 1:
-            for j in range(len(layer)):
-                error = 0.0
-                for neuron in network[i + 1]:
-                    error += (neuron['weights'][j] * neuron['delta'])
-                errors.append(error)
-        else:
-            for j in range(len(layer)):
-                neuron = layer[j]
-                errors.append(expected[j] - neuron['output'])
-        for j in range(len(layer)):
-            neuron = layer[j]
-            neuron['delta'] = errors[j] * neuron['transfer_derivative'](neuron['output'])
-
-# Update network weights with error
-def update_weights(network, row, l_rate):
-    for i in range(len(network)):
-        inputs = row[:-1]
-        if i != 0:
-            inputs = [neuron['output'] for neuron in network[i - 1]]
-        for neuron in network[i]:
-            for j in range(len(inputs)):
-                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
-            neuron['weights'][-1] += l_rate * neuron['delta']
-
-# Train a network for a fixed number of epochs
-def train_network(network, train, l_rate, n_epoch, n_outputs, type, eventp, myapp):
-    global valuepb, valuetrain, valuemydata, timestart, timeleft, currentcycle, currentfold
-    global n_folds, mean_qerror
-    step = 100.0/(n_folds*n_epoch*len(train))
-    steptrain = 100.0/ n_epoch
-    currentfold += 1
-    currentcycle = 0
-    for epoch in range(n_epoch):
-        sum_error = 0
-        valuetrain += steptrain
-        valuemydata = MyApp.Lblleft(type=type, dataerror=0)
-        currentcycle += 1
-        if stoptrainning:
-            break
-        i = 1
-        for row in train:
-            valuepb += step
-            outputs = forward_propagate(network, row)
-            expected = [0 for i in range(n_outputs)]
-            expected[row[-1]] = 1
-            sum_error += sum([(expected[i] - outputs[i]) ** 2 for i in range(len(expected))])
-            mean_qerror = sum_error / i
-            i += 1
-            backward_propagate_error(network, expected)
-            update_weights(network, row, l_rate)
-            if stoptrainning:
-                break
-        print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, sum_error))
-       
-    if type == 'train':
-        eventp.trainfinished(myapp)
-
-#Works with btnGo
-def predict(network, row):
-    outputs = forward_propagate(network, row)
-    print(outputs)
-    print('..........')
-    print(outputs.index(max(outputs)))
-    return outputs.index(max(outputs))
-#accuracy
-def accuracy_metric(actual, predicted):
-    correct = 0
-    for i in range(len(actual)):
-        if actual[i] == predicted[i]:
-            correct += 1
-    return (correct / float(len(actual))) * 100.0
-
-def auxlayoutpb(valuetrain):
-    global valuemydata, printth
-    global dataset, imageinput
-    if valuetrain > printth:
-        for layer in valuemydata.networklist:
-            print(layer)
-        printth += 20
-    # calculate new maxs
-    if valuemydata is None:
-        return
-    for layer in range(len(valuemydata.networklist)):
-        max = 0.0
-        for myline in listoflines:
-            if myline.layer == layer:
-                myline.value = abs(valuemydata.networklist[myline.layer][myline.hidden]['weights'][myline.offset])
-                if myline.value > max:
-                    max = myline.value
-        for myline in listoflines:
-            if myline.layer == layer:
-                myline.maximum = max
-
-    nchanges = 0
-    for myline in listoflines:
-        nchanges += myline.change()
-    print ('number of changes {} \n' .format(nchanges))
-    indeximageinput = int(random() * len(inputimagelist))
-    imageinput.update_texture(inputimagelist[indeximageinput])
-
-#Error progress
-def layoutpbnext(self):
-    global valuepb, lbltimeleft, timestart, timeleft, sum_error, currentcycle, currentfold
-    global progressbar
-
-    timenow = time.monotonic()
-    elapse = timenow - timestart
-    if valuepb == 0:
-        lbltimeleft.text = 'estimating...'
-    else:
-        left = (elapse / valuepb) * (100.0 - valuepb)
-        if left > 3600:
-            hours = divmod(left, 3600)
-            minutes = hours[1]/60
-            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(hours[0])) + ' hours ' + str("{:.0f}".format(minutes) + ' minutes')
-        elif left > 60:
-            minutes = left / 60
-            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(minutes)) + ' minutes'
-        else:
-            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(left)) + ' seconds'
-    progressbar.value = valuepb
-    auxlayoutpb(valuepb)
-    errorlbl.text = '[b] [color=D464EB]Mean quadratic error: [/b][/color]' + str("{:.4f}".format(mean_qerror))
-    labelcycles.text = '[b] [color=D464EB]Cycles: [/b][/color]' + str(currentcycle) + '/' + str(n_epoch)
-    labelfolds.text =  '[b] [color=D464EB]Folds: [/b][/color]' + str(currentfold) + '/' + str(n_folds)
-#Train progress
-def layoutpbtrainnext(self):
-    global valuetrain, lbltimeleft, timestart, timeleft, labelcycles, labelfolds
-    global progressbar, currentcycle, currentfold
-    timenow = time.monotonic()
-    elapse = timenow - timestart
-    if valuetrain == 0:
-        lbltimeleft.text = 'estimating...'
-    else:
-        left = (elapse / valuetrain) * (100.0 - valuetrain)
-        if left > 3600:
-            hours = divmod(left, 3600)
-            minutes = hours[1] / 60
-            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(hours[0])) + ' hours ' + str("{:.0f}".format(minutes) + ' minutes')
-        elif left > 60:
-            minutes = left / 60
-            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(minutes)) + ' minutes'
-        else:
-            lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(left)) + ' seconds'
-    progressbar.value = valuetrain
-    auxlayoutpb(valuetrain)
-    labelcycles.text = '[b] [color=D464EB]Cycles: [/b][/color]' + str(currentcycle) + '/' + str(n_epoch)
-    labelfolds.text = '[b] [color=D464EB]Folds: [/b][/color]' + str(n_folds)
-
-
-    #MyApp.drawinglblblackkv(self, self.parentlayout.ids.idlayoutmiddle, valuemydata)
-# Backpropagation Algorithm With Stochastic Gradient Descent
-def back_propagation(train, test, eventp, myapp, l_rate, n_epoch, n_hidden):
-    global network
-
-    n_inputs = len(train[0]) - 1
-    n_outputs = len(set([row[-1] for row in train]))
-    network = initialize_network(n_inputs, n_hidden, n_outputs, transfer_sigmoid, transfer_sigmoid_derivative)
-    train_network(network, train, l_rate, n_epoch, n_outputs, 'backp', eventp, myapp)
-    predictions = list()
-    for row in test:
-        if stoptrainning:
-            break
-        prediction = predict(network, row)
-        predictions.append(prediction)
-    return(predictions)
-
-
+    def change(self):
+        newcolor = self.value / self.maximum
+        if (abs(newcolor - self.color) > 0.02):
+            self.canvas.remove(self.linewidget)
+            self.color = newcolor
+            self.canvas.add(Color(self.color, self.color, self.color))
+            self.canvas.add(self.linewidget)
+            return 1
+        return 0
 
 
 class MyApp(App):
 
+    def auxlayoutpb(self, myvaluetrain):
+        global valuemydata, printth
+        global dataset, imageinput
+        if myvaluetrain > printth:
+            for layer in valuemydata.networklist:
+                print(layer)
+            printth += 20
+        # calculate new maxs
+        if valuemydata is None:
+            return
+        for layer in range(len(valuemydata.networklist)):
+            max = 0.0
+            for myline in listoflines:
+                if myline.layer == layer:
+                    myline.value = abs(valuemydata.networklist[myline.layer][myline.hidden]['weights'][myline.offset])
+                    if myline.value > max:
+                        max = myline.value
+            for myline in listoflines:
+                if myline.layer == layer:
+                    myline.maximum = max
+
+        nchanges = 0
+        for myline in listoflines:
+            nchanges += myline.change()
+        print('number of changes {} \n'.format(nchanges))
+        indeximageinput = int(random() * len(inputimagelist))
+        imageinput.update_texture(inputimagelist[indeximageinput])
+
+    # Error progress
+    def layoutpbnext(self, deltatime):
+        global valuepb, lbltimeleft, timestart, timeleft, sum_error, currentcycle, currentfold
+        global progressbar
+
+        timenow = time.monotonic()
+        elapse = timenow - timestart
+        if valuepb == 0:
+            lbltimeleft.text = 'estimating...'
+        else:
+            left = (elapse / valuepb) * (100.0 - valuepb)
+            if left > 3600:
+                hours = divmod(left, 3600)
+                minutes = hours[1] / 60
+                lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(hours[0])) + ' hours ' + str(
+                    "{:.0f}".format(minutes) + ' minutes')
+            elif left > 60:
+                minutes = left / 60
+                lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(minutes)) + ' minutes'
+            else:
+                lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(left)) + ' seconds'
+        progressbar.value = valuepb
+        auxlayoutpb(valuepb)
+        errorlbl.text = '[b] [color=D464EB]Mean quadratic error: [/b][/color]' + str("{:.4f}".format(mean_qerror))
+        labelcycles.text = '[b] [color=D464EB]Cycles: [/b][/color]' + str(currentcycle) + '/' + str(n_epoch)
+        labelfolds.text = '[b] [color=D464EB]Folds: [/b][/color]' + str(currentfold) + '/' + str(n_folds)
+
+    # Train progress
+    def layoutpbtrainnext(self, deltatime):
+        global lbltimeleft, timestart, timeleft, labelcycles, labelfolds
+        global progressbar, currentcycle, currentfold
+        timenow = time.monotonic()
+        elapse = timenow - timestart
+        if self.valuetrain == 0:
+            lbltimeleft.text = 'estimating...'
+        else:
+            left = (elapse / self.valuetrain) * (100.0 - self.valuetrain)
+            if left > 3600:
+                hours = divmod(left, 3600)
+                minutes = hours[1] / 60
+                lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(hours[0])) + ' hours ' + str(
+                    "{:.0f}".format(minutes) + ' minutes')
+            elif left > 60:
+                minutes = left / 60
+                lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(minutes)) + ' minutes'
+            else:
+                lbltimeleft.text = '[b] Remaining time: [/b]' + str("{:.0f}".format(left)) + ' seconds'
+        progressbar.value = self.valuetrain
+        self.auxlayoutpb(self.valuetrain)
+        labelcycles.text = '[b] [color=D464EB]Cycles: [/b][/color]' + str(currentcycle) + '/' + str(self.n_epoch)
+        labelfolds.text = '[b] [color=D464EB]Folds: [/b][/color]' + str(self.n_folds)
+
     # When Train is pressed
     def drawinglblblackkv(self, textlayout, mydata):
         global accuracylabel, progressbar, prediction, biaseslabels
-        global n_epoch, n_folds, l_rate, imageinput, inputimagelist
+        global imageinput, inputimagelist
         global listoflines
         global valuemydata
-        valuemydata = MyApp.Lblleft(mydata.type, mydata.dataerror)
+        valuemydata = Lblleft(self, mydata.type, mydata.dataerror)
 
         listoflines.clear()
         prediction = True
@@ -922,12 +789,12 @@ class MyApp(App):
                 #draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex + 196, c * 50 + (middley-34 - spaceoutput / 2)),color=(1, 1, 1, .9))
         c = 0
         for row in mydata.outputimageslist:
-            image = Filechooser.WidgetTexture(row, self.isimage)
+            image = WidgetTexture(row, self.isimage)
             image.size_hint = (None, None)
             image.pos = middlex + 237 , c * 50 + (middley - 30 - spaceoutput / 2)
             draw.add_widget(image)
             c += 1
-        imageinput = Filechooser.WidgetTexture(inputimagelist[0])
+        imageinput = WidgetTexture(inputimagelist[0])
         imageinput.pos = middlex - 320 , middley - 50
         imageinput.size_hint=(None, None)
         draw.add_widget(imageinput)
@@ -959,48 +826,6 @@ class MyApp(App):
                         Ellipse(pos=(middlex - 225, b * 50 + (middley - space / 2) + 27.3), size=(5, 5))
         draw.add_widget(Label(text=str(numdata), pos=(middlex - 270, middley + 220), size_hint=(None, None)))
 
-    class Lblleft():
-
-        def __init__(self, type, dataerror):
-            global scores, varerrorlayout, n_epoch, n_folds, l_rate
-            global list_hidden, network, n_outputs, n_inputs, currentpage, list_hidden, outputimageslist
-
-            self.datestr = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            self.networklist = network.copy()
-            self.n_outputlbl = n_outputs
-            self.n_inputlbl = n_inputs
-            self.filename = filename
-            self.type = type
-            self.n_epoch = n_epoch
-            self.n_folds = n_folds
-            self.l_rate = l_rate
-            self.dataerror = dataerror
-            self.list_hidden = list_hidden.copy()
-            self.outputimageslist = outputimageslist.copy()
-
-    class LineParam():
-        def __init__(self, layer, hidden, offset, maximum, value, color, linewidget, canvas):
-            self.layer = layer
-            self.hidden = hidden
-            self.offset = offset
-            self.maximum = maximum
-            self.linewidget = linewidget
-            self.canvas = canvas
-            self.value = value
-            self.color = color
-
-        def remove(self):
-            self.canvas.remove(self.linewidget)
-
-        def change(self):
-            newcolor = self.value / self.maximum
-            if (abs(newcolor - self.color) > 0.02):
-                self.canvas.remove(self.linewidget)
-                self.color = newcolor
-                self.canvas.add(Color(self.color, self.color, self.color))
-                self.canvas.add(self.linewidget)
-                return 1
-            return 0
 
     def listoflinesappend(self, layer, hidden, offset, maximum, canvas, networklist, linepoints):
         value = abs(networklist[layer][hidden]['weights'][offset])
@@ -1008,12 +833,12 @@ class MyApp(App):
         with canvas:
             Color(color, color, color)
             linewidget = Line(points=linepoints)
-        listoflines.append(MyApp.LineParam(layer, hidden, offset, maximum, value, color, linewidget, canvas))
+        listoflines.append(LineParam(layer, hidden, offset, maximum, value, color, linewidget, canvas))
 
     #When self.btnError is pressed
     #The lbls on the left
     def leftlabels(self, textlayout, leftpanelitem, *largs):
-        global scores, varerrorlayout, n_epoch, n_folds, l_rate, labelcycles, labelfolds, errorlbl
+        global scores, varerrorlayout, labelcycles, labelfolds, errorlbl
         global list_hidden, network, n_outputs, n_inputs, currentpage
 
 
@@ -1401,9 +1226,9 @@ class MyApp(App):
         self.onpredictlayout = False
 
     def btnTrainpressed(self):
-            global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata, valuetrain
-            global network, n_inputs, n_outputs, n_folds, dataset, list_hidden, trainclock
-            global printth, stoptrainning, currentfold, currentcycle, timestart
+            global progressbar, accuracylabel, scores, numdata
+            global network, n_inputs, n_outputs, dataset, list_hidden, trainclock
+            global printth, currentfold, currentcycle, timestart
             layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
             layoutprogressbar.remove_widget(progressbar)
             layoutprogressbar.add_widget(progressbar)
@@ -1428,13 +1253,13 @@ class MyApp(App):
             currentfold = 0
             currentcycle = 0
             progressbar.value = 0
-            valuetrain = 0
-            stoptrainning = False
+            self.valuetrain = 0
+            self.stoptrainning = False
             printth = 0
             timestart = time.monotonic()
-            trainclock = Clock.schedule_interval(layoutpbtrainnext, 1 / 10)
+            trainclock = Clock.schedule_interval(self.layoutpbtrainnext, 1 / 10)
             network = initialize_network(n_inputs, list_hidden, n_outputs, transfer_sigmoid, transfer_sigmoid_derivative)
-            threading.Thread(target=train_network, args=(network, dataset, l_rate, n_epoch, n_outputs, 'train', myevent, self)).start()
+            threading.Thread(target=train_network, args=(network, dataset, self.n_folds, self.l_rate, self.n_epoch, n_outputs, 'train', self.myevent, self)).start()
             self.layout.remove_widget(lbltimeleft)
             self.layout.add_widget(lbltimeleft)
             #train_network(network, dataset, l_rate, n_epoch, n_outputs)
@@ -1444,15 +1269,15 @@ class MyApp(App):
             self.cancellayout()
 
     def btnErrorpressed(self):
-            global progressbar, accuracylabel, scores, n_epoch, l_rate, numdata, valuepb, printth
-            global network, n_inputs, n_outputs, n_folds, dataset, list_hidden, trainclock, stoptrainning
-            global myevent, timestart, errorlbl
+            global progressbar, accuracylabel, scores, numdata, valuepb, printth
+            global network, n_inputs, n_outputs, dataset, list_hidden, trainclock
+            global timestart, errorlbl
             layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
             layoutprogressbar.remove_widget(progressbar)
             layoutprogressbar.add_widget(progressbar)
             progressbar.value = 0
             valuepb = 0
-            stoptrainning = False
+            self.stoptrainning = False
             timestart = time.monotonic()
             trainclock = Clock.schedule_interval(layoutpbnext, 1 / 10)
 
@@ -1460,11 +1285,15 @@ class MyApp(App):
             self.layout.remove_widget(lbltimeleft)
             self.layout.add_widget(lbltimeleft)
 
-            threading.Thread(target=self.evaluate_algorithm, args=(dataset, back_propagation, n_folds, myevent, self, l_rate, n_epoch, list_hidden)).start()
+            threading.Thread(target=self.evaluate_algorithm, args=(dataset, back_propagation, self.myevent, self,
+                                                                   self.n_folds, self.l_rate, self.n_epoch, list_hidden)).start()
             self.cancellayout()
 
     def mainlayout_func(self):
-        global prediction, n_inputs, n_outputs, dataset, numdata, listinputs, filename
+        global prediction, n_inputs, n_outputs, dataset, numdata, listinputs, filename, inputimagelist, outputimageslist
+        inputimagelist = self.inputimagelist
+        outputimageslist = self.outputimageslist
+        filename = self.filename
         self.layoutmainscreen.height = 580
         self.btnlayout.height = 50
         self.layoutinfoleft.size_hint_x = 0.1
@@ -1474,8 +1303,8 @@ class MyApp(App):
             dataset = self.savedataset
             network = self.savenetwork
             filename = self.savedfilename
-            lblfilename = self.parentlayout.ids.idlabelfilename
-            lblfilename.text = ('[b] Current file: [/b]' + '[i]' + basename(filename))
+            self.lblfilename = self.parentlayout.ids.idlabelfilename
+            self.lblfilename.text = ('[b] Current file: [/b]' + '[i]' + basename(filename))
 
 
         self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
@@ -1502,7 +1331,7 @@ class MyApp(App):
 
         if prediction == False:
             if varerrorlayout == False:
-                myevent.drawingmainlayout(self)
+                self.myevent.drawingmainlayout(self)
                 self.btnPredict.disabled = True
             else:
                 self.btnPredict.disabled = True
@@ -1510,14 +1339,14 @@ class MyApp(App):
             self.btnPredict.disabled = False
 
     def predictlayout(self):
-        global dataset, network, myevent
+        global dataset, network
         self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
         self.layouttrainscreen.anchor_x = 'center'
         self.savedataset = dataset.copy()
         self.savenetwork = network.copy()
         self.savedfilename = filename
         self.filechooserfunction()
-        myevent.drawingmainlayout
+        self.myevent.drawingmainlayout
         self.layout.remove_widget(self.btnTrain)
         self.layout.remove_widget(self.btnError)
         self.layout.remove_widget(self.btnPredict)
@@ -1719,116 +1548,80 @@ class MyApp(App):
                 self.btnlayerlessneuron.disabled = True
 
     def btnplusfoldspressed (self):
-        global n_folds
         self.btnlessfolds.disabled = False
-        if n_folds >= 10:
-            n_folds = 10
+        if self.n_folds >= 10:
+            self.n_folds = 10
         else:
-            n_folds += 1
-            self.numfolds.text = str(n_folds)
-            if n_folds == 10:
+            self.n_folds += 1
+            self.numfolds.text = str(self.n_folds)
+            if self.n_folds == 10:
                 self.btnplusfolds.disabled = True
     def btnlessfoldspressed(self):
         self.btnplusfolds.disabled = False
-        global n_folds
-        if n_folds <= 1:
-            n_folds = 1
+        if self.n_folds <= 1:
+            self.n_folds = 1
         else:
-            n_folds = n_folds - 1
-            self.numfolds.text = str(n_folds)
-            if n_folds == 1:
+            self.n_folds = self.n_folds - 1
+            self.numfolds.text = str(self.n_folds)
+            if self.n_folds == 1:
                 self.btnlessfolds.disabled = True
 
     def btnplusratepressed (self):
         global l_rate
         self.btnlessrate.disabled = False
-        if l_rate >= 1.0:
-            l_rate = 1.0
+        if self.l_rate >= 1.0:
+            self.l_rate = 1.0
         else:
-            l_rate = l_rate + 0.1
-            self.numrate.text = str("{:.1f}".format(l_rate))
-            if l_rate == 1.0:
+            self.l_rate = self.l_rate + 0.1
+            self.numrate.text = str("{:.1f}".format(self.l_rate))
+            if self.l_rate == 1.0:
                 self.btnplusrate.disabled = True
     def btnlessratepressed(self):
-        global l_rate
         self.btnplusrate.disabled = False
-        if l_rate <= 0.1:
-            l_rate = 0.1
+        if self.l_rate <= 0.1:
+            self.l_rate = 0.1
         else:
-            l_rate = l_rate - 0.1
-            self.numrate.text = str("{:.1f}".format(l_rate))
-            if l_rate == 0.1:
+            self.l_rate = self.l_rate - 0.1
+            self.numrate.text = str("{:.1f}".format(self.l_rate))
+            if self.l_rate == 0.1:
                 self.btnlessrate.disabled = True
 
     def btnplusepochpressed (self):
-        global n_epoch
+
         self.btnlessepoch.disabled = False
-        if n_epoch >= 500:
-            n_epoch = 500
+        if self.n_epoch >= 500:
+            self.n_epoch = 500
         else:
-            n_epoch += 10
+            self.n_epoch += 10
             self.numepoch.text = str(n_epoch)
-            if n_epoch == 500:
+            if self.n_epoch == 500:
                 self.btnplusepoch.disabled = True
 
     def filechooserfunction(self):
-        global popupfilechooser
-        content = Filechooser()
+
+        content = Filechooser(self)
         popupfilechooser = Popup(title="Load file", content=content,
                             size_hint=(0.9, 0.9),auto_dismiss= False, separator_color= (.67,.57,.69))
+        content.update_parent_popup(popupfilechooser)
         popupfilechooser.open()
 
-    def filechooserfunctionPredict(self):
-        global popupfilechooser
-        content = Filechooser()
-        popupfilechooser = Popup(title="Load file", content=content,
-                            size_hint=(0.9, 0.9),auto_dismiss= False, separator_color= (.67,.57,.69))
-        popupfilechooser.open()
 
     def btncancelpressed(self):
-        global stoptrainning
-        stoptrainning = True
+        self.stoptrainning = True
 
-
-    def evaluate_algorithm(self, dataset, algorithm, n_folds, eventp, myapp, *args):
-        global progressbar
-        global scores
-        folds = cross_validation_split(dataset, n_folds)
-        for fold in folds:
-            if stoptrainning:
-                break
-            train_set = list(folds)
-            train_set.remove(fold)
-            train_set = sum(train_set, [])
-            test_set = list()
-            for row in fold:
-                if stoptrainning:
-                    break
-                row_copy = list(row)
-                test_set.append(row_copy)
-                row_copy[-1] = None
-            predicted = algorithm(train_set, test_set, eventp, myapp, *args)
-            if stoptrainning:
-                break
-            actual = [row[-1] for row in fold]
-            accuracy = accuracy_metric(actual, predicted)
-            scores.append(accuracy)
-        eventp.evevaluatealgorithm(myapp)
 
     def btnlessepochpressed(self):
-        global n_epoch
         self.btnplusepoch.disabled = False
-        if n_epoch <= 10:
-            n_epoch = 10
+        if self.n_epoch <= 10:
+            self.n_epoch = 10
         else:
-            n_epoch = n_epoch - 10
+            self.n_epoch = self.n_epoch - 10
             self.numepoch.text = str(n_epoch)
-            if n_epoch == 10:
+            if self.n_epoch == 10:
                 self.btnlessepoch.disabled = True
 
     def build(self):
-        global layoutneuronmainscreen, layoutlabels, lblfilename, currentpage
-        global myevent
+        global layoutneuronmainscreen, layoutlabels, currentpage
         class MyEventDispatcher(EventDispatcher):
             global lbltimeleft
             def __init__(self, **kwargs):
@@ -1840,7 +1633,7 @@ class MyApp(App):
                 super(MyEventDispatcher, self).__init__(**kwargs)
             @mainthread
             def evevaluatealgorithm(self, myapp):
-                if stoptrainning:
+                if myapp.stoptrainning:
                     self.dispatch('on_trainfinished', myapp)
                 else:
                     self.dispatch('on_evevaluatealgorithm', myapp)
@@ -1869,7 +1662,7 @@ class MyApp(App):
                 myapp.layout.remove_widget(lbltimeleft)
                 progressbar.value = 0
                 trainclock.cancel()
-                if stoptrainning:
+                if myapp.stoptrainning:
                     myapp.mainlayout_func()
                 else:
                     myapp.trainlayout()
@@ -1884,7 +1677,7 @@ class MyApp(App):
                 #MyApp.drawingblank(btnOk, layoutneuronmainscreen, layoutlabels)
                 global filename
 
-                threading.Thread(target=readdataset, args=(filename, myevent, myapp, None, None)).start()
+                threading.Thread(target=readdataset, args=(filename, myapp.myevent, myapp, None, None)).start()
 
 
 
@@ -1904,7 +1697,7 @@ class MyApp(App):
                     n_inputs = len(dataset[0]) - 1
                     n_outputs = len(set([row[-1] for row in dataset]))
                     network = initialize_network_no_weights(n_inputs, list_hidden, n_outputs)
-                    myapp.drawinglblblackkv(myapp.layoutinfomiddle, MyApp.Lblleft(type='train', dataerror=0))
+                    myapp.drawinglblblackkv(myapp.layoutinfomiddle, Lblleft(myapp, type='train', dataerror=0))
                     myapp.layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
                     myapp.layoutprogressbar.remove_widget(progressbar)
                     myapp.layout.remove_widget(lbltimeleft)
@@ -1924,7 +1717,11 @@ class MyApp(App):
 
         list_hidden.append(6)
         numlayers = str(len(list_hidden))
-        myevent = MyEventDispatcher()
+        self.myevent = MyEventDispatcher()
+
+        self.n_folds = 5
+        self.l_rate = 0.3
+        self.n_epoch = 20
 
         self.onpredictlayout = False
 
@@ -1946,17 +1743,17 @@ class MyApp(App):
         self.outputlabel = Label(text='Output', markup=True, font_size=17, size_hint=(None, None), color=(1, 1, 1))
         self.inputlabel = Label(text='Input', markup=True, font_size=17, size_hint=(None, None), color=(1, 1, 1))
         self.lblcurrentpage = Label(text=('[b]Page:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + '0'), markup=True)
-        lblfilename = ''
+        self.lblfilename = ''
         self.btnplussidetext = Button(text='[b]>', markup=True, size_hint=(.2, .8),
                                  pos_hint={'center_x': .5, 'center_y': .5},
-                                 background_normal='ButtonPlusP.png',
-                                 background_down='ButtonDeactivated.png',
-                                 background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                                 background_normal='images/ButtonPlusP.png',
+                                 background_down='images/ButtonDeactivated.png',
+                                 background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.btnlesssidetext = Button(text='[b]<', markup=True, size_hint=(.2, .8),
                                  pos_hint={'center_x': 1, 'center_y': .5},
-                                 background_normal='ButtonPlusP.png',
-                                 background_down='ButtonDeactivated.png',
-                                 background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                                 background_normal='images/ButtonPlusP.png',
+                                 background_down='images/ButtonDeactivated.png',
+                                 background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
 
         neuronlayout = BoxLayout(orientation='vertical', size_hint=(.3,1))
         self.neurontwolayout = BoxLayout(orientation='vertical', size_hint=(.3,1))
@@ -1975,29 +1772,29 @@ class MyApp(App):
         self.layoutinfodown = self.parentlayout.ids.idlayoutdown
         self.layoutbtninfo = self.parentlayout.ids.idlayoutlbldown
         layoutfilenameright = self.parentlayout.ids.idboxlayoutright
-        lblfilename = self.parentlayout.ids.idlabelfilename
+        self.lblfilename = self.parentlayout.ids.idlabelfilename
 
 
-        self.btnPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='ButtonDeactivated.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
-        self.btnProcessPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='ButtonDeactivated.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
-        self.btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png', size_hint=(.95,.9), background_disabled_normal='ButtonDeactivated.png',
+        self.btnPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='images/ButtonDeactivated.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png')
+        self.btnProcessPredict = Button(color=(1, 1, 1, 1), text='[b]PREDICT', markup = True,background_disabled_normal='images/ButtonDeactivated.png', font_size=18, size_hint=(.95, .9), pos_hint={'center_x':.5, 'center_y':.5}, background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png')
+        self.btnTrain = Button(text='[b]TRAIN',markup = True, background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png', size_hint=(.95,.9), background_disabled_normal='images/ButtonDeactivated.png',
                        pos_hint={'center_x':.5, 'center_y':.5}, color = (1,1,1,1), font_size=18)
-        self.btnError = Button(text='[b]ERROR', markup=True, background_normal='ButtonPlusP.png',
-                          background_down='ButtonDeactivated.png', size_hint=(.95, .9),
-                          pos_hint={'center_x': .5, 'center_y': .5},background_disabled_normal='ButtonDeactivated.png', color=(1, 1, 1, 1), font_size=18)
-        self.btnOk = Button(text='[b]OK', markup=True, background_normal='ButtonPlusB.png',
-                          background_down='ButtonDeactivated.png', size_hint=(.8, .8),
+        self.btnError = Button(text='[b]ERROR', markup=True, background_normal='images/ButtonPlusP.png',
+                          background_down='images/ButtonDeactivated.png', size_hint=(.95, .9),
+                          pos_hint={'center_x': .5, 'center_y': .5},background_disabled_normal='images/ButtonDeactivated.png', color=(1, 1, 1, 1), font_size=18)
+        self.btnOk = Button(text='[b]OK', markup=True, background_normal='images/ButtonPlusB.png',
+                          background_down='images/ButtonDeactivated.png', size_hint=(.8, .8),
                           pos_hint={'center_x': .5, 'center_y': .5}, color=(0, 0, 0, 1), font_size=18)
-        self.btnOpen = Button(text='[b]OPEN', markup=True, background_normal='ButtonPlusP.png',
-                       background_down='ButtonPlusGDown.png', size_hint=(.8, .8),
+        self.btnOpen = Button(text='[b]OPEN', markup=True, background_normal='images/ButtonPlusP.png',
+                       background_down='images/ButtonPlusGDown.png', size_hint=(.8, .8),
                        pos_hint={'center_x': .5, 'center_y': .5}, color=(1, 1, 1, 1), font_size=18)
-        self.btnBack = Button(text='[b]', markup=True, background_normal='ButtonBack.png',
-                       background_down='ButtonBack.png', size_hint=(None, None), size=(60,60),
-                       pos_hint={'center_x': 1, 'center_y': .5}, color=(1, 1, 1, 1),background_disabled_normal='ButtonBackDisabled.png')
-        self.btnSettings = Button(background_normal='ButtonSettings.png', background_down='ButtonSettings.png', size_hint=(None, None), size=(60,60), pos_hint={'center_x':1, 'center_y':.5},background_disabled_normal='ButtonSettingsDisabled.png')
+        self.btnBack = Button(text='[b]', markup=True, background_normal='images/ButtonBack.png',
+                       background_down='images/ButtonBack.png', size_hint=(None, None), size=(60,60),
+                       pos_hint={'center_x': 1, 'center_y': .5}, color=(1, 1, 1, 1),background_disabled_normal='images/ButtonBackDisabled.png')
+        self.btnSettings = Button(background_normal='images/ButtonSettings.png', background_down='images/ButtonSettings.png', size_hint=(None, None), size=(60,60), pos_hint={'center_x':1, 'center_y':.5},background_disabled_normal='images/ButtonSettingsDisabled.png')
         self.btnnewinput=Button(color=(1,1,1,1), text='[b]New Input',markup = True, font_size=18, size_hint=(.95,.9),
-                       pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
-        self.btnCancel = Button(color=(1,1,1,1), text='[b]CANCEL',markup = True, font_size=18, size_hint=(.95,.9), pos_hint={'center_x':.5, 'center_y':.5},background_normal='ButtonPlusP.png', background_down='ButtonDeactivated.png')
+                       pos_hint={'center_x':.5, 'center_y':.5},background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png')
+        self.btnCancel = Button(color=(1,1,1,1), text='[b]CANCEL',markup = True, font_size=18, size_hint=(.95,.9), pos_hint={'center_x':.5, 'center_y':.5},background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png')
 
 
 
@@ -2007,49 +1804,49 @@ class MyApp(App):
 
         # Left Neuron Switcher
         self.btnplusneuron = Button(text = '[b]+',markup = True, size_hint=(.2,.8),pos_hint={'center_x':.5, 'center_y':.5},
-                               background_normal='ButtonPlusP.png',
-                               background_down='ButtonDeactivated.png',
-                               background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                               background_normal='images/ButtonPlusP.png',
+                               background_down='images/ButtonDeactivated.png',
+                               background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.btnlessneuron = Button(text = '[b]-',markup = True,size_hint=(.2, .8),pos_hint={'center_x':.5, 'center_y':.5},
-                               background_normal='ButtonPlusP.png',
-                               background_down='ButtonDeactivated.png',
-                               background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                               background_normal='images/ButtonPlusP.png',
+                               background_down='images/ButtonDeactivated.png',
+                               background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.lblhiddenlayer = Label(text=str(list_hidden[0]))
         self.lblneuron = Label(text='[b]Neurons', markup=True)
 
         # Second neuron switcher
         self.btnplusneurontwo = Button(text = '[b]+',markup = True,size_hint=(.2, .8),pos_hint={'center_x':.5, 'center_y':.5},
-                                  background_normal='ButtonPlusP.png',
-                                  background_down='ButtonDeactivated.png',
-                                  background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                                  background_normal='images/ButtonPlusP.png',
+                                  background_down='images/ButtonDeactivated.png',
+                                  background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.btnlessneurontwo = Button(text = '[b]-',markup = True,size_hint=(.2, .8), pos_hint={'center_x':.5, 'center_y':.5},
-                                  background_normal='ButtonPlusP.png',
-                                  background_down='ButtonDeactivated.png',
-                                  background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                                  background_normal='images/ButtonPlusP.png',
+                                  background_down='images/ButtonDeactivated.png',
+                                  background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.lblhiddenlayertwo = Label(text='4')
         self.lblneurontwo = Label(text='[b]Neurons', markup=True)
 
         # Right/Third neuron switcher
         self.btnplusneuronthree = Button(text = '[b]+',markup = True,size_hint=(.2, .8),pos_hint= {'center_x':1, 'center_y':.5},
-                                    background_normal='ButtonPlusP.png',
-                                    background_down='ButtonDeactivated.png',
-                                    background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                                    background_normal='images/ButtonPlusP.png',
+                                    background_down='images/ButtonDeactivated.png',
+                                    background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.btnlessneuronthree = Button(text = '[b]-',markup = True,size_hint=(.2, .8),pos_hint={'center_x':1, 'center_y':.5},
-                                    background_normal='ButtonPlusP.png',
-                                    background_down='ButtonDeactivated.png',
-                                    background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                                    background_normal='images/ButtonPlusP.png',
+                                    background_down='images/ButtonDeactivated.png',
+                                    background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.lblhiddenlayerthree = Label(text='4')
         self.lblneuronthree = Label(text='[b]Neurons', markup=True)
 
         # Number of layers switcher
         self.btnlayerplusneuron = Button(text = '[b]+',markup = True,size_hint=(.2, .8),pos_hint={'center_x':1, 'center_y':.5},
-                                    background_normal='ButtonPlusP.png',
-                                    background_down='ButtonDeactivated.png',
-                                    background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                                    background_normal='images/ButtonPlusP.png',
+                                    background_down='images/ButtonDeactivated.png',
+                                    background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.btnlayerlessneuron = Button(text = '[b]-',markup = True,size_hint=(.2, .8),pos_hint={'center_x':1, 'center_y':.5},
-                                    background_normal='ButtonPlusP.png',
-                                    background_down='ButtonDeactivated.png',
-                                    background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                                    background_normal='images/ButtonPlusP.png',
+                                    background_down='images/ButtonDeactivated.png',
+                                    background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.lbllayer = Label(text=numlayers)
         self.lblnumlayers = Label(text='[b] Hiddenlayers',markup = True, font_size=(11))
         lblblack = Widget(size_hint=(.1,.1))
@@ -2060,40 +1857,40 @@ class MyApp(App):
 
         self.btnplusepoch = Button(text='[b]+', markup=True, size_hint=(.2, .8),
                               pos_hint={'center_x': 1, 'center_y': .5},
-                              background_normal='ButtonPlusP.png',
-                              background_down='ButtonDeactivated.png',
-                              background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                              background_normal='images/ButtonPlusP.png',
+                              background_down='images/ButtonDeactivated.png',
+                              background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.btnlessepoch = Button(text='[b]-', markup=True, size_hint=(.2, .8),
                                     pos_hint={'center_x': 1, 'center_y': .5},
-                                    background_normal='ButtonPlusP.png',
-                                    background_down='ButtonDeactivated.png',
-                                    background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                                    background_normal='images/ButtonPlusP.png',
+                                    background_down='images/ButtonDeactivated.png',
+                                    background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.lblepoch = Label(text='[b] CYCLES:',markup=True, font_size=(11), pos_hint={'center_x':.5, 'center_y':.5})
-        self.numepoch = Label(text=str(n_epoch))
+        self.numepoch = Label(text=str(self.n_epoch))
         self.btnplusrate = Button(text='[b]+', markup=True, size_hint=(.2, .8),
                               pos_hint={'center_x': 1, 'center_y': .5},
-                              background_normal='ButtonPlusP.png',
-                              background_down='ButtonDeactivated.png',
-                              background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                              background_normal='images/ButtonPlusP.png',
+                              background_down='images/ButtonDeactivated.png',
+                              background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.btnlessrate = Button(text='[b]-', markup=True, size_hint=(.2, .8),
                               pos_hint={'center_x': 1, 'center_y': .5},
-                              background_normal='ButtonPlusP.png',
-                              background_down='ButtonDeactivated.png',
-                              background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                              background_normal='images/ButtonPlusP.png',
+                              background_down='images/ButtonDeactivated.png',
+                              background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         lblrate = Label(text='[b]RATE:',markup=True, font_size=(11), pos_hint={'center_x': .5, 'center_y': .5})
-        self.numrate = Label(text=str(l_rate))
+        self.numrate = Label(text=str(self.l_rate))
         self.btnplusfolds = Button(text='[b]+', markup=True, size_hint=(.2, .8),
                              pos_hint={'center_x': 1, 'center_y': .5},
-                             background_normal='ButtonPlusP.png',
-                             background_down='ButtonDeactivated.png',
-                             background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                             background_normal='images/ButtonPlusP.png',
+                             background_down='images/ButtonDeactivated.png',
+                             background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         self.btnlessfolds = Button(text='[b]-', markup=True, size_hint=(.2, .8),
                              pos_hint={'center_x': 1, 'center_y': .5},
-                             background_normal='ButtonPlusP.png',
-                             background_down='ButtonDeactivated.png',
-                             background_disabled_normal='ButtonDeactivated.png', font_size=20)
+                             background_normal='images/ButtonPlusP.png',
+                             background_down='images/ButtonDeactivated.png',
+                             background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
         lblfolds = Label(text='[b]FOLDS:',markup=True, font_size=(11), pos_hint={'center_x': .5, 'center_y': .5})
-        self.numfolds = Label(text=str(n_folds))
+        self.numfolds = Label(text=str(self.n_folds))
 
         MyApp.restoreleftpanellist(self)
 
@@ -2210,376 +2007,6 @@ class LayoutNeuron(AnchorLayout):
 
 class LayoutScreen(BoxLayout):
     pass
-
-class PopupLoading(Label):
-    anglef = NumericProperty(40)
-    angleb = NumericProperty(0)
-
-    def start(self):
-        Animation.cancel_all(self)
-        self.anglef = 40
-        self.angleb = 0
-        self.anim = Animation(angleb=360, anglef=360, duration=1)
-        self.anim.bind(on_complete=self.repeat)
-        self.anim.start(self)
-
-    def repeat(self, animation, incr_crude_clock):
-        self.start()
-
-class Filechooser(BoxLayout):
-
-    def myselected(self, path, filenameselected):
-        self.ids.text_input.text = basename(filenameselected)
-
-    class WidgetTexture(Widget):
-        def __init__(self, imagebits, colorformat='luminance',**kwargs):
-            super(Filechooser.WidgetTexture, self).__init__(**kwargs)
-
-            if colorformat is 'rgb':
-                sidesquare = sqrt((len(imagebits) - 1) / 3)
-            else:
-                sidesquare = sqrt(len(imagebits) - 1)
-            self.texture = Texture.create(size=(sidesquare, sidesquare))
-
-            buf = list(imagebits)
-            buf.pop(-1)
-            arr = list()
-            for value in buf:
-                arr.append(int(value))
-
-            bufbytes = array('B', arr)
-            self.texture.blit_buffer(bufbytes, colorfmt=colorformat, bufferfmt='ubyte')
-            self.texture.flip_vertical()
-
-            with self.canvas:
-                Color(1,1,1)
-                self.rect = Rectangle(texture=self.texture, pos=self.pos, size=(sidesquare, sidesquare))
-
-            self.bind(pos=self.update_rect,
-                      size=self.update_rect)
-
-        def update_rect(self, *args):
-            self.rect.pos = (self.center_x - self.rect.size[0] / 2, self.center_y - self.rect.size[1] / 2)
-
-        def update_texture(self, imagebits):
-            buf = list(imagebits)
-            buf.pop(-1)
-            arr = list()
-            for value in buf:
-                arr.append(int(value))
-
-            bufbytes = array('B', arr)
-            self.texture.blit_buffer(bufbytes, colorfmt='luminance', bufferfmt='ubyte')
-            self.texture.flip_vertical()
-
-    def filechoosershowdatasetcont(self, filenameselected):
-
-        if self.mytexturedataset == None:
-            containererror = BoxLayout(orientation='vertical')
-            popuperror = Popup(title='DATASET:', content=containererror, separator_color=(.6,1,1, 1),
-                              auto_dismiss=False, size_hint=(.5,.5))
-            lblerror = Label(text='{} : Wrong file format' .format(filenameselected))
-            popuperrorbtn = Button(text='OK', on_press=popuperror.dismiss, background_normal='ButtonPlusP.png',
-                              background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png',
-                              pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1,.5))
-            containererror.add_widget(lblerror)
-            containererror.add_widget(popuperrorbtn)
-            popuperror.open()
-        else:
-            self.popup.dismiss()
-            self.pagenum = 1
-            self.pags = 0
-            containerbox = BoxLayout(orientation='vertical', spacing = 10)
-            popupshow = Popup(title='DATASET:', content=containerbox, separator_color=(.6,1,1, 1),
-                              auto_dismiss=False)
-            popupbtn = Button(text='OK', on_press=popupshow.dismiss, background_normal='ButtonPlusP.png',
-                              background_down='ButtonDeactivated.png', background_disabled_normal='ButtonDeactivated.png',
-                              pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(.4,1))
-            self.mainlayout = GridLayout(cols=1)
-            middlelayout = BoxLayout(orientation = 'horizontal')
-            self.btnnextpage = Button(text='[b]>', markup=True, size_hint=(.05, .2),
-                             pos_hint={'center_x': 1, 'center_y': .5},
-                             background_normal='ButtonPlusP.png',
-                             background_down='ButtonDeactivated.png',
-                             background_disabled_normal='ButtonDeactivated.png', font_size=20)
-            self.btnpreviouspage = Button(text='[b]<', markup=True, size_hint=(.05, .2),
-                                 pos_hint={'center_x': 1, 'center_y': .5},
-                                 background_normal='ButtonPlusP.png',
-                                 background_down='ButtonDeactivated.png',
-                                 background_disabled_normal='ButtonDeactivated.png', font_size=20)
-            mybtnlayout = BoxLayout(orientation='horizontal', size_hint=(1,.1))
-            typelayout = GridLayout( cols = 4)
-            infolayout = BoxLayout(orientation='horizontal', size_hint=(1,.1))
-            self.imagedatabox = CheckBox(group = 'typeobject', size_hint=(.4,1))
-            lblimagedatabox = Label(text='Images dataset',halign="left")
-            lblimagedatabox.bind(size=lblimagedatabox.setter('text_size'))
-            self.numberdatabox = CheckBox(group = 'typeobject', size_hint=(.4,1))
-            lblnumberdatabox = Label(text='Numbers dataset',halign="left")
-            lblnumberdatabox.bind(size=lblnumberdatabox.setter('text_size'))
-            self.outputfirstbox = CheckBox(group='output', size_hint=(.4,1))
-            lbloutputfirstbox = Label(text='Outputs on first column',halign="left")
-            lbloutputfirstbox.bind(size=lbloutputfirstbox.setter('text_size'))
-            self.outputlastbox = CheckBox(group='output', size_hint=(.4,1))
-            lbloutputlastbox = Label(text='Outputs on last column',halign="left")
-            lbloutputlastbox.bind(size=lbloutputlastbox.setter('text_size'))
-
-            self.lblpage = Label(text='', markup = True, pos_hint={'center_x': .5, 'center_y': .5},
-                            size_hint=(1, .1), color=(.7,.9,.9))
-            outputslast = ([row[-1] for row in self.mytexturedataset])
-            setoutputslast = set(outputslast)
-
-            self.btnnoutputs = Button(text='[b]nº outputs: [/b]' + str(len(setoutputslast)),markup = True, pos_hint={'center_x': .5, 'center_y': .5},
-                            size_hint=(1, .9), background_normal='ButtonPlusP.png',
-                             background_down='ButtonDeactivated.png')
-            lblnelements = Label(text='[b]nº elements: [/b]' + str(len(outputslast)), markup = True, pos_hint={'center_x': .5, 'center_y': .5},
-                            size_hint=(.8, .1))
-
-            self.lblelementsize = Label(text='', markup = True, pos_hint={'center_x': .5, 'center_y': .5},
-                            size_hint=(.8, .1))
-
-
-
-
-            self.outputlastbox.active = True
-            self.outputchanged = False
-            self.btnpreviouspage.disabled = True
-            self.btnnextpage.disabled = False
-            self.btnnextpage.bind(on_press=lambda x:self.numberdatasetfunc('plusbtn'))
-            self.btnpreviouspage.bind(on_press=lambda x:self.numberdatasetfunc('lessbtn'))
-            self.outputfirstbox.bind(on_press=lambda x:self.outputdatasetfunc())
-            self.numberdatabox.bind(active=lambda x,y:self.resetandnumberdatasetfunc(''))
-            self.btnnoutputs.bind(on_press=lambda x:self.outputoptionsfunc())
-
-            if self.optionalimage == True:
-                typelayout.add_widget(self.numberdatabox)
-                typelayout.add_widget(lblnumberdatabox)
-            if self.optionaloutput == True:
-                typelayout.add_widget(self.outputlastbox)
-                typelayout.add_widget(lbloutputlastbox)
-            if self.optionalimage == True:
-                typelayout.add_widget(self.imagedatabox)
-                typelayout.add_widget(lblimagedatabox)
-            if self.optionaloutput == True:
-                typelayout.add_widget(outputfirstbox)
-                typelayout.add_widget(lbloutputfirstbox)
-            mybtnlayout.add_widget(popupbtn)
-            mybtnlayout.add_widget(typelayout)
-            middlelayout.add_widget(self.btnpreviouspage)
-            middlelayout.add_widget(self.mainlayout)
-            middlelayout.add_widget(self.btnnextpage)
-            containerbox.add_widget(middlelayout)
-            containerbox.add_widget(infolayout)
-            infolayout.add_widget(self.btnnoutputs)
-            infolayout.add_widget(lblnelements)
-            infolayout.add_widget(self.lblelementsize)
-            infolayout.add_widget(self.lblpage)
-            containerbox.add_widget(mybtnlayout)
-            popupshow.open()
-
-            if self.isimage is not None:
-                self.imagedatabox.active = True
-            else:
-                self.numberdatabox.active = True
-            self.numberdatasetfunc('')
-
-    def filechoosershowdataset(self, path, filenameselected, eventp):
-        global myevent, filename
-        filename = os.path.join(path, filenameselected)
-        lblfilename.text = ('[b] Current file: [/b]' + '[i]' + filenameselected)
-        self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filename)
-        eventp.evshowfile(self, filenameselected)
-
-    def numberdatasetfunc(self, plusless):
-        global outputimageslist, inputimagelist
-
-        self.mainlayout.clear_widgets()
-        if plusless == 'plusbtn':
-            self.pagenum += 1
-        elif plusless == 'lessbtn':
-            self.pagenum -= 1
-
-        self.btnactivation()
-
-        #Show number
-        if self.numberdatabox.active == True:
-            nitemsperpage = 14
-            pagsfloat = (len(self.mytexturedataset) / nitemsperpage)
-            pagsaux = float(int(pagsfloat))
-            self.pags = int(pagsfloat)
-            if pagsaux != pagsfloat:
-                self.pags += 1
-            self.lblelementsize.text = '[b]element size: [/b]' + str(len(self.mytexturedataset[0]))
-            self.lblpage.text = '[b]Page: [/b]' + str(self.pagenum) + '/' + str(self.pags)
-
-            if len(self.mytexturedataset[0]) > 20:
-                self.mainlayout.cols = 11
-                linesperpage = 14
-                for rowtexture in range(linesperpage):
-                    index = rowtexture + (self.pagenum - 1) * linesperpage
-                    pos = 0
-                    if index >= len(self.mytexturedataset):
-                        break
-                    firstline = self.mytexturedataset[rowtexture + (self.pagenum-1) * linesperpage]
-                    for number in firstline:
-                        if pos < 5 or pos >= (len(firstline) - 5):
-                            datalbl = Label(text=str(number))
-                            self.mainlayout.add_widget(datalbl)
-                        elif pos == 5 :
-                            datalbl = Label(text='...')
-                            self.mainlayout.add_widget(datalbl)
-                        pos += 1
-            else:
-                self.mainlayout.cols = len(self.mytexturedataset[0])
-                for rowtexture in range(14):
-                    pos = rowtexture+(self.pagenum-1)*14
-                    if pos >= len(self.mytexturedataset):
-                        break
-                    for number in self.mytexturedataset[pos]:
-                        mystrrow = number + ' '
-                        datalbl = Label(text =mystrrow)
-                        self.mainlayout.add_widget(datalbl)
-
-
-        #Show Images
-        else:
-            if self.isimage is 'rgb':
-                points = sqrt((len(self.mytexturedataset[0]) - 1) / 3)
-            else:
-                points = sqrt(len(self.mytexturedataset[0]) - 1)
-            cols = int((Window.width - 200) / points)
-            self.mainlayout.cols = int(cols)
-            rows = int((Window.height - 200) / points)
-            self.mainlayout.rows = int (rows)
-            nitemsperpage = (self.mainlayout.cols * self.mainlayout.rows)
-            pagsfloat = (len(self.mytexturedataset) / nitemsperpage)
-            pagsaux = float(int(pagsfloat))
-            self.pags = int(pagsfloat)
-            self.lblelementsize.text = '[b]image size: [/b]' + str(int(points)) + ' x ' + str(int(points))
-            if pagsaux != pagsfloat:
-                self.pags += 1
-
-            self.lblpage.text = '[b]Page: [/b]' + str(self.pagenum) + '/' + str(self.pags)
-            for rowtexture in range(nitemsperpage): #in range cols * rows
-                index = rowtexture+(self.pagenum-1)*nitemsperpage
-                if index >= len(self.mytexturedataset):
-                    break
-                imagedata = self.WidgetTexture(self.mytexturedataset[index], self.isimage)
-                self.mainlayout.add_widget(imagedata)
-            outputslast = ([row[-1] for row in self.mytexturedataset])
-            setoutputslast = sorted(set(outputslast))
-            self.myoutputimageslist = list()
-            for number in setoutputslast:
-                for row in self.mytexturedataset:
-                    if row[-1] == number:
-                        self.myoutputimageslist.append(row)
-                        break
-            if len(self.mytexturedataset) > 100:
-                inputimagelist = list(self.mytexturedataset[10:100])
-            else:
-                inputimagelist = list(self.mytexturedataset[:-1])
-
-            outputimageslist = self.myoutputimageslist.copy()
-        self.btnactivation()
-
-    def resetandnumberdatasetfunc(self, plusless):
-        self.pagenum = 1
-        self.numberdatasetfunc(plusless)
-
-    def outputdatasetfunc(self):
-
-        if self.outputfirstbox.active == True and self.outputchanged == False:
-            self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filenameselected)
-            self.numberdatasetfunc('')
-            self.outputchanged = True
-        elif self.outputlastbox.active == True and self.outputchanged == True:
-            self.mytexturedataset = datasetoutputlastcolumn(self.mytexturedataset)
-            self.numberdatasetfunc('')
-            self.outputchanged = False
-        else:
-            pass
-
-    def outputoptionsfunc(self):
-        containeroutput = BoxLayout(orientation='vertical')
-        outputbox = GridLayout()
-        outputbox.clear_widgets()
-        self.popupoutputs = Popup(title='OUTPUTS:', content=containeroutput, separator_color=(.6,1,1, 1),
-                      auto_dismiss=False, size_hint=(.6,.8))
-        popupoutputbtn = Button(text='OK', background_normal='ButtonPlusP.png',
-                                background_down='ButtonDeactivated.png',
-                                background_disabled_normal='ButtonDeactivated.png', pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1, .2))
-        popupoutputbtn.bind(on_press= lambda x:self.popupoutputsdismiss() )
-        outputslast = ([row[-1] for row in self.mytexturedataset])
-        setoutputslast = sorted(set(outputslast))
-
-        if self.imagedatabox.active == True:
-            outputbox.cols = len(setoutputslast)
-        else:
-            outputbox.rows = len(setoutputslast)
-
-        if self.imagedatabox.active == True:
-            # for number in setoutputslast:
-            #     for row in self.mytexturedataset:
-            #         if row[-1] == number:
-            #             imagedata = WidgetTexture(row)
-            #             outputbox.add_widget(imagedata)
-            #             break
-            for row in self.myoutputimageslist:
-                image = Filechooser.WidgetTexture(row, self.isimage)
-                outputbox.remove_widget(image)
-                outputbox.add_widget(image)
-
-        for number in setoutputslast:
-            lbloutput = Label(text=str(number))
-            outputbox.add_widget(lbloutput)
-
-
-        containeroutput.add_widget(outputbox)
-        containeroutput.add_widget(popupoutputbtn)
-
-        self.popupoutputs.open()
-
-    def btnactivation(self):
-        if self.pagenum <= 1:
-            self.btnpreviouspage.disabled = True
-        else:
-            self.btnpreviouspage.disabled = False
-        if self.pagenum >= int(self.pags):
-            self.btnnextpage.disabled = True
-        else:
-            self.btnnextpage.disabled = False
-
-    def popupoutputsdismiss(self):
-        self.popupoutputs.dismiss()
-
-    def open(self, path, filenameselected):
-        global popupfilechooser
-        global myevent
-
-        popuploading = PopupLoading()
-        self.popup = Popup(title=filenameselected, content=popuploading,
-                      size_hint=(0.9, 0.9), auto_dismiss=False, separator_color=(.67, .57, .69))
-        self.popup.open()
-
-        popuploading.start()
-
-        threading.Thread(target=Filechooser.filechoosershowdataset, args=(self, path, filenameselected, myevent)).start()
-        popupfilechooser.dismiss()
-
-    def BtnImagesFncn(self,btnimages):
-        if btnimages.text == 'Numbers dataset':
-            btnimages.text = 'Images dataset'
-        else:
-            btnimages.text = 'Numbers dataset'
-    def BtnOutputFncn(self,btnimages):
-        if btnimages.text == 'Output on last column':
-            btnimages.text = 'Output on first column'
-        else:
-            btnimages.text = 'Output on last column'
-
-
-    def popupdismiss(self):
-        popupfilechooser.dismiss()
-
 
 
 
