@@ -177,7 +177,7 @@
             id:mainseparatorprogressbar
             size_hint: None, None
             width: self.parent.width
-            height: 2
+            height: 4
             canvas:
                 Color:
                     rgba: 0, 0, 0, 0
@@ -239,14 +239,14 @@
                 multiline: False
                 pos_hint: {'center_x': .5, 'center_y': .5}
             Button:
-                text: 'Cancel'
+                text: 'Cancelar'
                 on_press: idfilechooser.popupdismiss()
                 size_hint_x: .2
                 pos_hint: {'center_x': .5, 'center_y': .5}
                 background_normal: 'images/ButtonPlusP.png'
                 background_down: 'ButtonDeactivated.png'
             Button:
-                text: 'Open'
+                text: 'Abrir'
                 on_press: idfilechooser.open(filechooserbox.path, text_input.text)
                 size_hint_x: .2
                 pos_hint: {'center_x': .5, 'center_y': .5}

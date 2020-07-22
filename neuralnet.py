@@ -80,6 +80,8 @@ def forward_propagate(network, row):
             neuron['output'] = neuron['transfer'](activation)
             new_inputs.append(neuron['output'])
         inputs = new_inputs
+        print('network: ______________')
+        print(layer)
     return inputs
 
 # Backpropagate error and store in neurons
@@ -114,22 +116,22 @@ def update_weights(network, row, l_rate):
 
 # Train a network for a fixed number of epochs
 def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eventp, myapp):
-    global valuepb, valuetrain, valuemydata, timestart, timeleft, currentcycle, currentfold
+    global timeleft
     global mean_qerror
     step = 100.0/(n_folds*n_epoch*len(train))
     steptrain = 100.0/ myapp.n_epoch
-    currentfold += 1
-    currentcycle = 0
+    myapp.currentfold += 1
+    myapp.currentcycle = 0
     for epoch in range(n_epoch):
         sum_error = 0
-        valuetrain += steptrain
-        valuemydata = Lblleft(myapp, type=type, dataerror=0)
-        currentcycle += 1
+        myapp.valuetrain += steptrain
+        myapp.valuemydata.networklist = network
+        myapp.currentcycle += 1
         if myapp.stoptrainning:
             break
         i = 1
         for row in train:
-            valuepb += step
+            myapp.valuepb += step
             outputs = forward_propagate(network, row)
             expected = [0 for i in range(n_outputs)]
             expected[row[-1]] = 1
@@ -166,17 +168,15 @@ def accuracy_metric(actual, predicted):
 # Backpropagation Algorithm With Stochastic Gradient Descent
 
 def back_propagation(train, test, eventp, myapp, n_folds, l_rate, n_epoch, n_hidden):
-    global network
-
     n_inputs = len(train[0]) - 1
     n_outputs = len(set([row[-1] for row in train]))
-    network = initialize_network(n_inputs, n_hidden, n_outputs, transfer_sigmoid, transfer_sigmoid_derivative)
-    train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, 'backp', eventp, myapp)
+    myapp.network = initialize_network(n_inputs, n_hidden, n_outputs, transfer_sigmoid, transfer_sigmoid_derivative)
+    train_network(myapp.network, train, n_folds, l_rate, n_epoch, n_outputs, 'backp', eventp, myapp)
     predictions = list()
     for row in test:
         if myapp.stoptrainning:
             break
-        prediction = predict(network, row)
+        prediction = predict(myapp.network, row)
         predictions.append(prediction)
     return(predictions)
 
@@ -184,7 +184,7 @@ def back_propagation(train, test, eventp, myapp, n_folds, l_rate, n_epoch, n_hid
 
 def evaluate_algorithm(dataset, algorithm, eventp, myapp, n_folds, *args):
     global progressbar
-    global scores
+    scores = list()
     folds = cross_validation_split(dataset, n_folds)
     for fold in folds:
         if myapp.stoptrainning:
@@ -205,4 +205,4 @@ def evaluate_algorithm(dataset, algorithm, eventp, myapp, n_folds, *args):
         actual = [row[-1] for row in fold]
         accuracy = accuracy_metric(actual, predicted)
         scores.append(accuracy)
-    eventp.evevaluatealgorithm(myapp)
+    eventp.evevaluatealgorithm(myapp, scores)

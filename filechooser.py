@@ -50,25 +50,25 @@ class Filechooser(BoxLayout):
 
     def filechoosershowdatasetcont(self, filenameselected):
 
+        self.popup.dismiss()
         if self.mytexturedataset == None:
             containererror = BoxLayout(orientation='vertical')
             popuperror = Popup(title='DATASET:', content=containererror, separator_color=(.6,1,1, 1),
                               auto_dismiss=False, size_hint=(.5,.5))
-            lblerror = Label(text='{} : Wrong file format' .format(filenameselected))
-            popuperrorbtn = Button(text='OK', on_press=popuperror.dismiss, background_normal='images/ButtonPlusP.png',
+            lblerror = Label(text='{} : Formato de archivo no válido' .format(filenameselected))
+            popuperrorbtn = Button(text='Aceptar', on_press=popuperror.dismiss, background_normal='images/ButtonPlusP.png',
                               background_down='images/ButtonDeactivated.png', background_disabled_normal='images/ButtonDeactivated.png',
                               pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1,.5))
             containererror.add_widget(lblerror)
             containererror.add_widget(popuperrorbtn)
             popuperror.open()
         else:
-            self.popup.dismiss()
             self.pagenum = 1
             self.pags = 0
             containerbox = BoxLayout(orientation='vertical', spacing = 10)
             popupshow = Popup(title='DATASET:', content=containerbox, separator_color=(.6,1,1, 1),
                               auto_dismiss=False)
-            popupbtn = Button(text='OK', on_press=popupshow.dismiss, background_normal='images/ButtonPlusP.png',
+            popupbtn = Button(text='Aceptar', on_press=popupshow.dismiss, background_normal='images/ButtonPlusP.png',
                               background_down='images/ButtonDeactivated.png', background_disabled_normal='images/ButtonDeactivated.png',
                               pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(.4,1))
             self.mainlayout = GridLayout(cols=1)
@@ -87,16 +87,16 @@ class Filechooser(BoxLayout):
             typelayout = GridLayout( cols = 4)
             infolayout = BoxLayout(orientation='horizontal', size_hint=(1,.1))
             self.imagedatabox = CheckBox(group = 'typeobject', size_hint=(.4,1))
-            lblimagedatabox = Label(text='Images dataset',halign="left")
+            lblimagedatabox = Label(text='Dataset de imágenes',halign="left")
             lblimagedatabox.bind(size=lblimagedatabox.setter('text_size'))
             self.numberdatabox = CheckBox(group = 'typeobject', size_hint=(.4,1))
-            lblnumberdatabox = Label(text='Numbers dataset',halign="left")
+            lblnumberdatabox = Label(text='Dataset de números',halign="left")
             lblnumberdatabox.bind(size=lblnumberdatabox.setter('text_size'))
             self.outputfirstbox = CheckBox(group='output', size_hint=(.4,1))
-            lbloutputfirstbox = Label(text='Outputs on first column',halign="left")
+            lbloutputfirstbox = Label(text='Salidas en la primera columna',halign="left")
             lbloutputfirstbox.bind(size=lbloutputfirstbox.setter('text_size'))
             self.outputlastbox = CheckBox(group='output', size_hint=(.4,1))
-            lbloutputlastbox = Label(text='Outputs on last column',halign="left")
+            lbloutputlastbox = Label(text='Salidas en la última columna',halign="left")
             lbloutputlastbox.bind(size=lbloutputlastbox.setter('text_size'))
 
             self.lblpage = Label(text='', markup = True, pos_hint={'center_x': .5, 'center_y': .5},
@@ -104,10 +104,10 @@ class Filechooser(BoxLayout):
             outputslast = ([row[-1] for row in self.mytexturedataset])
             setoutputslast = set(outputslast)
 
-            self.btnnoutputs = Button(text='[b]nº outputs: [/b]' + str(len(setoutputslast)),markup = True, pos_hint={'center_x': .5, 'center_y': .5},
+            self.btnnoutputs = Button(text='[b]nº salidas: [/b]' + str(len(setoutputslast)),markup = True, pos_hint={'center_x': .5, 'center_y': .5},
                             size_hint=(1, .9), background_normal='images/ButtonPlusP.png',
                              background_down='images/ButtonDeactivated.png')
-            lblnelements = Label(text='[b]nº elements: [/b]' + str(len(outputslast)), markup = True, pos_hint={'center_x': .5, 'center_y': .5},
+            lblnelements = Label(text='[b]nº elementos: [/b]' + str(len(outputslast)), markup = True, pos_hint={'center_x': .5, 'center_y': .5},
                             size_hint=(.8, .1))
 
             self.lblelementsize = Label(text='', markup = True, pos_hint={'center_x': .5, 'center_y': .5},
@@ -161,7 +161,7 @@ class Filechooser(BoxLayout):
     def filechoosershowdataset(self, path, filenameselected, eventp):
         filename = os.path.join(path, filenameselected)
         self.callerclass.filename = filename
-        self.callerclass.lblfilename.text = ('[b] Current file: [/b]' + '[i]' + filenameselected)
+        self.callerclass.lblfilename.text = ('[b] Archivo: [/b]' + '[i]' + filenameselected)
         self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filename)
         eventp.evshowfile(self, filenameselected)
 
@@ -184,8 +184,8 @@ class Filechooser(BoxLayout):
             self.pags = int(pagsfloat)
             if pagsaux != pagsfloat:
                 self.pags += 1
-            self.lblelementsize.text = '[b]element size: [/b]' + str(len(self.mytexturedataset[0]))
-            self.lblpage.text = '[b]Page: [/b]' + str(self.pagenum) + '/' + str(self.pags)
+            self.lblelementsize.text = '[b]tamaño de los elementos: [/b]' + str(len(self.mytexturedataset[0]))
+            self.lblpage.text = '[b]Página: [/b]' + str(self.pagenum) + '/' + str(self.pags)
 
             if len(self.mytexturedataset[0]) > 20:
                 self.mainlayout.cols = 11
@@ -230,11 +230,11 @@ class Filechooser(BoxLayout):
             pagsfloat = (len(self.mytexturedataset) / nitemsperpage)
             pagsaux = float(int(pagsfloat))
             self.pags = int(pagsfloat)
-            self.lblelementsize.text = '[b]image size: [/b]' + str(int(points)) + ' x ' + str(int(points))
+            self.lblelementsize.text = '[b]tamaño de las imágenes: [/b]' + str(int(points)) + ' x ' + str(int(points))
             if pagsaux != pagsfloat:
                 self.pags += 1
 
-            self.lblpage.text = '[b]Page: [/b]' + str(self.pagenum) + '/' + str(self.pags)
+            self.lblpage.text = '[b]Página: [/b]' + str(self.pagenum) + '/' + str(self.pags)
             for rowtexture in range(nitemsperpage): #in range cols * rows
                 index = rowtexture+(self.pagenum-1)*nitemsperpage
                 if index >= len(self.mytexturedataset):
@@ -278,7 +278,7 @@ class Filechooser(BoxLayout):
         containeroutput = BoxLayout(orientation='vertical')
         outputbox = GridLayout()
         outputbox.clear_widgets()
-        self.popupoutputs = Popup(title='OUTPUTS:', content=containeroutput, separator_color=(.6,1,1, 1), size_hint=(.8,.4))
+        self.popupoutputs = Popup(title='SALIDAS:', content=containeroutput, separator_color=(.6,1,1, 1), size_hint=(.8,.4))
         outputslast = ([row[-1] for row in self.mytexturedataset])
         setoutputslast = sorted(set(outputslast))
 
@@ -339,15 +339,15 @@ class Filechooser(BoxLayout):
         self.prevpopup.dismiss()
 
     def BtnImagesFncn(self,btnimages):
-        if btnimages.text == 'Numbers dataset':
-            btnimages.text = 'Images dataset'
+        if btnimages.text == 'Dataset de números':
+            btnimages.text = 'Dataset de imágenes'
         else:
-            btnimages.text = 'Numbers dataset'
+            btnimages.text = 'Dataset de números'
     def BtnOutputFncn(self,btnimages):
-        if btnimages.text == 'Output on last column':
-            btnimages.text = 'Output on first column'
+        if btnimages.text == 'Salidas en la última columna':
+            btnimages.text = 'Salidas en la primera columna'
         else:
-            btnimages.text = 'Output on last column'
+            btnimages.text = 'Salidas en la última columna'
 
 
     def popupdismiss(self):
