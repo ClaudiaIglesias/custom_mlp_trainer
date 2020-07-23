@@ -48,9 +48,10 @@ class Filechooser(BoxLayout):
     def myselected(self, path, filenameselected):
         self.ids.text_input.text = basename(filenameselected)
 
-    def filechoosershowdatasetcont(self, filenameselected):
+    def filechoosershowdatasetcont(self, filenameselected, details):
 
         self.popup.dismiss()
+
         if self.mytexturedataset == None:
             containererror = BoxLayout(orientation='vertical')
             popuperror = Popup(title='DATASET:', content=containererror, separator_color=(.6,1,1, 1),
@@ -103,7 +104,6 @@ class Filechooser(BoxLayout):
                             size_hint=(1, .1), color=(.7,.9,.9))
             outputslast = ([row[-1] for row in self.mytexturedataset])
             setoutputslast = set(outputslast)
-
             self.btnnoutputs = Button(text='[b]nº salidas: [/b]' + str(len(setoutputslast)),markup = True, pos_hint={'center_x': .5, 'center_y': .5},
                             size_hint=(1, .9), background_normal='images/ButtonPlusP.png',
                              background_down='images/ButtonDeactivated.png')
@@ -126,18 +126,19 @@ class Filechooser(BoxLayout):
             self.numberdatabox.bind(active=lambda x,y:self.resetandnumberdatasetfunc(''))
             self.btnnoutputs.bind(on_press=lambda x:self.outputoptionsfunc())
 
-            if self.optionalimage == True:
-                typelayout.add_widget(self.numberdatabox)
-                typelayout.add_widget(lblnumberdatabox)
-            if self.optionaloutput == True:
-                typelayout.add_widget(self.outputlastbox)
-                typelayout.add_widget(lbloutputlastbox)
-            if self.optionalimage == True:
-                typelayout.add_widget(self.imagedatabox)
-                typelayout.add_widget(lblimagedatabox)
-            if self.optionaloutput == True:
-                typelayout.add_widget(outputfirstbox)
-                typelayout.add_widget(lbloutputfirstbox)
+            if details is False:
+                if self.optionalimage == True:
+                    typelayout.add_widget(self.numberdatabox)
+                    typelayout.add_widget(lblnumberdatabox)
+                if self.optionaloutput == True:
+                    typelayout.add_widget(self.outputlastbox)
+                    typelayout.add_widget(lbloutputlastbox)
+                if self.optionalimage == True:
+                    typelayout.add_widget(self.imagedatabox)
+                    typelayout.add_widget(lblimagedatabox)
+                if self.optionaloutput == True:
+                    typelayout.add_widget(outputfirstbox)
+                    typelayout.add_widget(lbloutputfirstbox)
             mybtnlayout.add_widget(popupbtn)
             mybtnlayout.add_widget(typelayout)
             middlelayout.add_widget(self.btnpreviouspage)
@@ -145,25 +146,27 @@ class Filechooser(BoxLayout):
             middlelayout.add_widget(self.btnnextpage)
             containerbox.add_widget(middlelayout)
             containerbox.add_widget(infolayout)
-            infolayout.add_widget(self.btnnoutputs)
+            if details is False:
+                infolayout.add_widget(self.btnnoutputs)
             infolayout.add_widget(lblnelements)
             infolayout.add_widget(self.lblelementsize)
             infolayout.add_widget(self.lblpage)
             containerbox.add_widget(mybtnlayout)
             popupshow.open()
 
-            if self.isimage is not None:
-                self.imagedatabox.active = True
-            else:
-                self.numberdatabox.active = True
+            if details is False:
+                if self.isimage is not None:
+                    self.imagedatabox.active = True
+                else:
+                    self.numberdatabox.active = True
             self.numberdatasetfunc('')
 
-    def filechoosershowdataset(self, path, filenameselected, eventp):
+    def filechoosershowdataset(self, path, filenameselected, eventp, details):
         filename = os.path.join(path, filenameselected)
         self.callerclass.filename = filename
         self.callerclass.lblfilename.text = ('[b] Archivo: [/b]' + '[i]' + filenameselected)
         self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filename)
-        eventp.evshowfile(self, filenameselected)
+        eventp.evshowfile(self, filenameselected, details)
 
     def numberdatasetfunc(self, plusless):
         global outputimageslist, inputimagelist
@@ -335,7 +338,7 @@ class Filechooser(BoxLayout):
 
         popuploading.start()
 
-        threading.Thread(target=Filechooser.filechoosershowdataset, args=(self, path, filenameselected, self.callerclass.myevent)).start()
+        threading.Thread(target=Filechooser.filechoosershowdataset, args=(self, path, filenameselected, self.callerclass.myevent, False)).start()
         self.prevpopup.dismiss()
 
     def BtnImagesFncn(self,btnimages):

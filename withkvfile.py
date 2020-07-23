@@ -46,7 +46,7 @@ import os
 from os.path import dirname, join, basename, exists, expanduser
 from kivy.animation import Animation
 
-from filechooser import Filechooser
+from filechooser import Filechooser, PopupLoading
 from loaddataset import showdataset, readdataset, str_column_to_float
 from neuralnet import initialize_network_no_weights, train_network, back_propagation, \
     initialize_network, transfer_sigmoid, transfer_sigmoid_derivative, predict, evaluate_algorithm, accuracy_metric, \
@@ -1277,6 +1277,25 @@ class MyApp(App):
                                                                    self.n_folds, self.l_rate, self.n_epoch, list_hidden)).start()
             self.cancellayout()
 
+    def btnDetailspressed(self):
+        content = Filechooser(self)
+        popuploading = PopupLoading()
+        content.popup = Popup(title=basename(self.filename), content=popuploading,
+                           size_hint=(0.9, 0.9), auto_dismiss=False, separator_color=(.67, .57, .69))
+        content.popup.open()
+
+        popuploading.start()
+
+        threading.Thread(target=content.filechoosershowdataset,
+                         args=(dirname(self.filename), basename(self.filename), self.myevent, True)).start()
+
+
+
+        #popupfilechooser = Popup(title="Cargar archivo", content=content,
+                            #size_hint=(0.9, 0.9),auto_dismiss= False, separator_color= (.67,.57,.69))
+        #content.filechoosershowdataset(dirname(self.filename), basename(self.filename), self.myevent, True)
+        #popupfilechooser.open()
+
     def mainlayout_func(self):
         global prediction, n_inputs, n_outputs, dataset, numdata, listinputs, filename, inputimagelist, outputimageslist
         inputimagelist = self.inputimagelist
@@ -1304,6 +1323,7 @@ class MyApp(App):
         self.layout.remove_widget(self.btnTrain)
         self.layout.remove_widget(self.btnError)
         self.layout.remove_widget(self.btnPredict)
+        self.layout.remove_widget(self.btnDetails)
         self.layout.add_widget(self.btnTrain)
         self.layout.add_widget(self.btnError)
         self.layout.add_widget(self.btnPredict)
@@ -1370,6 +1390,7 @@ class MyApp(App):
         self.layout.remove_widget(self.btnCancel)
         self.layoutinfotop.remove_widget(self.btnSettings)
         self.layoutinfotop.remove_widget(self.btnBack)
+        self.layout.add_widget(self.btnDetails)
         layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
         layoutprogressbar.remove_widget(progressbar)
         progressbar.value = 0
@@ -1739,12 +1760,12 @@ class MyApp(App):
                         myapp.trainclock = Clock.schedule_interval(myapp.layoutpbpredictnext, 1 / 10)
                         threading.Thread(target=predictfunc, args=(myapp,mydataset)).start()
             @mainthread
-            def evshowfile(self, filechooser, filenameselected):
-                self.dispatch('on_evshowfile', filechooser, filenameselected)
+            def evshowfile(self, filechooser, filenameselected, details):
+                self.dispatch('on_evshowfile', filechooser, filenameselected, details)
 
-            def on_evshowfile(self, filechooser, filenameselected):
+            def on_evshowfile(self, filechooser, filenameselected, details):
                 try:
-                    Filechooser.filechoosershowdatasetcont(filechooser, filenameselected)
+                    Filechooser.filechoosershowdatasetcont(filechooser, filenameselected, details)
                 except Exception as e:  # work on python 3.x
                     print('filechoosershowdatasetcont: ' + str(e))
 
@@ -2020,7 +2041,7 @@ class MyApp(App):
         self.btnOpen.bind(on_press=lambda x:self.filechooserfunction())
         self.btnplussidetext.bind(on_press=lambda x:self.leftlabelswitch(self.layoutinfomiddle, 0, 'btnplus'))
         self.btnlesssidetext.bind(on_press=lambda x:self.leftlabelswitch(self.layoutinfomiddle, 0, 'btnless'))
-        self.btnDetails.bind(on_press=lambda x:Filechooser.filechoosershowdatasetcont())
+        self.btnDetails.bind(on_press=lambda x:self.btnDetailspressed())
 
         return self.parentlayout
 
