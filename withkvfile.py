@@ -49,7 +49,8 @@ from kivy.animation import Animation
 from filechooser import Filechooser
 from loaddataset import showdataset, readdataset, str_column_to_float
 from neuralnet import initialize_network_no_weights, train_network, back_propagation, \
-    initialize_network, transfer_sigmoid, transfer_sigmoid_derivative, predict, evaluate_algorithm, accuracy_metric
+    initialize_network, transfer_sigmoid, transfer_sigmoid_derivative, predict, evaluate_algorithm, accuracy_metric, \
+    predictfunc
 from widgettexture import WidgetTexture
 
 numoutputs = 1
@@ -71,10 +72,10 @@ errorlbl = Label(text = '', markup = True)
 labelcycles = (Label(text='[b] [color=D464EB]Ciclos: [/b][/color]', markup=True,
                              halign="left",
                              size_hint=(1, .1), color=(1, 1, 1)))
-labelfolds = (Label(text='[b] [color=D464EB]Pliegues: [/b][/color]' , markup=True,
+labelfolds = (Label(text='[b] [color=D464EB]Grupos: [/b][/color]' , markup=True,
                             halign="left",
                             size_hint=(1, .1), color=(1, 1, 1)))
-mean_qerror = 0
+
 
 inputimagelist = ''
 
@@ -165,7 +166,7 @@ class MyApp(App):
 
     # Error progress
     def layoutpbnext(self, deltatime):
-        global lbltimeleft, timeleft, sum_error, labelcycles, labelfolds, errorlbl, mean_qerror
+        global lbltimeleft, timeleft, sum_error, labelcycles, labelfolds, errorlbl
         global progressbar
 
         timenow = time.monotonic()
@@ -186,7 +187,7 @@ class MyApp(App):
                 lbltimeleft.text = '[b] Tiempo restante: [/b]' + str("{:.0f}".format(left)) + ' segundos'
         progressbar.value = self.valuepb
         self.auxlayoutpb(self.valuepb)
-        errorlbl.text = '[b] [color=D464EB]Mean quadratic error: [/b][/color]' + str("{:.4f}".format(mean_qerror))
+        errorlbl.text = '[b] [color=D464EB]Mean quadratic error: [/b][/color]' + str("{:.4f}".format(self.mean_qerror))
         labelcycles.text = '[b] [color=D464EB]Cycles: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
         labelfolds.text = '[b] [color=D464EB]Folds: [/b][/color]' + str(self.currentfold) + '/' + str(self.n_folds)
 
@@ -213,7 +214,7 @@ class MyApp(App):
         progressbar.value = self.valuetrain
         self.auxlayoutpb(self.valuetrain)
         labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
-        labelfolds.text = '[b] [color=D464EB]Pliegues: [/b][/color]' + str(self.n_folds)
+        labelfolds.text = '[b] [color=D464EB]Grupos: [/b][/color]' + str(self.n_folds)
 
     # Predict progress
     def layoutpbpredictnext(self, deltatime):
@@ -239,22 +240,7 @@ class MyApp(App):
         indeximageinput = int(random() * len(inputimagelist))
         imageinput.update_texture(inputimagelist[indeximageinput])
         # labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
-        # labelfolds.text = '[b] [color=D464EB]Pliegues: [/b][/color]' + str(self.n_folds)
-
-    def predictfunc(self):
-        global dataset
-        self.valuepredict = 0
-        step = len(dataset)/100
-        for row in dataset:
-            if self.stoptrainning:
-                break
-            predict(self.network, row)
-            self.valuepredict += step
-        #predicted = back_propagation(train_set, test_set, eventp, myapp, n_folds, *args)
-        actual = [row[-1] for row in dataset]
-        predicted = [row[-1] for row in dataset]
-        accuracy = accuracy_metric(actual, predicted)
-        self.myevent.predictfinished(self, accuracy)
+        # labelfolds.text = '[b] [color=D464EB]Grupos: [/b][/color]' + str(self.n_folds)
 
     # When Train is pressed
     def drawinglblblackkv(self, textlayout, mydata):
@@ -880,17 +866,17 @@ class MyApp(App):
         labelfile = (Label(text='[b] Archivo: [/b][i]' + basename(leftpanelitem.filename), markup=True, halign="left",
                            size_hint=(1, .1)))
         labelfile.bind(size=labelfile.setter('text_size'))
-        labeltype = (Label(text='[b] [color=4BDCFF]Test: [/b][/color]' + leftpanelitem.type, markup=True,
+        labeltype = (Label(text='[b] [color=4BDCFF]Función: [/b][/color]' + leftpanelitem.type, markup=True,
                            halign="left",
                            size_hint=(1, .1), color=(1, 1, 1)))
         labeltype.bind(size=labeltype.setter('text_size'))
         labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(leftpanelitem.n_epoch)
         labelcycles.bind(size=labelcycles.setter('text_size'))
-        labelrate = (Label(text='[b] [color=D464EB]Rate: [/b][/color]' + str(leftpanelitem.l_rate), markup=True,
+        labelrate = (Label(text='[b] [color=D464EB]Ratio: [/b][/color]' + str(leftpanelitem.l_rate), markup=True,
                            halign="left",
                            size_hint=(1, .1), color=(1, 1, 1)))
         labelrate.bind(size=labelrate.setter('text_size'))
-        labelfolds.text = '[b] [color=D464EB]Pliegues: [/b][/color]' + str(leftpanelitem.n_folds)
+        labelfolds.text = '[b] [color=D464EB]Iteraciones: [/b][/color]' + str(leftpanelitem.n_folds)
         labelfolds.bind(size=labelfolds.setter('text_size'))
         errorlbl.text = ''
         errorlbl.bind(size=errorlbl.setter('text_size'))
@@ -1295,6 +1281,7 @@ class MyApp(App):
             layoutprogressbar.add_widget(progressbar)
             progressbar.value = 0
             self.valuetrain = 0
+            self.mean_qerror = 0
 
             self.valuepb = 0
             self.stoptrainning = False
@@ -1390,9 +1377,11 @@ class MyApp(App):
         global dataset
         self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
         mydata = MyApp.Lblleft(self, type='test', dataerror=0)
-
+        layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
+        layoutprogressbar.add_widget(progressbar)
+        progressbar.value = 0
         self.drawinglblblackkv(self.layoutinfomiddle, mydata)
-        threading.Thread(target=readdataset, args=(filename, self.myevent, self, None, None)).start()
+        threading.Thread(target=readdataset, args=(self.filename, self.myevent, self, None, None)).start()
 
     def predictfinishedlayout(self, accuracy):
         self.layout.remove_widget(self.btnTrain)
@@ -1686,7 +1675,6 @@ class MyApp(App):
                 progressbar.value = 0
                 print('Scores: %s' % scores)
                 if len(scores):
-                    print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
                     accuracylabel = (sum(scores) / float(len(scores)))
                     myapp.errorlayout(accuracylabel)
                 myapp.layout.remove_widget(lbltimeleft)
@@ -1709,11 +1697,11 @@ class MyApp(App):
                         print(layer)
 
             @mainthread
-            def predictfinished(self, myapp, accuracy):
+            def predictfinished(self, myapp, scores):
                 if myapp.stoptrainning:
-                    self.dispatch('on_predictfinished', myapp)
+                    self.dispatch('on_trainfinished', myapp)
                 else:
-                    self.dispatch('on_predictfinished', myapp, accuracy)
+                    self.dispatch('on_predictfinished', myapp, scores)
             # Predict
             def on_predictfinished(self, myapp, accuracy):
                 myapp.layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
@@ -1748,10 +1736,10 @@ class MyApp(App):
                 if progressvarvalue == 100:
                     progressbar.value = 100.0
                     myapp.isimage = myisimage
-                    dataset = mydataset
-                    n_inputs = len(dataset[0]) - 1
-                    n_outputs = len(set([row[-1] for row in dataset]))
                     if myapp.onpredictlayout is False:
+                        dataset = mydataset
+                        n_inputs = len(dataset[0]) - 1
+                        n_outputs = len(set([row[-1] for row in dataset]))
                         myapp.network = initialize_network_no_weights(n_inputs, list_hidden, n_outputs)
                         myapp.drawinglblblackkv(myapp.layoutinfomiddle, myapp.Lblleft(myapp, type='entrenamiento', dataerror=0))
                     myapp.layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
@@ -1767,7 +1755,7 @@ class MyApp(App):
                         progressbar.value = 0
                         myapp.valuepredict = 0
                         myapp.trainclock = Clock.schedule_interval(myapp.layoutpbpredictnext, 1 / 10)
-                        threading.Thread(target=myapp.predictfunc, args=()).start()
+                        threading.Thread(target=predictfunc, args=(myapp,mydataset)).start()
             @mainthread
             def evshowfile(self, filechooser, filenameselected):
                 self.dispatch('on_evshowfile', filechooser, filenameselected)
@@ -1953,7 +1941,7 @@ class MyApp(App):
                              background_normal='images/ButtonPlusP.png',
                              background_down='images/ButtonDeactivated.png',
                              background_disabled_normal='images/ButtonDeactivated.png', font_size=20)
-        lblfolds = Label(text='[b]PLIEGUES:',markup=True, font_size=(11), pos_hint={'center_x': .5, 'center_y': .5})
+        lblfolds = Label(text='[b]GRUPOS:',markup=True, font_size=(11), pos_hint={'center_x': .5, 'center_y': .5})
         self.numfolds = Label(text=str(self.n_folds))
 
         MyApp.restoreleftpanellist(self)

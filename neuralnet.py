@@ -80,8 +80,6 @@ def forward_propagate(network, row):
             neuron['output'] = neuron['transfer'](activation)
             new_inputs.append(neuron['output'])
         inputs = new_inputs
-        print('network: ______________')
-        print(layer)
     return inputs
 
 # Backpropagate error and store in neurons
@@ -117,7 +115,6 @@ def update_weights(network, row, l_rate):
 # Train a network for a fixed number of epochs
 def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eventp, myapp):
     global timeleft
-    global mean_qerror
     step = 100.0/(n_folds*n_epoch*len(train))
     steptrain = 100.0/ myapp.n_epoch
     myapp.currentfold += 1
@@ -136,7 +133,7 @@ def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eve
             expected = [0 for i in range(n_outputs)]
             expected[row[-1]] = 1
             sum_error += sum([(expected[i] - outputs[i]) ** 2 for i in range(len(expected))])
-            mean_qerror = sum_error / i
+            myapp.mean_qerror = sum_error / i
             i += 1
             backward_propagate_error(network, expected)
             update_weights(network, row, l_rate)
@@ -150,9 +147,6 @@ def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eve
 #Works with btnGo
 def predict(network, row):
     outputs = forward_propagate(network, row)
-    print(outputs)
-    print('..........')
-    print(outputs.index(max(outputs)))
     return outputs.index(max(outputs))
 #accuracy
 def accuracy_metric(actual, predicted):
@@ -206,3 +200,21 @@ def evaluate_algorithm(dataset, algorithm, eventp, myapp, n_folds, *args):
         accuracy = accuracy_metric(actual, predicted)
         scores.append(accuracy)
     eventp.evevaluatealgorithm(myapp, scores)
+
+
+
+def predictfunc(myapp,mydataset):
+    print('len mydataset:{}' .format(len(mydataset)))
+    myapp.valuepredict = 0
+    step = 100.0/len(mydataset)
+    predictions = list()
+    for row in mydataset:
+        if myapp.stoptrainning:
+            break
+        predicted = predict(myapp.network, row)
+        myapp.valuepredict += step
+        predictions.append(predicted)
+    actual = [row[-1] for row in mydataset]
+    accuracy = accuracy_metric(actual, predictions)
+    myapp.myevent.predictfinished(myapp, accuracy)
+
