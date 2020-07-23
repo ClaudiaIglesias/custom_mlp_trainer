@@ -70,11 +70,9 @@ lbltimeleft = Label(text='tiempo restante:', markup = True)
 
 errorlbl = Label(text = '', markup = True)
 labelcycles = (Label(text='[b] [color=D464EB]Ciclos: [/b][/color]', markup=True,
-                             halign="left",
-                             size_hint=(1, .1), color=(1, 1, 1)))
+                             halign="left", color=(1, 1, 1)))
 labelfolds = (Label(text='[b] [color=D464EB]Grupos: [/b][/color]' , markup=True,
-                            halign="left",
-                            size_hint=(1, .1), color=(1, 1, 1)))
+                            halign="left", color=(1, 1, 1)))
 
 
 inputimagelist = ''
@@ -138,6 +136,8 @@ class MyApp(App):
 
     def auxlayoutpb(self, myvaluetrain):
         global dataset, imageinput
+        global lbltimeleft, timeleft,  labelcycles, labelfolds, errorlbl
+        global progressbar
         if myvaluetrain > self.printth:
             for layer in self.valuemydata.networklist:
                 print(layer)
@@ -160,61 +160,39 @@ class MyApp(App):
         nchanges = 0
         for myline in listoflines:
             nchanges += myline.change()
-        print('number of changes {} \n'.format(nchanges))
         indeximageinput = int(random() * len(inputimagelist))
         imageinput.update_texture(inputimagelist[indeximageinput])
-
-    # Error progress
-    def layoutpbnext(self, deltatime):
-        global lbltimeleft, timeleft, sum_error, labelcycles, labelfolds, errorlbl
-        global progressbar
 
         timenow = time.monotonic()
         elapse = timenow - self.timestart
         if self.valuepb == 0:
             lbltimeleft.text = 'estimando...'
         else:
-            left = (elapse / self.valuepb) * (100.0 - self.valuepb)
+            left = int((elapse / self.valuepb) * (100.0 - self.valuepb))
             if left > 3600:
-                hours = divmod(left, 3600)
-                minutes = hours[1] / 60
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str("{:.0f}".format(hours[0])) + ' horas ' + str(
-                    "{:.0f}".format(minutes) + ' minutes')
+                hours, seconds = divmod(left, 3600)
+                minutes = int(seconds / 60)
+                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(hours) + ' horas ' + str(minutes) + ' minutos'
             elif left > 60:
-                minutes = left / 60
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str("{:.0f}".format(minutes)) + ' minutos'
+                minutes, left = divmod(left, 60)
+                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(minutes) + ' minutos ' + str(left) + ' segundos'
             else:
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str("{:.0f}".format(left)) + ' segundos'
+                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(left) + ' segundos'
         progressbar.value = self.valuepb
+
+    # Error progress
+    def layoutpbnext(self, deltatime):
+        global labelcycles, labelfolds, errorlbl
         self.auxlayoutpb(self.valuepb)
-        errorlbl.text = '[b] [color=D464EB]Mean quadratic error: [/b][/color]' + str("{:.4f}".format(self.mean_qerror))
-        labelcycles.text = '[b] [color=D464EB]Cycles: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
-        labelfolds.text = '[b] [color=D464EB]Folds: [/b][/color]' + str(self.currentfold) + '/' + str(self.n_folds)
+        errorlbl.text = '[b] [color=D464EB]Error cuadrático medio: [/b][/color]' + str("{:.4f}".format(self.mean_qerror))
+        labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
+        labelfolds.text = '[b] [color=D464EB]Grupos: [/b][/color]' + str(self.currentfold) + '/' + str(self.n_folds)
 
     # Train progress
     def layoutpbtrainnext(self, deltatime):
-        global lbltimeleft, timestart, timeleft, labelcycles, labelfolds
-        global progressbar
-        timenow = time.monotonic()
-        elapse = timenow - self.timestart
-        if self.valuetrain == 0:
-            lbltimeleft.text = 'estimando...'
-        else:
-            left = (elapse / self.valuetrain) * (100.0 - self.valuetrain)
-            if left > 3600:
-                hours = divmod(left, 3600)
-                minutes = hours[1] / 60
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str("{:.0f}".format(hours[0])) + ' horas ' + str(
-                    "{:.0f}".format(minutes) + ' minutes')
-            elif left > 60:
-                minutes = left / 60
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str("{:.0f}".format(minutes)) + ' minutos'
-            else:
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str("{:.0f}".format(left)) + ' segundos'
-        progressbar.value = self.valuetrain
-        self.auxlayoutpb(self.valuetrain)
+        global labelcycles, labelfolds
+        self.auxlayoutpb(self.valuepb)
         labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
-        labelfolds.text = '[b] [color=D464EB]Grupos: [/b][/color]' + str(self.n_folds)
 
     # Predict progress
     def layoutpbpredictnext(self, deltatime):
@@ -225,20 +203,21 @@ class MyApp(App):
         if self.valuepredict == 0:
             lbltimeleft.text = 'estimando...'
         else:
-            left = (elapse / self.valuepredict) * (100.0 - self.valuepredict)
+            left = int((elapse / self.valuepredict) * (100.0 - self.valuepredict))
             if left > 3600:
-                hours = divmod(left, 3600)
-                minutes = hours[1] / 60
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str("{:.0f}".format(hours[0])) + ' horas ' + str(
-                    "{:.0f}".format(minutes) + ' minutes')
+                hours, seconds = divmod(left, 3600)
+                minutes = int(seconds / 60)
+                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(hours) + ' horas ' + str(minutes) + ' minutos'
             elif left > 60:
-                minutes = left / 60
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str("{:.0f}".format(minutes)) + ' minutos'
+                minutes, left = divmod(left, 60)
+                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(minutes) + ' minutos ' + str(left) + ' segundos'
             else:
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str("{:.0f}".format(left)) + ' segundos'
+                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(left) + ' segundos'
         progressbar.value = self.valuepredict
         indeximageinput = int(random() * len(inputimagelist))
         imageinput.update_texture(inputimagelist[indeximageinput])
+        acc = (self.correctpredict* 100.0) / self.totalpredict
+        self.labelaccuracy.text = '[b] Precisión: [/b]' + str("{:.2f}".format(acc)) + '%'
         # labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
         # labelfolds.text = '[b] [color=D464EB]Grupos: [/b][/color]' + str(self.n_folds)
 
@@ -373,7 +352,7 @@ class MyApp(App):
 
                     else:
                         for d in range(10):
-                            mypoints = [middlex - 205, d * 50 + (middley - 10 - 575 / 2) + 30, middlex,
+                            mypoints = [middlex - 205, d * 50 + (middley - 10 - space / 2) + 30, middlex,
                                              a * 25 + (middley + 9 - spaceone / 2)]
                             MyApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
             draw.add_widget(Label(text = str(mydata.list_hidden[0]), pos = (middlex - 40 , middley+220), size_hint=(None,None), font_size=13))
@@ -861,29 +840,27 @@ class MyApp(App):
         global list_hidden, n_outputs, n_inputs, currentpage
 
 
-        lbldate= Label(text=leftpanelitem.datestr, markup=True, halign="left", size_hint=(1, .1))
+        lbldate = Label(text=leftpanelitem.datestr, markup=True, halign="left")
         lbldate.bind(size=lbldate.setter('text_size'))
-        labelfile = (Label(text='[b] Archivo: [/b][i]' + basename(leftpanelitem.filename), markup=True, halign="left",
-                           size_hint=(1, .1)))
+        labelfile = (Label(text='[b] Archivo: [/b][i]' + basename(leftpanelitem.filename), markup=True, halign="left"))
         labelfile.bind(size=labelfile.setter('text_size'))
         labeltype = (Label(text='[b] [color=4BDCFF]Función: [/b][/color]' + leftpanelitem.type, markup=True,
-                           halign="left",
-                           size_hint=(1, .1), color=(1, 1, 1)))
+                           halign="left", color=(1, 1, 1)))
         labeltype.bind(size=labeltype.setter('text_size'))
         labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(leftpanelitem.n_epoch)
         labelcycles.bind(size=labelcycles.setter('text_size'))
         labelrate = (Label(text='[b] [color=D464EB]Ratio: [/b][/color]' + str(leftpanelitem.l_rate), markup=True,
-                           halign="left",
-                           size_hint=(1, .1), color=(1, 1, 1)))
+                           halign="left", color=(1, 1, 1)))
         labelrate.bind(size=labelrate.setter('text_size'))
-        labelfolds.text = '[b] [color=D464EB]Iteraciones: [/b][/color]' + str(leftpanelitem.n_folds)
-        labelfolds.bind(size=labelfolds.setter('text_size'))
+        if leftpanelitem.type is 'error':
+            labelfolds.text = '[b] [color=D464EB]Grupos: [/b][/color]' + str(leftpanelitem.n_folds)
+            labelfolds.bind(size=labelfolds.setter('text_size'))
         errorlbl.text = ''
         errorlbl.bind(size=errorlbl.setter('text_size'))
         varerrorlayout = True
-        labelaccuracy = (Label(text='[b] Precisión: [/b]' + str("{:.2f}".format(leftpanelitem.dataerror)) + '%', markup=True,
-                                   halign="left", size_hint=(1, .1)))
-        labelaccuracy.bind(size=labelaccuracy.setter('text_size'))
+        self.labelaccuracy = (Label(text='[b] Precisión: [/b]' + str("{:.2f}".format(leftpanelitem.dataerror)) + '%', markup=True,
+                                   halign="left"))
+        self.labelaccuracy.bind(size=self.labelaccuracy.setter('text_size'))
 
 
 
@@ -900,9 +877,10 @@ class MyApp(App):
         textlayout.add_widget(labeltype)
         textlayout.add_widget(labelcycles)
         textlayout.add_widget(labelrate)
-        textlayout.add_widget(labelfolds)
+        if leftpanelitem.type is 'error':
+            textlayout.add_widget(labelfolds)
         textlayout.add_widget(errorlbl)
-        textlayout.add_widget(labelaccuracy)
+        textlayout.add_widget(self.labelaccuracy)
 
 
 
@@ -1255,7 +1233,6 @@ class MyApp(App):
             self.currentfold = 0
             self.currentcycle = 0
             progressbar.value = 0
-            self.valuetrain = 0
             self.valuepb = 0
             self.stoptrainning = False
             self.printth = 0
@@ -1263,7 +1240,7 @@ class MyApp(App):
             self.trainclock = Clock.schedule_interval(self.layoutpbtrainnext, 1 / 10)
             self.network = initialize_network(n_inputs, list_hidden, n_outputs, transfer_sigmoid, transfer_sigmoid_derivative)
             self.valuemydata = self.Lblleft(self, type='entrenamiento', dataerror=0)
-            threading.Thread(target=train_network, args=(self.network, dataset, self.n_folds, self.l_rate, self.n_epoch, n_outputs, 'train', self.myevent, self)).start()
+            threading.Thread(target=train_network, args=(self.network, dataset, 1, self.l_rate, self.n_epoch, n_outputs, 'train', self.myevent, self)).start()
             self.layout.remove_widget(lbltimeleft)
             self.layout.add_widget(lbltimeleft)
             #train_network(network, dataset, l_rate, n_epoch, n_outputs)
@@ -1280,7 +1257,7 @@ class MyApp(App):
             layoutprogressbar.remove_widget(progressbar)
             layoutprogressbar.add_widget(progressbar)
             progressbar.value = 0
-            self.valuetrain = 0
+            self.valuepb = 0
             self.mean_qerror = 0
 
             self.valuepb = 0
@@ -1342,6 +1319,7 @@ class MyApp(App):
 
         if prediction == False:
             if varerrorlayout == False:
+                layoutprogressbar.add_widget(progressbar)
                 self.myevent.drawingmainlayout(self)
                 self.btnPredict.disabled = True
             else:
@@ -1380,6 +1358,7 @@ class MyApp(App):
         layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
         layoutprogressbar.add_widget(progressbar)
         progressbar.value = 0
+        self.layout.remove_widget(self.btnProcessPredict)
         self.drawinglblblackkv(self.layoutinfomiddle, mydata)
         threading.Thread(target=readdataset, args=(self.filename, self.myevent, self, None, None)).start()
 
@@ -1729,7 +1708,7 @@ class MyApp(App):
                 self.dispatch('on_evreaddataset', progressvarvalue, myisimage, mydataset, myapp)
 
             def on_evreaddataset(self, progressvarvalue, myisimage, mydataset, myapp):
-                global dataset, n_inputs, n_outputs
+                global dataset, n_inputs, n_outputs, lbltimeleft
                 myapp.layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
                 #myapp.layoutprogressbar.add_widget(progressbar)
                 progressbar.value = progressvarvalue
@@ -1753,6 +1732,9 @@ class MyApp(App):
                         layoutprogressbar.remove_widget(progressbar)
                         layoutprogressbar.add_widget(progressbar)
                         progressbar.value = 0
+                        myapp.layout.remove_widget(myapp.btnCancel)
+                        myapp.layout.add_widget(lbltimeleft)
+                        myapp.layout.add_widget(myapp.btnCancel)
                         myapp.valuepredict = 0
                         myapp.trainclock = Clock.schedule_interval(myapp.layoutpbpredictnext, 1 / 10)
                         threading.Thread(target=predictfunc, args=(myapp,mydataset)).start()
@@ -1847,6 +1829,7 @@ class MyApp(App):
         self.btnnewinput=Button(color=(1,1,1,1), text='[b]Nueva entrada',markup = True, font_size=18, size_hint=(.95,.9),
                        pos_hint={'center_x':.5, 'center_y':.5},background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png')
         self.btnCancel = Button(color=(1,1,1,1), text='[b]CANCELAR',markup = True, font_size=18, size_hint=(.95,.9), pos_hint={'center_x':.5, 'center_y':.5},background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png')
+        self.btnDetails = Button(color=(1,1,1,1), text='[b]MOSTRAR DETALLES',markup = True, font_size=18, size_hint=(.95,.9), pos_hint={'center_x':.5, 'center_y':.5},background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png')
 
 
 
@@ -2037,7 +2020,7 @@ class MyApp(App):
         self.btnOpen.bind(on_press=lambda x:self.filechooserfunction())
         self.btnplussidetext.bind(on_press=lambda x:self.leftlabelswitch(self.layoutinfomiddle, 0, 'btnplus'))
         self.btnlesssidetext.bind(on_press=lambda x:self.leftlabelswitch(self.layoutinfomiddle, 0, 'btnless'))
-
+        self.btnDetails.bind(on_press=lambda x:Filechooser.filechoosershowdatasetcont())
 
         return self.parentlayout
 
