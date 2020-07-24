@@ -163,6 +163,7 @@ def showdataset(filenamepath):
 
         if outputcolumn == 0:
             mydataset = datasetoutputfirsttolastcolumn(mydataset)
+        str_column_to_int(mydataset, len(mydataset[0]) - 1)
         return outputoptional, imageoptional, isimage, mydataset
 
 def readdataset(filenamepath, myevent, myapp, forceisimage=None, forceoutputcolumn=None):

@@ -122,7 +122,7 @@ class Filechooser(BoxLayout):
             self.numberdatabox.bind(active=lambda x,y:self.resetandnumberdatasetfunc(''))
             self.btnnoutputs.bind(on_press=lambda x:self.outputoptionsfunc())
 
-            if details is False:
+            if details is None:
                 if self.optionalimage == True:
                     typelayout.add_widget(self.numberdatabox)
                     typelayout.add_widget(lblnumberdatabox)
@@ -142,7 +142,7 @@ class Filechooser(BoxLayout):
             middlelayout.add_widget(self.btnnextpage)
             containerbox.add_widget(middlelayout)
             containerbox.add_widget(infolayout)
-            if details is False:
+            if details is None:
                 infolayout.add_widget(self.btnnoutputs)
             infolayout.add_widget(lblnelements)
             infolayout.add_widget(self.lblelementsize)
@@ -150,7 +150,7 @@ class Filechooser(BoxLayout):
             containerbox.add_widget(mybtnlayout)
             popupshow.open()
 
-            if details is False:
+            if details is None:
                 if self.isimage is not None:
                     self.imagedatabox.active = True
                 else:
@@ -166,7 +166,7 @@ class Filechooser(BoxLayout):
         self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filename)
         eventp.evshowfile(self, filenameselected, details)
 
-    def numberdatasetfunc(self, plusless, details):
+    def numberdatasetfunc(self, plusless, details=None):
         global outputimageslist, inputimagelist
 
         self.mainlayout.clear_widgets()
@@ -235,18 +235,6 @@ class Filechooser(BoxLayout):
             if pagsaux != pagsfloat:
                 self.pags += 1
 
-            self.lblpage.text = '[b]Página: [/b]' + str(self.pagenum) + '/' + str(self.pags)
-            for rowtexture in range(nitemsperpage): #in range cols * rows
-                index = rowtexture+(self.pagenum-1)*nitemsperpage
-                if index >= len(self.mytexturedataset):
-                    break
-                imagedata = WidgetTexture(self.mytexturedataset[index], self.isimage)
-                self.mainlayout.add_widget(imagedata)
-                if details is not False:
-                    if details[index] == self.mytexturedataset[index][-1]:
-                        imagedata.update_color(details[index], True)
-                    else:
-                        imagedata.update_color(details[index], False)
             outputslast = ([row[-1] for row in self.mytexturedataset])
             setoutputslast = sorted(set(outputslast))
             self.myoutputimageslist = list()
@@ -255,6 +243,21 @@ class Filechooser(BoxLayout):
                     if row[-1] == number:
                         self.myoutputimageslist.append(row)
                         break
+
+            self.lblpage.text = '[b]Página: [/b]' + str(self.pagenum) + '/' + str(self.pags)
+            for rowtexture in range(nitemsperpage): #in range cols * rows
+                index = rowtexture+(self.pagenum-1)*nitemsperpage
+                if index >= len(self.mytexturedataset):
+                    break
+                if details is None:
+                    imagedata = WidgetTexture(self.mytexturedataset[index], self.isimage)
+                else:
+                    imagedata = WidgetTexture(self.mytexturedataset[index], self.isimage,
+                                              details[index], self.mytexturedataset[index][-1],
+                                              self.myoutputimageslist[details[index]])
+                self.mainlayout.add_widget(imagedata)
+
+
             if len(self.mytexturedataset) > 100:
                 self.callerclass.inputimagelist = list(self.mytexturedataset[10:100])
             else:
@@ -265,17 +268,17 @@ class Filechooser(BoxLayout):
 
     def resetandnumberdatasetfunc(self, plusless):
         self.pagenum = 1
-        self.numberdatasetfunc(plusless, False)
+        self.numberdatasetfunc(plusless)
 
     def outputdatasetfunc(self):
 
         if self.outputfirstbox.active == True and self.outputchanged == False:
             self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filenameselected)
-            self.numberdatasetfunc('', False)
+            self.numberdatasetfunc('')
             self.outputchanged = True
         elif self.outputlastbox.active == True and self.outputchanged == True:
             self.mytexturedataset = datasetoutputlastcolumn(self.mytexturedataset)
-            self.numberdatasetfunc('', False)
+            self.numberdatasetfunc('')
             self.outputchanged = False
         else:
             pass
@@ -341,7 +344,7 @@ class Filechooser(BoxLayout):
 
         popuploading.start()
 
-        threading.Thread(target=Filechooser.filechoosershowdataset, args=(self, path, filenameselected, self.callerclass.myevent, False)).start()
+        threading.Thread(target=Filechooser.filechoosershowdataset, args=(self, path, filenameselected, self.callerclass.myevent, None)).start()
         self.prevpopup.dismiss()
 
     def BtnImagesFncn(self,btnimages):

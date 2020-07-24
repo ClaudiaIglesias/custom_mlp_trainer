@@ -63,9 +63,6 @@ outputimageslist = list()
 prediction = False
 varerrorlayout = False
 
-
-timestart = None
-timeleft = ''
 lbltimeleft = Label(text='tiempo restante:', markup = True)
 
 errorlbl = Label(text = '', markup = True)
@@ -134,14 +131,11 @@ class MyApp(App):
             self.list_hidden = list(list_hidden)
             self.outputimageslist = list(outputimageslist)
 
-    def auxlayoutpb(self, myvaluetrain):
+    def auxlayoutpb(self):
         global dataset, imageinput
-        global lbltimeleft, timeleft,  labelcycles, labelfolds, errorlbl
+        global lbltimeleft, labelcycles, labelfolds, errorlbl
         global progressbar
-        if myvaluetrain > self.printth:
-            for layer in self.valuemydata.networklist:
-                print(layer)
-            self.printth += 20
+
         # calculate new maxs
         if self.valuemydata is None:
             return
@@ -169,6 +163,7 @@ class MyApp(App):
             lbltimeleft.text = 'estimando...'
         else:
             left = int((elapse / self.valuepb) * (100.0 - self.valuepb))
+            #print('elapse {0}, valuep {1}, left {2}' .format(elapse, self.valuepb, left))
             if left > 3600:
                 hours, seconds = divmod(left, 3600)
                 minutes = int(seconds / 60)
@@ -183,7 +178,7 @@ class MyApp(App):
     # Error progress
     def layoutpbnext(self, deltatime):
         global labelcycles, labelfolds, errorlbl
-        self.auxlayoutpb(self.valuepb)
+        self.auxlayoutpb()
         errorlbl.text = '[b] [color=D464EB]Error cuadrático medio: [/b][/color]' + str("{:.4f}".format(self.mean_qerror))
         labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
         labelfolds.text = '[b] [color=D464EB]Grupos: [/b][/color]' + str(self.currentfold) + '/' + str(self.n_folds)
@@ -191,12 +186,12 @@ class MyApp(App):
     # Train progress
     def layoutpbtrainnext(self, deltatime):
         global labelcycles, labelfolds
-        self.auxlayoutpb(self.valuepb)
+        self.auxlayoutpb()
         labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
 
     # Predict progress
     def layoutpbpredictnext(self, deltatime):
-        global lbltimeleft, timestart, timeleft, labelcycles, labelfolds
+        global lbltimeleft, labelcycles, labelfolds
         global progressbar
         timenow = time.monotonic()
         elapse = timenow - self.timestart

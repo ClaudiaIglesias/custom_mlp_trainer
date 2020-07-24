@@ -114,7 +114,6 @@ def update_weights(network, row, l_rate):
 
 # Train a network for a fixed number of epochs
 def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eventp, myapp):
-    global timeleft
     step = 100.0/(n_folds*n_epoch*len(train))
     myapp.currentfold += 1
     myapp.currentcycle = 0
@@ -126,7 +125,6 @@ def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eve
             break
         i = 1
         for row in train:
-            myapp.valuepb += step
             outputs = forward_propagate(network, row)
             expected = [0 for i in range(n_outputs)]
             expected[row[-1]] = 1
@@ -137,6 +135,7 @@ def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eve
             update_weights(network, row, l_rate)
             if myapp.stoptrainning:
                 break
+            myapp.valuepb += step
         print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, myapp.l_rate, sum_error))
 
     if type == 'train':
@@ -218,7 +217,7 @@ def predictfunc(myapp,mydataset):
         myapp.totalpredict += 1
         if row[-1] == predicted:
             myapp.correctpredict += 1
-        myapp.mistakeslist.append(str(predicted))
+        myapp.mistakeslist.append(predicted)
     actual = [row[-1] for row in mydataset]
     accuracy = accuracy_metric(actual, predictions)
     myapp.myevent.predictfinished(myapp, accuracy)
