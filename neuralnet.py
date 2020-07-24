@@ -218,9 +218,7 @@ def predictfunc(myapp,mydataset):
         myapp.totalpredict += 1
         if row[-1] == predicted:
             myapp.correctpredict += 1
-            myapp.mistakeslist.append(True)
-        else:
-            myapp.mistakeslist.append(False)
+        myapp.mistakeslist.append(str(predicted))
     actual = [row[-1] for row in mydataset]
     accuracy = accuracy_metric(actual, predictions)
     myapp.myevent.predictfinished(myapp, accuracy)

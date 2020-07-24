@@ -116,8 +116,8 @@ class Filechooser(BoxLayout):
             self.outputchanged = False
             self.btnpreviouspage.disabled = True
             self.btnnextpage.disabled = False
-            self.btnnextpage.bind(on_press=lambda x:self.numberdatasetfunc('plusbtn',False))
-            self.btnpreviouspage.bind(on_press=lambda x:self.numberdatasetfunc('lessbtn',False))
+            self.btnnextpage.bind(on_press=lambda x:self.numberdatasetfunc('plusbtn', details))
+            self.btnpreviouspage.bind(on_press=lambda x:self.numberdatasetfunc('lessbtn', details))
             self.outputfirstbox.bind(on_press=lambda x:self.outputdatasetfunc())
             self.numberdatabox.bind(active=lambda x,y:self.resetandnumberdatasetfunc(''))
             self.btnnoutputs.bind(on_press=lambda x:self.outputoptionsfunc())
@@ -243,7 +243,10 @@ class Filechooser(BoxLayout):
                 imagedata = WidgetTexture(self.mytexturedataset[index], self.isimage)
                 self.mainlayout.add_widget(imagedata)
                 if details is not False:
-                    imagedata.update_color(details[rowtexture])
+                    if details[index] == self.mytexturedataset[index][-1]:
+                        imagedata.update_color(details[index], True)
+                    else:
+                        imagedata.update_color(details[index], False)
             outputslast = ([row[-1] for row in self.mytexturedataset])
             setoutputslast = sorted(set(outputslast))
             self.myoutputimageslist = list()

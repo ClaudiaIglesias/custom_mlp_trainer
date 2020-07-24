@@ -1822,6 +1822,8 @@ class MyApp(App):
         layoutsettingsup = BoxLayout(orientation='horizontal', spacing = 10)
         layoutsettingsdown = BoxLayout(orientation='horizontal',spacing = 10)
         self.layoutsettingsupleft = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(.7,1))
+        layoutsigmoidbox = BoxLayout(orientation='vertical', size_hint=(.1, 1))
+        layoutsigmoidlbl = BoxLayout(orientation='vertical', size_hint=(.2, 1))
         layoutsettingsupright = BoxLayout(orientation='horizontal',spacing = 10, size_hint=(.3,1))
         self.layoutinfotop = self.parentlayout.ids.idlayouttop
         self.layoutinfomiddle = self.parentlayout.ids.idlayoutmiddle
@@ -1855,9 +1857,10 @@ class MyApp(App):
 
 
 
-        box = CheckBox()
-        lblbox = Label(text='Sigmoid:', color=(1, 1, 1, 1), font_size=(14))
-        boxshowbiaslabel = CheckBox()
+        self.sigmoidbox = CheckBox(group='function', size_hint=(.1, 1), pos_hint={'center_x': .5, 'center_y': .5})
+        lblsigmoidbox = Label(text='Sigmoid', pos_hint={'center_x': .5, 'center_y': 0})
+        self.relubox = CheckBox(group='function', size_hint=(.1, 1), pos_hint={'center_x': .5, 'center_y': .5})
+        lblrelubox = Label(text='Relu',  pos_hint={'center_x': .5, 'center_y': 0})
 
         # Left Neuron Switcher
         self.btnplusneuron = Button(text = '[b]+',markup = True, size_hint=(.2,.8),pos_hint={'center_x':.5, 'center_y':.5},
@@ -1959,6 +1962,12 @@ class MyApp(App):
         layoutsettingsup.add_widget(layoutsettingsupright)
         neuronlayout.add_widget(self.lblneuron)
         neuronlayout.add_widget(self.lblhiddenlayer)
+        layoutsigmoidbox.add_widget(self.sigmoidbox)
+        layoutsigmoidlbl.add_widget(lblsigmoidbox)
+        layoutsigmoidbox.add_widget(self.relubox)
+        layoutsigmoidlbl.add_widget(lblrelubox)
+        self.layoutsettingsupleft.add_widget(layoutsigmoidlbl)
+        self.layoutsettingsupleft.add_widget(layoutsigmoidbox)
         self.layoutsettingsupleft.add_widget(lblblacktwo)
         self.layoutsettingsupleft.add_widget(self.btnlessneuron)
         self.layoutsettingsupleft.add_widget(neuronlayout)
