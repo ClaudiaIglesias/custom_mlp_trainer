@@ -40,6 +40,14 @@ class WidgetTexture(Button):
     def update_rect(self, *args):
         self.rect.pos = (self.center_x - self.rect.size[0] / 2, self.center_y - self.rect.size[1] / 2)
 
+    def update_color(self, color):
+        if color is False:
+            with self.canvas:
+                Color(1, 0, 0)
+                self.rect = Rectangle(texture=self.mytexture, pos=self.pos, size=(self.sidesquare, self.sidesquare))
+        else:
+            pass
+
     def update_texture(self, imagebits):
         buf = list(imagebits)
         buf.pop(-1)

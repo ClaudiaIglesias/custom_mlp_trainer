@@ -208,6 +208,7 @@ def predictfunc(myapp,mydataset):
     myapp.correctpredict = 0
     step = 100.0/len(mydataset)
     predictions = list()
+    myapp.mistakeslist = list()
     for row in mydataset:
         if myapp.stoptrainning:
             break
@@ -217,6 +218,9 @@ def predictfunc(myapp,mydataset):
         myapp.totalpredict += 1
         if row[-1] == predicted:
             myapp.correctpredict += 1
+            myapp.mistakeslist.append(True)
+        else:
+            myapp.mistakeslist.append(False)
     actual = [row[-1] for row in mydataset]
     accuracy = accuracy_metric(actual, predictions)
     myapp.myevent.predictfinished(myapp, accuracy)

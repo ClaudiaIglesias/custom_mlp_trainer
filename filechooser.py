@@ -17,10 +17,6 @@ from loaddataset import showdataset
 from widgettexture import WidgetTexture
 
 
-
-
-
-
 class PopupLoading(Label):
     anglef = NumericProperty(40)
     angleb = NumericProperty(0)
@@ -120,8 +116,8 @@ class Filechooser(BoxLayout):
             self.outputchanged = False
             self.btnpreviouspage.disabled = True
             self.btnnextpage.disabled = False
-            self.btnnextpage.bind(on_press=lambda x:self.numberdatasetfunc('plusbtn'))
-            self.btnpreviouspage.bind(on_press=lambda x:self.numberdatasetfunc('lessbtn'))
+            self.btnnextpage.bind(on_press=lambda x:self.numberdatasetfunc('plusbtn',False))
+            self.btnpreviouspage.bind(on_press=lambda x:self.numberdatasetfunc('lessbtn',False))
             self.outputfirstbox.bind(on_press=lambda x:self.outputdatasetfunc())
             self.numberdatabox.bind(active=lambda x,y:self.resetandnumberdatasetfunc(''))
             self.btnnoutputs.bind(on_press=lambda x:self.outputoptionsfunc())
@@ -159,7 +155,9 @@ class Filechooser(BoxLayout):
                     self.imagedatabox.active = True
                 else:
                     self.numberdatabox.active = True
-            self.numberdatasetfunc('')
+
+            self.numberdatasetfunc('', details)
+
 
     def filechoosershowdataset(self, path, filenameselected, eventp, details):
         filename = os.path.join(path, filenameselected)
@@ -168,7 +166,7 @@ class Filechooser(BoxLayout):
         self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filename)
         eventp.evshowfile(self, filenameselected, details)
 
-    def numberdatasetfunc(self, plusless):
+    def numberdatasetfunc(self, plusless, details):
         global outputimageslist, inputimagelist
 
         self.mainlayout.clear_widgets()
@@ -244,6 +242,8 @@ class Filechooser(BoxLayout):
                     break
                 imagedata = WidgetTexture(self.mytexturedataset[index], self.isimage)
                 self.mainlayout.add_widget(imagedata)
+                if details is not False:
+                    imagedata.update_color(details[rowtexture])
             outputslast = ([row[-1] for row in self.mytexturedataset])
             setoutputslast = sorted(set(outputslast))
             self.myoutputimageslist = list()
@@ -262,17 +262,17 @@ class Filechooser(BoxLayout):
 
     def resetandnumberdatasetfunc(self, plusless):
         self.pagenum = 1
-        self.numberdatasetfunc(plusless)
+        self.numberdatasetfunc(plusless, False)
 
     def outputdatasetfunc(self):
 
         if self.outputfirstbox.active == True and self.outputchanged == False:
             self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filenameselected)
-            self.numberdatasetfunc('')
+            self.numberdatasetfunc('', False)
             self.outputchanged = True
         elif self.outputlastbox.active == True and self.outputchanged == True:
             self.mytexturedataset = datasetoutputlastcolumn(self.mytexturedataset)
-            self.numberdatasetfunc('')
+            self.numberdatasetfunc('', False)
             self.outputchanged = False
         else:
             pass

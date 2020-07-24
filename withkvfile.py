@@ -1287,7 +1287,7 @@ class MyApp(App):
         popuploading.start()
 
         threading.Thread(target=content.filechoosershowdataset,
-                         args=(dirname(self.filename), basename(self.filename), self.myevent, True)).start()
+                         args=(dirname(self.filename), basename(self.filename), self.myevent, self.mistakeslist)).start()
 
 
 
@@ -1380,6 +1380,7 @@ class MyApp(App):
         progressbar.value = 0
         self.layout.remove_widget(self.btnProcessPredict)
         self.drawinglblblackkv(self.layoutinfomiddle, mydata)
+        self.mistakeslist = list()
         threading.Thread(target=readdataset, args=(self.filename, self.myevent, self, None, None)).start()
 
     def predictfinishedlayout(self, accuracy):
