@@ -116,7 +116,7 @@ def guess_is_type_image(mydataset):
         # if sidesquare is an integer
         if (sidesquare == intsidesquare):
             return 'rgb'
-    return False
+    return 'number'
 
 # range 0-1
 def normalize_dataset(dataset, minmax):
@@ -156,7 +156,7 @@ def showdataset(filenamepath):
         outputcolumn = guess_output_column(mydataset)
         outputoptional = optional_output_column(mydataset, outputcolumn)
         isimage = guess_is_type_image(mydataset)
-        if isimage == False:
+        if isimage is not 'number':
             imageoptional = False
         else:
             imageoptional = True

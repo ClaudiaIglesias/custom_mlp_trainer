@@ -120,20 +120,19 @@ class Filechooser(BoxLayout):
             self.btnpreviouspage.bind(on_press=lambda x:self.numberdatasetfunc('lessbtn', details))
             self.outputfirstbox.bind(on_press=lambda x:self.outputdatasetfunc())
             self.numberdatabox.bind(active=lambda x,y:self.resetandnumberdatasetfunc(''))
+            self.imagedatabox.bind(active=lambda x, y: self.resetandnumberdatasetfunc(''))
             self.btnnoutputs.bind(on_press=lambda x:self.outputoptionsfunc())
 
             if details is None:
-                if self.optionalimage == True:
+                if self.optionalimage:
                     typelayout.add_widget(self.numberdatabox)
                     typelayout.add_widget(lblnumberdatabox)
-                if self.optionaloutput == True:
-                    typelayout.add_widget(self.outputlastbox)
-                    typelayout.add_widget(lbloutputlastbox)
-                if self.optionalimage == True:
                     typelayout.add_widget(self.imagedatabox)
                     typelayout.add_widget(lblimagedatabox)
-                if self.optionaloutput == True:
-                    typelayout.add_widget(outputfirstbox)
+                if self.optionaloutput:
+                    typelayout.add_widget(self.outputlastbox)
+                    typelayout.add_widget(lbloutputlastbox)
+                    typelayout.add_widget(self.outputfirstbox)
                     typelayout.add_widget(lbloutputfirstbox)
             mybtnlayout.add_widget(popupbtn)
             mybtnlayout.add_widget(typelayout)
@@ -151,12 +150,14 @@ class Filechooser(BoxLayout):
             popupshow.open()
 
             if details is None:
-                if self.isimage is not None:
+                if self.isimage is not 'number':
                     self.imagedatabox.active = True
                 else:
                     self.numberdatabox.active = True
+            else:
+                self.numberdatasetfunc('', details)
 
-            self.numberdatasetfunc('', details)
+
 
 
     def filechoosershowdataset(self, path, filenameselected, eventp, details):
@@ -212,11 +213,12 @@ class Filechooser(BoxLayout):
                     if pos >= len(self.mytexturedataset):
                         break
                     for number in self.mytexturedataset[pos]:
-                        mystrrow = number + ' '
+                        mystrrow = str(number) + ' '
                         datalbl = Label(text =mystrrow)
                         self.mainlayout.add_widget(datalbl)
 
-
+            self.callerclass.inputimagelist = []
+            self.callerclass.outputimageslist = []
         #Show Images
         else:
             if self.isimage is 'rgb':

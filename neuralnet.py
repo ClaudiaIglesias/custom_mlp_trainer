@@ -18,21 +18,21 @@ def cross_validation_split(dataset, n_folds):
 	return dataset_split
 
 #Create the list of weights and biases
-def initialize_network(n_inputs, n_hidden, n_outputs, transfer_f, transfer_derfivative_f):
+def initialize_network(n_inputs, n_hidden, n_outputs, transfer_f):
     network = list()
     weightspernode=n_inputs
     for nodesinhidden in n_hidden:
         layer = list()
         for i in range(nodesinhidden):
             layer.append({'weights': [random() * sqrt(1 / weightspernode) for j in range(weightspernode + 1)],
-                 'transfer': transfer_f, 'transfer_derivative': transfer_derfivative_f})
+                 'transfer': transfer_f})
         network.append(layer)
         weightspernode=nodesinhidden
 
     output_layer = list()
     for i in range(n_outputs):
         output_layer.append({'weights':[ random() * sqrt(1 / nodesinhidden) for j in range(nodesinhidden + 1) ],
-            'transfer': transfer_sigmoid, 'transfer_derivative': transfer_sigmoid_derivative})
+            'transfer': 'sigmoid'})
     network.append(output_layer)
     return network
 
@@ -77,7 +77,10 @@ def forward_propagate(network, row):
         new_inputs = []
         for neuron in layer:
             activation = activate(neuron['weights'], inputs)
-            neuron['output'] = neuron['transfer'](activation)
+            if neuron['transfer'] is 'sigmoid':
+                neuron['output'] = transfer_sigmoid(activation)
+            elif neuron['transfer'] is 'relu':
+                neuron['output'] = transfer_rectified(activation)
             new_inputs.append(neuron['output'])
         inputs = new_inputs
     return inputs
@@ -99,7 +102,10 @@ def backward_propagate_error(network, expected):
                 errors.append(expected[j] - neuron['output'])
         for j in range(len(layer)):
             neuron = layer[j]
-            neuron['delta'] = errors[j] * neuron['transfer_derivative'](neuron['output'])
+            if neuron['transfer'] is 'sigmoid':
+                neuron['delta'] = errors[j] * transfer_sigmoid_derivative(neuron['output'])
+            elif neuron['transfer'] is 'relu':
+                neuron['delta'] = errors[j] * transfer_rectified_derivative(neuron['output'])
 
 # Update network weights with error
 def update_weights(network, row, l_rate):
@@ -114,7 +120,10 @@ def update_weights(network, row, l_rate):
 
 # Train a network for a fixed number of epochs
 def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eventp, myapp):
-    step = 100.0/(n_folds*n_epoch*len(train))
+    if type == 'train':
+        step = 100.0/(n_folds*n_epoch*len(train))
+    else:
+        step = 100.0 / ((n_folds * n_epoch * len(train))+len(train))
     myapp.currentfold += 1
     myapp.currentcycle = 0
     for epoch in range(n_epoch):
@@ -161,14 +170,16 @@ def accuracy_metric(actual, predicted):
 def back_propagation(train, test, eventp, myapp, n_folds, l_rate, n_epoch, n_hidden):
     n_inputs = len(train[0]) - 1
     n_outputs = len(set([row[-1] for row in train]))
-    myapp.network = initialize_network(n_inputs, n_hidden, n_outputs, transfer_sigmoid, transfer_sigmoid_derivative)
+    myapp.network = initialize_network(n_inputs, n_hidden, n_outputs, myapp.transfermode)
     train_network(myapp.network, train, n_folds, l_rate, n_epoch, n_outputs, 'backp', eventp, myapp)
     predictions = list()
+    step = 100.0 / ((n_folds * n_epoch * len(train)) + len(train))
     for row in test:
         if myapp.stoptrainning:
             break
         prediction = predict(myapp.network, row)
         predictions.append(prediction)
+        myapp.valuepb += step
     return(predictions)
 
 

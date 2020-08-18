@@ -63,7 +63,7 @@ outputimageslist = list()
 prediction = False
 varerrorlayout = False
 
-lbltimeleft = Label(text='tiempo restante:', markup = True)
+lbltimeleft = Label(text='tiempo restante estimado:', markup = True)
 
 errorlbl = Label(text = '', markup = True)
 labelcycles = (Label(text='[b] [color=D464EB]Ciclos: [/b][/color]', markup=True,
@@ -119,6 +119,8 @@ class MyApp(App):
             global list_hidden, n_outputs, n_inputs, currentpage, list_hidden, outputimageslist
 
             self.datestr = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            if myapp.network is None:
+                return
             self.networklist = list(myapp.network)
             self.n_outputlbl = n_outputs
             self.n_inputlbl = n_inputs
@@ -129,6 +131,11 @@ class MyApp(App):
             self.l_rate = myapp.l_rate
             self.dataerror = dataerror
             self.list_hidden = list(list_hidden)
+            self.isimagelbl = myapp.isimage
+            if myapp.sigmoidmode:
+                self.transferlbl = 'sigmoid'
+            else:
+                self.transferlbl = 'relu'
             self.outputimageslist = list(outputimageslist)
 
     def auxlayoutpb(self):
@@ -155,7 +162,8 @@ class MyApp(App):
         for myline in listoflines:
             nchanges += myline.change()
         indeximageinput = int(random() * len(inputimagelist))
-        imageinput.update_texture(inputimagelist[indeximageinput])
+        if imageinput is not None:
+            imageinput.update_texture(inputimagelist[indeximageinput])
 
         timenow = time.monotonic()
         elapse = timenow - self.timestart
@@ -167,12 +175,12 @@ class MyApp(App):
             if left > 3600:
                 hours, seconds = divmod(left, 3600)
                 minutes = int(seconds / 60)
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(hours) + ' horas ' + str(minutes) + ' minutos'
+                lbltimeleft.text = '[b] Tiempo restante estimado: [/b]' + str(hours) + ' horas ' + str(minutes) + ' minutos'
             elif left > 60:
                 minutes, left = divmod(left, 60)
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(minutes) + ' minutos ' + str(left) + ' segundos'
+                lbltimeleft.text = '[b] Tiempo restante estimado: [/b]' + str(minutes) + ' minutos ' + str(left) + ' segundos'
             else:
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(left) + ' segundos'
+                lbltimeleft.text = '[b] Tiempo restante estimado: [/b]' + str(left) + ' segundos'
         progressbar.value = self.valuepb
 
     # Error progress
@@ -192,7 +200,7 @@ class MyApp(App):
     # Predict progress
     def layoutpbpredictnext(self, deltatime):
         global lbltimeleft, labelcycles, labelfolds
-        global progressbar
+        global progressbar, imageinput
         timenow = time.monotonic()
         elapse = timenow - self.timestart
         if self.valuepredict == 0:
@@ -202,15 +210,16 @@ class MyApp(App):
             if left > 3600:
                 hours, seconds = divmod(left, 3600)
                 minutes = int(seconds / 60)
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(hours) + ' horas ' + str(minutes) + ' minutos'
+                lbltimeleft.text = '[b] Tiempo restante estimado: [/b]' + str(hours) + ' horas ' + str(minutes) + ' minutos'
             elif left > 60:
                 minutes, left = divmod(left, 60)
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(minutes) + ' minutos ' + str(left) + ' segundos'
+                lbltimeleft.text = '[b] Tiempo restante estimado: [/b]' + str(minutes) + ' minutos ' + str(left) + ' segundos'
             else:
-                lbltimeleft.text = '[b] Tiempo restante: [/b]' + str(left) + ' segundos'
+                lbltimeleft.text = '[b] Tiempo restante estimado: [/b]' + str(left) + ' segundos'
         progressbar.value = self.valuepredict
         indeximageinput = int(random() * len(inputimagelist))
-        imageinput.update_texture(inputimagelist[indeximageinput])
+        if imageinput is not None:
+            imageinput.update_texture(inputimagelist[indeximageinput])
         acc = (self.correctpredict* 100.0) / self.totalpredict
         self.labelaccuracy.text = '[b] Precisión: [/b]' + str("{:.2f}".format(acc)) + '%'
         # labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
@@ -233,7 +242,7 @@ class MyApp(App):
 
         draw.canvas.clear()
 
-        MyApp.leftlabels(self, textlayout, mydata)
+        self.leftlabels(textlayout, mydata)
 
 
         numoutputs = mydata.n_outputlbl
@@ -782,15 +791,19 @@ class MyApp(App):
                 #draw.nodeslabel = Label(text=biases, font_size=10, pos=(middlex + 196, c * 50 + (middley-34 - spaceoutput / 2)),color=(1, 1, 1, .9))
         c = 0
         for row in mydata.outputimageslist:
-            image = WidgetTexture(row, self.isimage)
+            image = WidgetTexture(row, mydata.isimagelbl)
             image.size_hint = (None, None)
             image.pos = middlex + 237 , c * 50 + (middley - 30 - spaceoutput / 2)
             draw.add_widget(image)
             c += 1
-        imageinput = WidgetTexture(inputimagelist[0])
-        imageinput.pos = middlex - 320 , middley - 50
-        imageinput.size_hint=(None, None)
-        draw.add_widget(imageinput)
+
+        if len(inputimagelist):
+            imageinput = WidgetTexture(inputimagelist[0])
+            imageinput.pos = middlex - 320 , middley - 50
+            imageinput.size_hint=(None, None)
+            draw.add_widget(imageinput)
+        else:
+            imageinput = None
         draw.add_widget(Label(text=str(numoutputs), pos=(middlex + 200, middley + 220), size_hint=(None, None)))
 
 
@@ -847,7 +860,11 @@ class MyApp(App):
         labelrate = (Label(text='[b] [color=D464EB]Ratio: [/b][/color]' + str(leftpanelitem.l_rate), markup=True,
                            halign="left", color=(1, 1, 1)))
         labelrate.bind(size=labelrate.setter('text_size'))
-        if leftpanelitem.type is 'error':
+        labeltransfer = (Label(text='[b] [color=4BDCFF]Transferencia: [/b][/color]' + str(leftpanelitem.transferlbl), markup=True,
+                           halign="left", color=(1, 1, 1)))
+        labeltransfer.bind(size=labeltransfer.setter('text_size'))
+
+        if leftpanelitem.type is 'Error':
             labelfolds.text = '[b] [color=D464EB]Grupos: [/b][/color]' + str(leftpanelitem.n_folds)
             labelfolds.bind(size=labelfolds.setter('text_size'))
         errorlbl.text = ''
@@ -872,9 +889,10 @@ class MyApp(App):
         textlayout.add_widget(labeltype)
         textlayout.add_widget(labelcycles)
         textlayout.add_widget(labelrate)
-        if leftpanelitem.type is 'error':
+        if leftpanelitem.type is 'Error':
             textlayout.add_widget(labelfolds)
         textlayout.add_widget(errorlbl)
+        textlayout.add_widget(labeltransfer)
         textlayout.add_widget(self.labelaccuracy)
 
 
@@ -898,7 +916,7 @@ class MyApp(App):
         if type == 'btnplus':
             currentpage += 1
             mydata = leftpanellist[currentpage -1]
-            self.drawinglblblackkv(self, textlayout, mydata)
+            self.drawinglblblackkv(textlayout, mydata)
         if type == 'btnless':
             currentpage -= 1
             mydata = leftpanellist[currentpage - 1]
@@ -1159,7 +1177,8 @@ class MyApp(App):
             for panel in leftpanellist:
                 mystore.put('leftpanelhistory' + str(i), name="lelftpanellist", value=panel.__dict__)
                 i += 1
-        except:
+        except Exception as e:
+            print('store panel error: ' + str(e))
             os.remove('neuroncfg.json')
 
     def restoreleftpanellist(self):
@@ -1171,13 +1190,15 @@ class MyApp(App):
                 leftpanellist.clear()
                 for index in range(mynumberofitems):
                     mydatadict = mystore.get('leftpanelhistory' + str(index))['value']
-                    mydataclasss = MyApp.Lblleft(type='', dataerror=0)
+                    MyApp.network = None
+                    mydataclasss = MyApp.Lblleft(self, type='', dataerror=0)
                     for key in mydatadict:
                         setattr(mydataclasss, key, mydatadict[key])
                     leftpanellist.append(mydataclasss)
                     currentpage = len(leftpanellist)
                     MyApp.establishbtnpages(self)
-        except:
+        except Exception as e:
+            print('restore panel error: ' + str(e))
             os.remove('neuroncfg.json')
 
     def addclasstopanel(self, mypannelclass):
@@ -1224,6 +1245,10 @@ class MyApp(App):
             layoutprogressbar.remove_widget(progressbar)
             layoutprogressbar.add_widget(progressbar)
             seed(1)
+            if self.sigmoidmode:
+                self.transfermode = 'sigmoid'
+            else:
+                self.transfermode = 'relu'
 
             self.currentfold = 0
             self.currentcycle = 0
@@ -1232,9 +1257,10 @@ class MyApp(App):
             self.stoptrainning = False
             self.printth = 0
             self.timestart = time.monotonic()
-            self.trainclock = Clock.schedule_interval(self.layoutpbtrainnext, 1 / 10)
-            self.network = initialize_network(n_inputs, list_hidden, n_outputs, transfer_sigmoid, transfer_sigmoid_derivative)
-            self.valuemydata = self.Lblleft(self, type='entrenamiento', dataerror=0)
+            self.trainclock = Clock.schedule_interval(self.layoutpbtrainnext, 1.0)
+            self.network = initialize_network(n_inputs, list_hidden, n_outputs, self.transfermode)
+            self.valuemydata = self.Lblleft(self, type='Entrenamiento', dataerror=0)
+            self.leftlabels(self.layoutinfomiddle, self.valuemydata)
             threading.Thread(target=train_network, args=(self.network, dataset, 1, self.l_rate, self.n_epoch, n_outputs, 'train', self.myevent, self)).start()
             self.layout.remove_widget(lbltimeleft)
             self.layout.add_widget(lbltimeleft)
@@ -1255,10 +1281,15 @@ class MyApp(App):
             self.valuepb = 0
             self.mean_qerror = 0
 
+            if self.sigmoidmode:
+                self.transfermode = 'sigmoid'
+            else:
+                self.transfermode = 'relu'
+
             self.valuepb = 0
             self.stoptrainning = False
             self.timestart = time.monotonic()
-            self.trainclock = Clock.schedule_interval(self.layoutpbnext, 1 / 10)
+            self.trainclock = Clock.schedule_interval(self.layoutpbnext, 1.0)
 
             self.currentfold = 0
             self.currentcycle = 0
@@ -1267,7 +1298,7 @@ class MyApp(App):
             self.layout.remove_widget(lbltimeleft)
             self.layout.add_widget(lbltimeleft)
             self.valuemydata = self.Lblleft(self, type='Error', dataerror=0)
-
+            self.leftlabels(self.layoutinfomiddle, self.valuemydata)
             threading.Thread(target=evaluate_algorithm, args=(dataset, back_propagation, self.myevent, self,
                                                                    self.n_folds, self.l_rate, self.n_epoch, list_hidden)).start()
             self.cancellayout()
@@ -1308,6 +1339,10 @@ class MyApp(App):
             self.lblfilename = self.parentlayout.ids.idlabelfilename
             self.lblfilename.text = ('[b] Archivo: [/b]' + '[i]' + basename(filename))
 
+        if self.sigmoidbox.active == True:
+            self.sigmoidmode = True
+        else:
+            self.sigmoidmode = False
 
         self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
         self.layouttrainscreen.anchor_x = 'center'
@@ -1369,13 +1404,14 @@ class MyApp(App):
     def predictdonelayout(self):
         global dataset
         self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
-        mydata = MyApp.Lblleft(self, type='test', dataerror=0)
         layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
         layoutprogressbar.add_widget(progressbar)
         progressbar.value = 0
         self.layout.remove_widget(self.btnProcessPredict)
-        self.drawinglblblackkv(self.layoutinfomiddle, mydata)
         self.mistakeslist = list()
+        self.valuemydata = self.Lblleft(self, type='Test', dataerror=0)
+        self.drawinglblblackkv(self.layoutinfomiddle, self.valuemydata)
+        self.leftlabels(self.layoutinfomiddle, self.valuemydata)
         threading.Thread(target=readdataset, args=(self.filename, self.myevent, self, None, None)).start()
 
     def predictfinishedlayout(self, accuracy):
@@ -1395,7 +1431,7 @@ class MyApp(App):
 
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
-        mydata = MyApp.Lblleft(self, type='test', dataerror=accuracy)
+        mydata = MyApp.Lblleft(self, type='Test', dataerror=accuracy)
         MyApp.addclasstopanel(self, mydata)
         self.drawinglblblackkv(self.layoutinfomiddle, mydata)
 
@@ -1419,7 +1455,7 @@ class MyApp(App):
 
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
-        mydata = MyApp.Lblleft(self, type='entrenamiento', dataerror=0)
+        mydata = MyApp.Lblleft(self, type='Entrenamiento', dataerror=0)
         MyApp.addclasstopanel(self, mydata)
         self.drawinglblblackkv(self.layoutinfomiddle, mydata)
 
@@ -1457,7 +1493,7 @@ class MyApp(App):
         self.layoutinfotop.add_widget(self.btnSettings)
         mydata = MyApp.Lblleft(self, type='Error', dataerror=accuracy)
         self.addclasstopanel(mydata)
-        MyApp.leftlabels(self, self.layoutinfomiddle, mydata)
+        self.leftlabels(self.layoutinfomiddle, mydata)
 
     def btnplusneuronpressed (self):
         self.btnlessneuron.disabled = False
@@ -1737,7 +1773,7 @@ class MyApp(App):
                         n_inputs = len(dataset[0]) - 1
                         n_outputs = len(set([row[-1] for row in dataset]))
                         myapp.network = initialize_network_no_weights(n_inputs, list_hidden, n_outputs)
-                        myapp.drawinglblblackkv(myapp.layoutinfomiddle, myapp.Lblleft(myapp, type='entrenamiento', dataerror=0))
+                        myapp.drawinglblblackkv(myapp.layoutinfomiddle, myapp.Lblleft(myapp, type='Entrenamiento', dataerror=0))
                     myapp.layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
                     myapp.layoutprogressbar.remove_widget(progressbar)
                     myapp.layout.remove_widget(lbltimeleft)
@@ -1753,7 +1789,7 @@ class MyApp(App):
                         myapp.layout.add_widget(lbltimeleft)
                         myapp.layout.add_widget(myapp.btnCancel)
                         myapp.valuepredict = 0
-                        myapp.trainclock = Clock.schedule_interval(myapp.layoutpbpredictnext, 1 / 10)
+                        myapp.trainclock = Clock.schedule_interval(myapp.layoutpbpredictnext, 1.0)
                         threading.Thread(target=predictfunc, args=(myapp,mydataset)).start()
             @mainthread
             def evshowfile(self, filechooser, filenameselected, details):
@@ -1856,6 +1892,7 @@ class MyApp(App):
         lblsigmoidbox = Label(text='Sigmoid', pos_hint={'center_x': .5, 'center_y': 0})
         self.relubox = CheckBox(group='function', size_hint=(.1, 1), pos_hint={'center_x': .5, 'center_y': .5})
         lblrelubox = Label(text='Relu',  pos_hint={'center_x': .5, 'center_y': 0})
+        self.sigmoidbox.active = True
 
         # Left Neuron Switcher
         self.btnplusneuron = Button(text = '[b]+',markup = True, size_hint=(.2,.8),pos_hint={'center_x':.5, 'center_y':.5},
