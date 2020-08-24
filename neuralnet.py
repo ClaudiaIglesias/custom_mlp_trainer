@@ -123,7 +123,7 @@ def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eve
     if type == 'train':
         step = 100.0/(n_folds*n_epoch*len(train))
     else:
-        step = 100.0 / ((n_folds * n_epoch * len(train))+len(train))
+        step = 100.0 / (n_folds * n_epoch * len(train)+len(train)*n_folds)
     myapp.currentfold += 1
     myapp.currentcycle = 0
     for epoch in range(n_epoch):

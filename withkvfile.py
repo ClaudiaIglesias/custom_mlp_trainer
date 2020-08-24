@@ -852,9 +852,10 @@ class MyApp(App):
         lbldate.bind(size=lbldate.setter('text_size'))
         labelfile = (Label(text='[b] Archivo: [/b][i]' + basename(leftpanelitem.filename), markup=True, halign="left"))
         labelfile.bind(size=labelfile.setter('text_size'))
-        labeltype = (Label(text='[b] [color=4BDCFF]Función: [/b][/color]' + leftpanelitem.type, markup=True,
-                           halign="left", color=(1, 1, 1)))
-        labeltype.bind(size=labeltype.setter('text_size'))
+        if leftpanelitem.type != 'None':
+            labeltype = (Label(text='[b] [color=4BDCFF]Función: [/b][/color]' + leftpanelitem.type, markup=True,
+                               halign="left", color=(1, 1, 1)))
+            labeltype.bind(size=labeltype.setter('text_size'))
         labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(leftpanelitem.n_epoch)
         labelcycles.bind(size=labelcycles.setter('text_size'))
         labelrate = (Label(text='[b] [color=D464EB]Ratio: [/b][/color]' + str(leftpanelitem.l_rate), markup=True,
@@ -864,7 +865,7 @@ class MyApp(App):
                            halign="left", color=(1, 1, 1)))
         labeltransfer.bind(size=labeltransfer.setter('text_size'))
 
-        if leftpanelitem.type is 'Error':
+        if leftpanelitem.type is 'Error' or leftpanelitem.type is 'None':
             labelfolds.text = '[b] [color=D464EB]Grupos: [/b][/color]' + str(leftpanelitem.n_folds)
             labelfolds.bind(size=labelfolds.setter('text_size'))
         errorlbl.text = ''
@@ -886,10 +887,11 @@ class MyApp(App):
 
         textlayout.add_widget(lbldate)
         textlayout.add_widget(labelfile)
-        textlayout.add_widget(labeltype)
+        if leftpanelitem.type != 'None':
+            textlayout.add_widget(labeltype)
         textlayout.add_widget(labelcycles)
         textlayout.add_widget(labelrate)
-        if leftpanelitem.type is 'Error':
+        if leftpanelitem.type is 'Error' or leftpanelitem.type is 'None':
             textlayout.add_widget(labelfolds)
         textlayout.add_widget(errorlbl)
         textlayout.add_widget(labeltransfer)
@@ -1207,6 +1209,43 @@ class MyApp(App):
         currentpage = len(leftpanellist)
         MyApp.establishbtnpages(self)
         MyApp.storeleftpanellist(self)
+    def historylayout(self):
+        self.historylayoutvariable = True
+        self.layoutmainscreen.height = 580
+        self.btnlayout.height = 50
+        self.layoutinfoleft.size_hint_x = 0.4
+        self.layoutinforight.size_hint_x = 0.0
+        self.layout.remove_widget(self.btnTrain)
+        self.layout.remove_widget(self.btnError)
+        self.layoutinfotop.remove_widget(self.btnSettings)
+        self.layoutinfotop.remove_widget(self.btnBack)
+        self.layoutinfotop.remove_widget(self.btnHistory)
+        self.layout.remove_widget(self.btnPredict)
+        self.layout.remove_widget(self.btnProcessPredict)
+        self.layout.remove_widget(self.btnCancel)
+        self.layout.remove_widget(self.btnnewinput)
+        self.layout.remove_widget(self.layoutsettingsvertical)
+        self.layoutinfotop.add_widget(self.btnBack)
+        self.layoutbtninfo.remove_widget(self.btnlesssidetext)
+        self.layoutbtninfo.remove_widget(self.btnplussidetext)
+        self.layoutbtninfo.add_widget(self.btnlesssidetext)
+        self.layoutbtninfo.add_widget(self.btnplussidetext)
+        self.layoutinfodown.add_widget(Label(
+            text='-----------------------------------------------------------------------------------------------------------------------------------------------',
+            pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1, .1), color=(.6, .87, .89, 1)))
+        self.layoutinfodown.add_widget(self.lblcurrentpage)
+
+        self.myevent.drawinghistorylayout(self)
+
+    def auxhistorylayout(self):
+        try:
+            MyApp.restoreleftpanellist(self)
+            mydata = leftpanellist[-1]
+            currentpage = len(leftpanellist)
+            self.drawinglblblackkv(self.layoutinfomiddle, mydata)
+            self.establishbtnpages()
+        except:
+            pass
 
     def settingslayout(self):
         global prediction, biaseslabels, varerrorlayout
@@ -1224,14 +1263,20 @@ class MyApp(App):
         self.layout.remove_widget(self.btnTrain)
         self.layout.remove_widget(self.btnError)
         self.layout.remove_widget(self.btnPredict)
+        self.layoutinfotop.remove_widget(self.btnHistory)
+        self.layoutinfotop.add_widget(self.btnHistory)
         self.layoutinfotop.remove_widget(self.btnSettings)
         self.layoutinfotop.remove_widget(self.btnBack)
-        self.layout.remove_widget(self.btnPredict)
+        self.layoutbtninfo.remove_widget(self.btnlesssidetext)
+        self.layoutbtninfo.remove_widget(self.btnplussidetext)
         self.layout.remove_widget(self.btnProcessPredict)
         self.layout.remove_widget(self.btnCancel)
         self.layout.remove_widget(self.btnnewinput)
         self.clear(layoutneuronmainscreen, layoutlabels)
+        self.layoutinfodown.clear_widgets()
         self.layout.add_widget(self.layoutsettingsvertical)
+        self.layoutinfomiddle.clear_widgets()
+
 
         self.btnTrain.disabled = True
         self.btnError.disabled = True
@@ -1324,58 +1369,67 @@ class MyApp(App):
 
     def mainlayout_func(self):
         global prediction, n_inputs, n_outputs, dataset, numdata, listinputs, filename, inputimagelist, outputimageslist
-        inputimagelist = self.inputimagelist
-        outputimageslist = self.outputimageslist
-        filename = self.filename
-        self.layoutmainscreen.height = 580
-        self.btnlayout.height = 50
-        self.layoutinfoleft.size_hint_x = 0.1
-        self.layoutinforight.size_hint_x = 0.1
-
-        if self.onpredictlayout:
-            dataset = self.savedataset
-            self.network = self.savenetwork
-            filename = self.savedfilename
-            self.lblfilename = self.parentlayout.ids.idlabelfilename
-            self.lblfilename.text = ('[b] Archivo: [/b]' + '[i]' + basename(filename))
-
-        if self.sigmoidbox.active == True:
-            self.sigmoidmode = True
+        if self.historylayoutvariable:
+            self.historylayoutvariable = False
+            self.settingslayout()
         else:
-            self.sigmoidmode = False
+            inputimagelist = self.inputimagelist
+            outputimageslist = self.outputimageslist
+            filename = self.filename
+            self.layoutmainscreen.height = 580
+            self.btnlayout.height = 50
+            self.layoutinfoleft.size_hint_x = 0.1
+            self.layoutinforight.size_hint_x = 0.1
 
-        self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
-        self.layouttrainscreen.anchor_x = 'center'
+            if self.onpredictlayout:
+                dataset = self.savedataset
+                self.network = self.savenetwork
+                filename = self.savedfilename
+                self.lblfilename = self.parentlayout.ids.idlabelfilename
+                self.lblfilename.text = ('[b] Archivo: [/b]' + '[i]' + basename(filename))
 
-        self.layout.remove_widget(self.layoutsettingsvertical)
-        self.layout.remove_widget(self.btnCancel)
-        self.layout.remove_widget(self.btnnewinput)
-        self.layout.remove_widget(self.btnTrain)
-        self.layout.remove_widget(self.btnError)
-        self.layout.remove_widget(self.btnPredict)
-        self.layout.remove_widget(self.btnDetails)
-        self.layout.add_widget(self.btnTrain)
-        self.layout.add_widget(self.btnError)
-        self.layout.add_widget(self.btnPredict)
-        self.layoutinfotop.remove_widget(self.btnSettings)
-        self.layoutinfotop.add_widget(self.btnSettings)
-        self.layoutinfotop.remove_widget(self.btnBack)
-        self.btnSettings.disabled = False
-        self.btnBack.disabled = False
-        self.onpredictlayout = False
-        self.layout.remove_widget(self.btnProcessPredict)
-        layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
-        layoutprogressbar.remove_widget(progressbar)
-
-        if prediction == False:
-            if varerrorlayout == False:
-                layoutprogressbar.add_widget(progressbar)
-                self.myevent.drawingmainlayout(self)
-                self.btnPredict.disabled = True
+            if self.sigmoidbox.active == True:
+                self.sigmoidmode = True
             else:
-                self.btnPredict.disabled = True
-        else:
-            self.btnPredict.disabled = False
+                self.sigmoidmode = False
+
+            self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
+            self.layouttrainscreen.anchor_x = 'center'
+
+            self.layout.remove_widget(self.layoutsettingsvertical)
+            self.layoutbtninfo.remove_widget(self.btnlesssidetext)
+            self.layoutbtninfo.remove_widget(self.btnplussidetext)
+            self.layout.remove_widget(self.btnCancel)
+            self.layout.remove_widget(self.btnnewinput)
+            self.layout.remove_widget(self.btnTrain)
+            self.layout.remove_widget(self.btnError)
+            self.layout.remove_widget(self.btnPredict)
+            self.layout.remove_widget(self.btnDetails)
+            self.layout.add_widget(self.btnTrain)
+            self.layout.add_widget(self.btnError)
+            self.layout.add_widget(self.btnPredict)
+            self.layoutinfotop.remove_widget(self.btnSettings)
+            self.layoutinfotop.add_widget(self.btnSettings)
+            self.layoutinfotop.remove_widget(self.btnHistory)
+            self.layoutinfotop.add_widget(self.btnHistory)
+            self.layoutinfotop.remove_widget(self.btnBack)
+            self.btnSettings.disabled = False
+            self.btnHistory.disabled = False
+            self.btnBack.disabled = False
+            self.onpredictlayout = False
+            self.layout.remove_widget(self.btnProcessPredict)
+            layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
+            layoutprogressbar.remove_widget(progressbar)
+
+            if prediction == False:
+                if varerrorlayout == False:
+                    layoutprogressbar.add_widget(progressbar)
+                    self.myevent.drawingmainlayout(self)
+                    self.btnPredict.disabled = True
+                else:
+                    self.btnPredict.disabled = True
+            else:
+                self.btnPredict.disabled = False
 
     def predictlayout(self):
         global dataset
@@ -1385,21 +1439,24 @@ class MyApp(App):
         self.savenetwork = self.network.copy()
         self.savedfilename = filename
         self.filechooserfunction()
-        self.myevent.drawingmainlayout
+        self.myevent.drawingmainlayout()
         self.layout.remove_widget(self.btnTrain)
         self.layout.remove_widget(self.btnError)
         self.layout.remove_widget(self.btnPredict)
         self.layout.remove_widget(self.btnCancel)
         self.layoutinfotop.remove_widget(self.btnSettings)
+        self.layoutinfotop.remove_widget(self.btnHistory)
         self.layoutinfotop.remove_widget(self.btnBack)
         self.layout.remove_widget(self.btnnewinput)
         self.btnSettings.disabled = False
+        self.btnHistory.disabled = False
         self.btnBack.disabled = False
         self.onpredictlayout = True
 
         self.layout.add_widget(self.btnProcessPredict)
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
+        self.layoutinfotop.add_widget(self.btnHistory)
 # When file is chosen
     def predictdonelayout(self):
         global dataset
@@ -1421,16 +1478,19 @@ class MyApp(App):
         self.layout.remove_widget(self.btnProcessPredict)
         self.layout.remove_widget(self.btnCancel)
         self.layoutinfotop.remove_widget(self.btnSettings)
+        self.layoutinfotop.remove_widget(self.btnHistory)
         self.layoutinfotop.remove_widget(self.btnBack)
         self.layout.add_widget(self.btnDetails)
         layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
         layoutprogressbar.remove_widget(progressbar)
         progressbar.value = 0
         self.btnSettings.disabled = False
+        self.btnHistory.disabled = False
         self.btnBack.disabled = False
 
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
+        self.layoutinfotop.add_widget(self.btnHistory)
         mydata = MyApp.Lblleft(self, type='Test', dataerror=accuracy)
         MyApp.addclasstopanel(self, mydata)
         self.drawinglblblackkv(self.layoutinfomiddle, mydata)
@@ -1444,17 +1504,20 @@ class MyApp(App):
         self.layout.remove_widget(self.btnPredict)
         self.layout.remove_widget(self.btnCancel)
         self.layoutinfotop.remove_widget(self.btnSettings)
+        self.layoutinfotop.remove_widget(self.btnHistory)
         self.layoutinfotop.remove_widget(self.btnBack)
         layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
         layoutprogressbar.remove_widget(progressbar)
         progressbar.value=0
         self.btnSettings.disabled = False
+        self.btnHistory.disabled = False
         self.btnBack.disabled = False
         self.onpredictlayout = False
         self.btnPredict.disabled = False
 
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
+        self.layoutinfotop.add_widget(self.btnHistory)
         mydata = MyApp.Lblleft(self, type='Entrenamiento', dataerror=0)
         MyApp.addclasstopanel(self, mydata)
         self.drawinglblblackkv(self.layoutinfomiddle, mydata)
@@ -1466,11 +1529,14 @@ class MyApp(App):
         self.layout.remove_widget(self.btnProcessPredict)
         self.layoutinfotop.remove_widget(self.btnBack)
         self.layoutinfotop.remove_widget(self.btnSettings)
+        self.layoutinfotop.remove_widget(self.btnHistory)
         self.btnSettings.disabled = True
+        self.btnHistory.disabled = True
         self.btnBack.disabled = True
         self.layout.add_widget(self.btnCancel)
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
+        self.layoutinfotop.add_widget(self.btnHistory)
 
     def errorlayout(self, accuracy):
         self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
@@ -1481,16 +1547,19 @@ class MyApp(App):
         self.layout.remove_widget(self.btnPredict)
         self.layout.remove_widget(self.btnCancel)
         self.layoutinfotop.remove_widget(self.btnSettings)
+        self.layoutinfotop.remove_widget(self.btnHistory)
         self.layoutinfotop.remove_widget(self.btnBack)
         layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
         layoutprogressbar.remove_widget(progressbar)
         progressbar.value = 0
         self.btnSettings.disabled = False
+        self.btnHistory.disabled = False
         self.btnBack.disabled = False
         self.onpredictlayout = False
 
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
+        self.layoutinfotop.add_widget(self.btnHistory)
         mydata = MyApp.Lblleft(self, type='Error', dataerror=accuracy)
         self.addclasstopanel(mydata)
         self.leftlabels(self.layoutinfomiddle, mydata)
@@ -1692,6 +1761,7 @@ class MyApp(App):
                 self.register_event_type('on_evreaddataset')
                 self.register_event_type('on_evshowfile')
                 self.register_event_type('on_predictfinished')
+                self.register_event_type('on_drawinghistorylayout')
                 super(MyEventDispatcher, self).__init__(**kwargs)
             @mainthread
             def evevaluatealgorithm(self, myapp, scores):
@@ -1757,6 +1827,14 @@ class MyApp(App):
                 threading.Thread(target=readdataset, args=(filename, myapp.myevent, myapp, None, None)).start()
 
             @mainthread
+            def drawinghistorylayout(self, myapp):
+                self.dispatch('on_drawinghistorylayout', myapp)
+
+            def on_drawinghistorylayout(self, myapp):
+                MyApp.auxhistorylayout(myapp)
+
+
+            @mainthread
             def evreaddataset(self, progressvarvalue, myisimage, mydataset, myapp):
                 self.dispatch('on_evreaddataset', progressvarvalue, myisimage, mydataset, myapp)
 
@@ -1773,7 +1851,7 @@ class MyApp(App):
                         n_inputs = len(dataset[0]) - 1
                         n_outputs = len(set([row[-1] for row in dataset]))
                         myapp.network = initialize_network_no_weights(n_inputs, list_hidden, n_outputs)
-                        myapp.drawinglblblackkv(myapp.layoutinfomiddle, myapp.Lblleft(myapp, type='Entrenamiento', dataerror=0))
+                        myapp.drawinglblblackkv(myapp.layoutinfomiddle, myapp.Lblleft(myapp, type='None', dataerror=0))
                     myapp.layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
                     myapp.layoutprogressbar.remove_widget(progressbar)
                     myapp.layout.remove_widget(lbltimeleft)
@@ -1885,6 +1963,7 @@ class MyApp(App):
                        pos_hint={'center_x':.5, 'center_y':.5},background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png')
         self.btnCancel = Button(color=(1,1,1,1), text='[b]CANCELAR',markup = True, font_size=18, size_hint=(.95,.9), pos_hint={'center_x':.5, 'center_y':.5},background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png')
         self.btnDetails = Button(color=(1,1,1,1), text='[b]MOSTRAR DETALLES',markup = True, font_size=18, size_hint=(.95,.9), pos_hint={'center_x':.5, 'center_y':.5},background_normal='images/ButtonPlusP.png', background_down='images/ButtonDeactivated.png')
+        self.btnHistory = Button(background_normal='images/ButtonHistory.png', background_down='images/ButtonHistory.png', size_hint=(None, None), size=(60,60), pos_hint={'center_x':1, 'center_y':.5},background_disabled_normal='images/ButtonHistoryDisabled.png')
 
 
 
@@ -1989,6 +2068,8 @@ class MyApp(App):
         self.btnplussidetext.disabled = True
         self.btnlesssidetext.disabled = True
 
+        self.historylayoutvariable = False
+
         layoutsettingsup.add_widget(self.layoutsettingsupleft)
         layoutsettingsup.add_widget(lblblack)
         layoutsettingsup.add_widget(layoutsettingsupright)
@@ -1998,6 +2079,7 @@ class MyApp(App):
         layoutsigmoidlbl.add_widget(lblsigmoidbox)
         layoutsigmoidbox.add_widget(self.relubox)
         layoutsigmoidlbl.add_widget(lblrelubox)
+        self.layoutinfotop.add_widget(self.btnHistory)
         self.layoutsettingsupleft.add_widget(layoutsigmoidlbl)
         self.layoutsettingsupleft.add_widget(layoutsigmoidbox)
         self.layoutsettingsupleft.add_widget(lblblacktwo)
@@ -2031,12 +2113,7 @@ class MyApp(App):
         foldslayout.add_widget(self.numfolds)
         self.layoutsettingsvertical.add_widget(layoutsettingsup)
         self.layoutsettingsvertical.add_widget(layoutsettingsdown)
-        self.layoutbtninfo.add_widget(self.btnlesssidetext)
-        self.layoutbtninfo.add_widget(self.btnplussidetext)
-        self.layoutinfodown.add_widget(Label(
-            text='-----------------------------------------------------------------------------------------------------------------------------------------------',
-            pos_hint={'center_x': .5, 'center_y': .5}, size_hint=(1, .1), color=(.6, .87, .89, 1)))
-        self.layoutinfodown.add_widget(self.lblcurrentpage)
+
 
 
         self.neurontwolayout.add_widget(self.lblneurontwo)
@@ -2044,14 +2121,14 @@ class MyApp(App):
         self.neuronthreelayout.add_widget(self.lblneuronthree)
         self.neuronthreelayout.add_widget(self.lblhiddenlayerthree)
 
-        try:
-            MyApp.restoreleftpanellist(self)
-            mydata = leftpanellist[-1]
-            currentpage = len(leftpanellist)
-            self.drawinglblblackkv(self.layoutinfomiddle, mydata)
-            self.establishbtnpages()
-        except:
-            pass
+        # try:
+        #     MyApp.restoreleftpanellist(self)
+        #     mydata = leftpanellist[-1]
+        #     currentpage = len(leftpanellist)
+        #     #self.drawinglblblackkv(self.layoutinfomiddle, mydata)
+        #     self.establishbtnpages()
+        # except:
+        #     pass
 
 
         self.settingslayout()
@@ -2070,6 +2147,7 @@ class MyApp(App):
         self.btnlayerplusneuron.bind(on_press=lambda x:self.btnlayerplusneuronpressed())
         self.btnlayerlessneuron.bind(on_press=lambda x:self.btnlayerlessneuronpressed())
         self.btnSettings.bind(on_press=lambda x:self.settingslayout())
+        self.btnHistory.bind(on_press=lambda x: self.historylayout())
         self.btnCancel.bind(on_press=lambda x:self.btncancelpressed())
         self.btnOk.bind(on_press=lambda x:self.mainlayout_func())
         self.btnBack.bind(on_press=lambda x:self.mainlayout_func())
