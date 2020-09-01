@@ -1210,7 +1210,6 @@ class MyApp(App):
         MyApp.establishbtnpages(self)
         MyApp.storeleftpanellist(self)
     def historylayout(self):
-        self.historylayoutvariable = True
         self.layoutmainscreen.height = 580
         self.btnlayout.height = 50
         self.layoutinfoleft.size_hint_x = 0.4
@@ -1225,7 +1224,10 @@ class MyApp(App):
         self.layout.remove_widget(self.btnCancel)
         self.layout.remove_widget(self.btnnewinput)
         self.layout.remove_widget(self.layoutsettingsvertical)
-        self.layoutinfotop.add_widget(self.btnBack)
+        if self.settingslayoutvrb:
+            self.layoutinfotop.add_widget(self.btnSettings)
+        else:
+            self.layoutinfotop.add_widget(self.btnBack)
         self.layoutbtninfo.remove_widget(self.btnlesssidetext)
         self.layoutbtninfo.remove_widget(self.btnplussidetext)
         self.layoutbtninfo.add_widget(self.btnlesssidetext)
@@ -1250,6 +1252,7 @@ class MyApp(App):
     def settingslayout(self):
         global prediction, biaseslabels, varerrorlayout
         prediction = False
+        self.settingslayoutvrb = True
         varerrorlayout = False
         self.btnlayout.height = 300
         self.layoutmainscreen.height = 350
@@ -1369,67 +1372,64 @@ class MyApp(App):
 
     def mainlayout_func(self):
         global prediction, n_inputs, n_outputs, dataset, numdata, listinputs, filename, inputimagelist, outputimageslist
-        if self.historylayoutvariable:
-            self.historylayoutvariable = False
-            self.settingslayout()
+        inputimagelist = self.inputimagelist
+        outputimageslist = self.outputimageslist
+        filename = self.filename
+        self.layoutmainscreen.height = 580
+        self.btnlayout.height = 50
+        self.layoutinfoleft.size_hint_x = 0.1
+        self.layoutinforight.size_hint_x = 0.1
+
+        if self.onpredictlayout:
+            dataset = self.savedataset
+            self.network = self.savenetwork
+            filename = self.savedfilename
+            self.lblfilename = self.parentlayout.ids.idlabelfilename
+            self.lblfilename.text = ('[b] Archivo: [/b]' + '[i]' + basename(filename))
+
+        if self.sigmoidbox.active == True:
+            self.sigmoidmode = True
         else:
-            inputimagelist = self.inputimagelist
-            outputimageslist = self.outputimageslist
-            filename = self.filename
-            self.layoutmainscreen.height = 580
-            self.btnlayout.height = 50
-            self.layoutinfoleft.size_hint_x = 0.1
-            self.layoutinforight.size_hint_x = 0.1
+            self.sigmoidmode = False
 
-            if self.onpredictlayout:
-                dataset = self.savedataset
-                self.network = self.savenetwork
-                filename = self.savedfilename
-                self.lblfilename = self.parentlayout.ids.idlabelfilename
-                self.lblfilename.text = ('[b] Archivo: [/b]' + '[i]' + basename(filename))
+        self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
+        self.layouttrainscreen.anchor_x = 'center'
 
-            if self.sigmoidbox.active == True:
-                self.sigmoidmode = True
-            else:
-                self.sigmoidmode = False
-
-            self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
-            self.layouttrainscreen.anchor_x = 'center'
-
-            self.layout.remove_widget(self.layoutsettingsvertical)
-            self.layoutbtninfo.remove_widget(self.btnlesssidetext)
-            self.layoutbtninfo.remove_widget(self.btnplussidetext)
-            self.layout.remove_widget(self.btnCancel)
-            self.layout.remove_widget(self.btnnewinput)
-            self.layout.remove_widget(self.btnTrain)
-            self.layout.remove_widget(self.btnError)
-            self.layout.remove_widget(self.btnPredict)
-            self.layout.remove_widget(self.btnDetails)
-            self.layout.add_widget(self.btnTrain)
-            self.layout.add_widget(self.btnError)
-            self.layout.add_widget(self.btnPredict)
-            self.layoutinfotop.remove_widget(self.btnSettings)
+        self.layout.remove_widget(self.layoutsettingsvertical)
+        self.layoutbtninfo.remove_widget(self.btnlesssidetext)
+        self.layoutbtninfo.remove_widget(self.btnplussidetext)
+        self.layout.remove_widget(self.btnCancel)
+        self.layout.remove_widget(self.btnnewinput)
+        self.layout.remove_widget(self.btnTrain)
+        self.layout.remove_widget(self.btnError)
+        self.layout.remove_widget(self.btnPredict)
+        self.layout.remove_widget(self.btnDetails)
+        self.layout.add_widget(self.btnTrain)
+        self.layout.add_widget(self.btnError)
+        self.layout.add_widget(self.btnPredict)
+        self.layoutinfotop.remove_widget(self.btnSettings)
+        self.layoutinfotop.remove_widget(self.btnHistory)
+        if self.settingslayoutvrb is False:
             self.layoutinfotop.add_widget(self.btnSettings)
-            self.layoutinfotop.remove_widget(self.btnHistory)
             self.layoutinfotop.add_widget(self.btnHistory)
-            self.layoutinfotop.remove_widget(self.btnBack)
-            self.btnSettings.disabled = False
-            self.btnHistory.disabled = False
-            self.btnBack.disabled = False
-            self.onpredictlayout = False
-            self.layout.remove_widget(self.btnProcessPredict)
-            layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
-            layoutprogressbar.remove_widget(progressbar)
+        self.layoutinfotop.remove_widget(self.btnBack)
+        self.btnSettings.disabled = False
+        self.btnHistory.disabled = False
+        self.btnBack.disabled = False
+        self.onpredictlayout = False
+        self.layout.remove_widget(self.btnProcessPredict)
+        layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
+        layoutprogressbar.remove_widget(progressbar)
 
-            if prediction == False:
-                if varerrorlayout == False:
-                    layoutprogressbar.add_widget(progressbar)
-                    self.myevent.drawingmainlayout(self)
-                    self.btnPredict.disabled = True
-                else:
-                    self.btnPredict.disabled = True
+        if prediction == False:
+            if varerrorlayout == False:
+                layoutprogressbar.add_widget(progressbar)
+                self.myevent.drawingmainlayout(self)
+                self.btnPredict.disabled = True
             else:
-                self.btnPredict.disabled = False
+                self.btnPredict.disabled = True
+        else:
+            self.btnPredict.disabled = False
 
     def predictlayout(self):
         global dataset
@@ -1438,8 +1438,6 @@ class MyApp(App):
         self.savedataset = dataset.copy()
         self.savenetwork = self.network.copy()
         self.savedfilename = filename
-        self.filechooserfunction()
-        self.myevent.drawingmainlayout()
         self.layout.remove_widget(self.btnTrain)
         self.layout.remove_widget(self.btnError)
         self.layout.remove_widget(self.btnPredict)
@@ -1457,6 +1455,7 @@ class MyApp(App):
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
         self.layoutinfotop.add_widget(self.btnHistory)
+        self.filechooserfunction()
 # When file is chosen
     def predictdonelayout(self):
         global dataset
@@ -1566,20 +1565,21 @@ class MyApp(App):
 
     def btnplusneuronpressed (self):
         self.btnlessneuron.disabled = False
-        if list_hidden[0] >= 40:
-            list_hidden[0] = 40
+        if list_hidden[0] >= 256:
+            list_hidden[0] = 256
+
         else:
-            list_hidden[0] = list_hidden[0] + 1
+            list_hidden[0] = list_hidden[0] * 2
             self.drawingtryout(layoutneuronmainscreen, layoutlabels)
             self.lblhiddenlayer.text = str(list_hidden[0])
-            if list_hidden[0] == 40:
+            if list_hidden[0] == 256:
                 self.btnplusneuron.disabled = True
     def btnlessneuronpressed(self):
         self.btnplusneuron.disabled = False
         if list_hidden[0] <= 1:
             list_hidden[0] = 1
         else:
-            list_hidden[0] = list_hidden[0] - 1
+            list_hidden[0] = int (list_hidden[0] /2)
             self.lblhiddenlayer.text = str(list_hidden[0])
             self.drawingtryout(layoutneuronmainscreen, layoutlabels)
             if list_hidden[0] == 1:
@@ -1588,20 +1588,20 @@ class MyApp(App):
     def btnplusneurontwopressed(self):
         self.btnlessneurontwo.disabled = False
 
-        if list_hidden[1] >= 40:
-            list_hidden[1] = 40
+        if list_hidden[1] >= 256:
+            list_hidden[1] = 256
         else:
-            list_hidden[1] = list_hidden[1] + 1
+            list_hidden[1] = list_hidden[1] * 2
             self.lblhiddenlayertwo.text = str(list_hidden[1])
             self.drawingtryout(layoutneuronmainscreen, layoutlabels)
-            if list_hidden[1] == 40:
+            if list_hidden[1] == 256:
                 self.btnplusneurontwo.disabled = True
     def btnlessneurontwopressed(self):
         self.btnplusneurontwo.disabled = False
         if list_hidden[1] <= 1:
             list_hidden[1] = 1
         else:
-            list_hidden[1] = list_hidden[1] - 1
+            list_hidden[1] = int (list_hidden[1] /2)
             self.lblhiddenlayertwo.text = str(list_hidden[1])
             self.drawingtryout(layoutneuronmainscreen, layoutlabels)
             if list_hidden[1] == 1:
@@ -1610,20 +1610,20 @@ class MyApp(App):
     def btnplusneuronthreepressed(self):
         self.btnlessneuronthree.disabled = False
 
-        if list_hidden[2] >= 40:
-            list_hidden[2] = 40
+        if list_hidden[2] >= 256:
+            list_hidden[2] = 256
         else:
-            list_hidden[2] = list_hidden[2] + 1
+            list_hidden[2] = list_hidden[2] * 2
             self.lblhiddenlayerthree.text = str(list_hidden[2])
             self.drawingtryout(layoutneuronmainscreen, layoutlabels)
-            if list_hidden[2] == 40:
+            if list_hidden[2] == 256:
                 self.btnplusneuronthree.disabled = True
     def btnlessneuronthreepressed(self):
         self.btnplusneuronthree.disabled = False
         if list_hidden[2] <= 1:
             list_hidden[2] = 1
         else:
-            list_hidden[2] = list_hidden[2] - 1
+            list_hidden[2] = int (list_hidden[2] /2)
             self.lblhiddenlayerthree.text = str(list_hidden[2])
             self.drawingtryout(layoutneuronmainscreen, layoutlabels)
             if list_hidden[2] == 1:
@@ -1690,12 +1690,12 @@ class MyApp(App):
                 self.btnplusfolds.disabled = True
     def btnlessfoldspressed(self):
         self.btnplusfolds.disabled = False
-        if self.n_folds <= 1:
-            self.n_folds = 1
+        if self.n_folds <= 2:
+            self.n_folds = 2
         else:
             self.n_folds = self.n_folds - 1
             self.numfolds.text = str(self.n_folds)
-            if self.n_folds == 1:
+            if self.n_folds == 2:
                 self.btnlessfolds.disabled = True
 
     def btnplusratepressed (self):
@@ -1705,7 +1705,8 @@ class MyApp(App):
             self.l_rate = 1.0
         else:
             self.l_rate = self.l_rate + 0.1
-            self.numrate.text = str("{:.1f}".format(self.l_rate))
+            self.l_rate = float("{:.1f}".format(self.l_rate))
+            self.numrate.text = str(self.l_rate)
             if self.l_rate == 1.0:
                 self.btnplusrate.disabled = True
     def btnlessratepressed(self):
@@ -1714,7 +1715,8 @@ class MyApp(App):
             self.l_rate = 0.1
         else:
             self.l_rate = self.l_rate - 0.1
-            self.numrate.text = str("{:.1f}".format(self.l_rate))
+            self.l_rate = float("{:.1f}".format(self.l_rate))
+            self.numrate.text = str(self.l_rate)
             if self.l_rate == 0.1:
                 self.btnlessrate.disabled = True
 
@@ -1823,7 +1825,6 @@ class MyApp(App):
             def on_drawingmainlayout(self, myapp):
                 #MyApp.drawingblank(btnOk, layoutneuronmainscreen, layoutlabels)
                 global filename
-
                 threading.Thread(target=readdataset, args=(filename, myapp.myevent, myapp, None, None)).start()
 
             @mainthread
@@ -1857,6 +1858,12 @@ class MyApp(App):
                     myapp.layout.remove_widget(lbltimeleft)
                     myapp.btnTrain.disabled = False
                     myapp.btnError.disabled = False
+                    if myapp.settingslayoutvrb:
+                        myapp.layoutinfotop.remove_widget(myapp.btnSettings)
+                        myapp.layoutinfotop.remove_widget(myapp.btnHistory)
+                        myapp.layoutinfotop.add_widget(myapp.btnSettings)
+                        myapp.layoutinfotop.add_widget(myapp.btnHistory)
+                        myapp.settingslayoutvrb = False
                     if myapp.onpredictlayout:
                         myapp.cancellayout()
                         layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
@@ -1880,7 +1887,7 @@ class MyApp(App):
                     print('filechoosershowdatasetcont: ' + str(e))
 
 
-        list_hidden.append(6)
+        list_hidden.append(4)
         numlayers = str(len(list_hidden))
         self.myevent = MyEventDispatcher()
 
@@ -2068,7 +2075,6 @@ class MyApp(App):
         self.btnplussidetext.disabled = True
         self.btnlesssidetext.disabled = True
 
-        self.historylayoutvariable = False
 
         layoutsettingsup.add_widget(self.layoutsettingsupleft)
         layoutsettingsup.add_widget(lblblack)
