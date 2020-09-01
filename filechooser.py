@@ -45,7 +45,7 @@ class Filechooser(BoxLayout):
         self.ids.text_input.text = basename(filenameselected)
 
     def filechoosershowdatasetcont(self, filenameselected, details):
-
+        self.callerclass.historyfile = False
         self.popup.dismiss()
 
         if self.mytexturedataset == None:
