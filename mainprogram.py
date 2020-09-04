@@ -148,15 +148,16 @@ class NeuralNetApp(App):
             return
         for layer in range(len(self.valuemydata.networklist)):
             mymax = 0.0
-            for node in self.valuemydata.networklist[layer]:
-                myweights = node['weights']
-                for value in myweights:
-                    mymax= max(mymax, abs(value))
+            for myline in listoflines:
+                if myline.layer == layer:
+                    value = abs(self.valuemydata.networklist[myline.layer][myline.hidden]['weights'][myline.index])
+                    mymax = max(mymax, value)
 
             for myline in listoflines:
                 if myline.layer == layer:
                     myline.value = abs(self.valuemydata.networklist[myline.layer][myline.hidden]['weights'][myline.index])
-                    myline.max = mymax
+                    myline.maximum = mymax
+
 
         nchanges = 0
         for myline in listoflines:
@@ -220,7 +221,10 @@ class NeuralNetApp(App):
         indeximageinput = int(random() * len(inputimagelist))
         if imageinput is not None:
             imageinput.update_texture(inputimagelist[indeximageinput])
-        acc = (self.correctpredict* 100.0) / self.totalpredict
+        if self.totalpredict:
+            acc = (self.correctpredict* 100.0) / self.totalpredict
+        else:
+            acc = 0
         self.labelaccuracy.text = '[b] Precisión: [/b]' + str("{:.2f}".format(acc)) + '%'
         # labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
         # labelfolds.text = '[b] [color=D464EB]Grupos: [/b][/color]' + str(self.n_folds)
@@ -1398,7 +1402,7 @@ class NeuralNetApp(App):
             self.inputimagelist = list(mytexturedataset[10:100])
         else:
             self.inputimagelist = list(mytexturedataset[:-1])
-        self.settingslayout()
+        self.mainlayout_func()
 
     def btnokpressed(self):
 
@@ -1413,7 +1417,7 @@ class NeuralNetApp(App):
 
     def mainlayout_func(self):
         global prediction, n_inputs, n_outputs, dataset, numdata, listinputs, filename, inputimagelist, outputimageslist
-        print(self.historyfile)
+
         inputimagelist = self.inputimagelist
         outputimageslist = self.outputimageslist
         filename = self.filename
@@ -1464,8 +1468,8 @@ class NeuralNetApp(App):
         layoutprogressbar = self.parentlayout.ids.mainseparatorprogressbar
         layoutprogressbar.remove_widget(progressbar)
 
-        if prediction == False:
-            if varerrorlayout == False:
+        if prediction == False or self.historyfile:
+            if varerrorlayout == False or self.historyfile:
                 layoutprogressbar.add_widget(progressbar)
                 self.myevent.drawingmainlayout(self)
                 self.btnPredict.disabled = True
@@ -1473,8 +1477,7 @@ class NeuralNetApp(App):
                 self.btnPredict.disabled = True
         else:
             self.btnPredict.disabled = False
-        if self.historyfile:
-            self.btnPredict.disabled = False
+
     def predictlayout(self):
         global dataset
         self.layouttrainscreen = self.parentlayout.ids.idLayoutNeuron.ids.idAnchorLayoutNeuron
@@ -1895,7 +1898,10 @@ class NeuralNetApp(App):
                         dataset = mydataset
                         n_inputs = len(dataset[0]) - 1
                         n_outputs = len(set([row[-1] for row in dataset]))
-                        myapp.network = initialize_network_no_weights(n_inputs, list_hidden, n_outputs)
+                        if myapp.historyfile is False:
+                            myapp.network = initialize_network_no_weights(n_inputs, list_hidden, n_outputs)
+                        else:
+                            myapp.btnPredict.disabled = False
                         myapp.drawinglblblackkv(myapp.layoutinfomiddle, myapp.Lblleft(myapp, type='None', dataerror=0))
                     myapp.layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
                     myapp.layoutprogressbar.remove_widget(progressbar)
@@ -1914,6 +1920,8 @@ class NeuralNetApp(App):
                         layoutprogressbar.remove_widget(progressbar)
                         layoutprogressbar.add_widget(progressbar)
                         progressbar.value = 0
+                        myapp.stoptrainning = False
+                        myapp.timestart = time.monotonic()
                         myapp.layout.remove_widget(myapp.btnCancel)
                         myapp.layout.add_widget(lbltimeleft)
                         myapp.layout.add_widget(myapp.btnCancel)
