@@ -59,7 +59,13 @@ def transfer_rectified(output):
    return output * (output > 0)
 
 def transfer_sigmoid(activation):
-    return 1.0 / (1.0 + exp(-activation))
+    if activation > 50:
+        return 1
+    elif activation < -50:
+        return 0
+    else:
+        return 1.0 / (1.0 + exp(-activation))
+
 
 
 # Calculate the derivative of an neuron output

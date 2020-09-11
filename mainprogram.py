@@ -1,5 +1,4 @@
-
-
+import traceback
 
 from kivy.app import App
 from kivy.storage.jsonstore import JsonStore
@@ -112,7 +111,7 @@ class LineParam():
         return 0
 
 
-class NeuralNetApp(App):
+class RedNeuronalLabApp(App):
     class Lblleft():
         def __init__(self, myapp, type, dataerror):
             global varerrorlayout
@@ -196,6 +195,8 @@ class NeuralNetApp(App):
     def layoutpbtrainnext(self, deltatime):
         global labelcycles, labelfolds
         self.auxlayoutpb()
+        errorlbl.text = '[b] [color=D464EB]Error cuadrático medio: [/b][/color]' + str(
+            "{:.4f}".format(self.mean_qerror))
         labelcycles.text = '[b] [color=D464EB]Ciclos: [/b][/color]' + str(self.currentcycle) + '/' + str(self.n_epoch)
 
     # Predict progress
@@ -321,14 +322,14 @@ class NeuralNetApp(App):
                         for d in range(numdata):
                             mypoints = [middlex - 205, d * 50 + (middley - space / 2) + 17.5, middlex,
                                       a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
 
 
                     else:
                         for d in range(10):
                             mypoints = [middlex - 205, d * 50 + (middley - space / 2) + 17.5, middlex,
                                              a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
 
             else:
                 for a in range(20):
@@ -355,14 +356,14 @@ class NeuralNetApp(App):
                         for d in range(numdata):
                             mypoints = [middlex - 205, d * 50 + (middley - 10 - space / 2) + 30, middlex,
                                       a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
 
 
                     else:
                         for d in range(10):
                             mypoints = [middlex - 205, d * 50 + (middley - 10 - space / 2) + 30, middlex,
                                              a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, d, linecolorinput, draw.canvas, mydata.networklist, mypoints)
             draw.add_widget(Label(text = str(mydata.list_hidden[0]), pos = (middlex - 40 , middley+220), size_hint=(None,None), font_size=13))
 
             for e in range(numoutputs):
@@ -370,12 +371,12 @@ class NeuralNetApp(App):
                     for a in range(mydata.list_hidden[0]):
                         mypoints =[middlex+18, a * 25 + (middley  - spaceone / 2)+ 9, middlex+230,
                                          e * 50 + (middley+ 20 - spaceoutput / 2) ]
-                        NeuralNetApp.listoflinesappend(self, 1, e, a, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
+                        RedNeuronalLabApp.listoflinesappend(self, 1, e, a, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
                 else:
                     for a in range(20):
                         mypoints =[middlex+18, a * 25 + (middley  - spaceone / 2)+ 9, middlex+230,
                                          e * 50 + (middley+ 20 - spaceoutput / 2) ]
-                        NeuralNetApp.listoflinesappend(self, 1, e, a, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
+                        RedNeuronalLabApp.listoflinesappend(self, 1, e, a, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
 
         if len(mydata.list_hidden) == 2:
             # hiddenlayerone
@@ -414,14 +415,14 @@ class NeuralNetApp(App):
                         for i in range(numdata):
                             mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 80,
                                              a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
 
                     else:
                         for i in range(10):
                             mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 80,
                                              a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist, mypoints)
             else:
                 for a in range(20):
                     if a < 8 or a > 11:
@@ -447,15 +448,15 @@ class NeuralNetApp(App):
                         for i in range(numdata):
                             mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 80,
                                         a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
 
                     else:
                         for i in range(10):
                             mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 80,
                                         a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
             draw.add_widget(Label(text=str(mydata.list_hidden[0]), pos=(middlex - 121, middley + 220), size_hint=(None, None),font_size=13))
             # hiddenlayertwo
             valuefloat = 0
@@ -493,11 +494,11 @@ class NeuralNetApp(App):
                     if mydata.list_hidden[0] < 21:
                         for j in range(mydata.list_hidden[0]):
                             mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
-                            NeuralNetApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
                     else:
                         for j in range(20):
                             mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
-                            NeuralNetApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
             else:
                 for d in range(20):
                     if d < 8 or d > 11:
@@ -516,11 +517,11 @@ class NeuralNetApp(App):
                         if mydata.list_hidden[0] < 21:
                             for j in range(mydata.list_hidden[0]):
                                 mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
-                                NeuralNetApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                                RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
                         else:
                             for j in range(20):
                                 mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
-                                NeuralNetApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                                RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
                     else:
                         with draw.canvas:
                             Ellipse(pos=(middlex + 87, d * 25 + (middley - spacetwo / 2) + 9), size=(5, 5))
@@ -528,11 +529,11 @@ class NeuralNetApp(App):
                 if mydata.list_hidden[1] < 21:
                     for d in range(mydata.list_hidden[1]):
                         mypoints = [middlex+98, d * 25 + (middley+9 - spacetwo / 2), middlex + 230, e * 50 + (middley +20 - spaceoutput / 2)]
-                        NeuralNetApp.listoflinesappend(self, 2, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
+                        RedNeuronalLabApp.listoflinesappend(self, 2, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
                 else:
                     for d in range(20):
                         mypoints = [middlex + 98, d * 25 + (middley + 9 - spacetwo / 2), middlex + 230,e * 50 + (middley + 20 - spaceoutput / 2)]
-                        NeuralNetApp.listoflinesappend(self, 2, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
+                        RedNeuronalLabApp.listoflinesappend(self, 2, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
             draw.add_widget(Label(text=str(mydata.list_hidden[1]), pos=(middlex + 38, middley + 220), size_hint=(None, None),font_size=13))
 
         if len(mydata.list_hidden) == 3:
@@ -576,15 +577,15 @@ class NeuralNetApp(App):
                         for i in range(numdata):
                             mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 130,
                                              a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
 
                     else:
                         for i in range(10):
                             mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 130,
                                              a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
             else:
                 for a in range(20):
                     if a < 8 or a > 11:
@@ -609,15 +610,15 @@ class NeuralNetApp(App):
                         for i in range(numdata):
                             mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 130,
                                         a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
 
                     else:
                         for i in range(10):
                             mypoints = [middlex - 205, i * 50 + (middley - space / 2) + 17.5, middlex - 130,
                                         a * 25 + (middley + 9 - spaceone / 2)]
-                            NeuralNetApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 0, a, i, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
             draw.add_widget(
                 Label(text=str(mydata.list_hidden[0]), pos=(middlex - 171, middley + 220), size_hint=(None, None),
                       font_size=13))
@@ -653,11 +654,11 @@ class NeuralNetApp(App):
                     if mydata.list_hidden[0] < 21:
                         for j in range(mydata.list_hidden[0]):
                             mypoints = [middlex-112, j * 25 + (middley+9 - spaceone / 2), middlex, d * 25 + (middley+9 - spacetwo / 2)]
-                            NeuralNetApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
                     else:
                         for j in range(20):
                             mypoints = [middlex-112, j * 25 + (middley+9 - spaceone / 2), middlex, d * 25 + (middley+9 - spacetwo / 2)]
-                            NeuralNetApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
             else:
                 for d in range(20):
                     if d < 8 or d > 11:
@@ -681,14 +682,14 @@ class NeuralNetApp(App):
                         for j in range(mydata.list_hidden[0]):
                             mypoints = [middlex - 112, j * 25 + (middley + 9 - spaceone / 2), middlex,
                                         d * 25 + (middley + 9 - spacetwo / 2)]
-                            NeuralNetApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
                     else:
                         for j in range(20):
                             mypoints = [middlex - 112, j * 25 + (middley + 9 - spaceone / 2), middlex,
                                         d * 25 + (middley + 9 - spacetwo / 2)]
-                            NeuralNetApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
             draw.add_widget(
                 Label(text=str(mydata.list_hidden[0]), pos=(middlex - 40, middley + 220), size_hint=(None, None),
                       font_size=13))
@@ -730,11 +731,11 @@ class NeuralNetApp(App):
                     if mydata.list_hidden[1] < 21:
                         for l in range(mydata.list_hidden[1]):
                             mypoints = [middlex+18, l * 25 + (middley+9 - spacetwo / 2), middlex+130, d * 25 + (middley+9 - spacethree / 2)]
-                            NeuralNetApp.listoflinesappend(self, 2, d, l, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 2, d, l, linecolorinput, draw.canvas, mydata.networklist, mypoints)
                     else:
                         for l in range(20):
                             mypoints = [middlex+18, l * 25 + (middley+9 - spacetwo / 2), middlex+130, d * 25 + (middley+9 - spacethree / 2)]
-                            NeuralNetApp.listoflinesappend(self, 2, d, l, linecolorinput, draw.canvas, mydata.networklist, mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 2, d, l, linecolorinput, draw.canvas, mydata.networklist, mypoints)
             else:
                 for d in range(20):
                     if d < 8 or d > 11:
@@ -759,24 +760,24 @@ class NeuralNetApp(App):
                         for l in range(mydata.list_hidden[1]):
                             mypoints = [middlex + 18, l * 25 + (middley + 9 - spacetwo / 2), middlex + 130,
                                         d * 25 + (middley + 9 - spacethree / 2)]
-                            NeuralNetApp.listoflinesappend(self, 2, d, l, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 2, d, l, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
                     else:
                         for l in range(20):
                             mypoints = [middlex + 18, l * 25 + (middley + 9 - spacetwo / 2), middlex + 130,
                                         d * 25 + (middley + 9 - spacethree / 2)]
-                            NeuralNetApp.listoflinesappend(self, 2, d, l, linecolorinput, draw.canvas, mydata.networklist,
-                                                           mypoints)
+                            RedNeuronalLabApp.listoflinesappend(self, 2, d, l, linecolorinput, draw.canvas, mydata.networklist,
+                                                                mypoints)
 
             for e in range(numoutputs):
                 if mydata.list_hidden[2] < 21:
                     for d in range(mydata.list_hidden[2]):
                         mypoints = [middlex+148, d * 25 + (middley + 9 - spacethree / 2), middlex+230, e * 50 + (middley + 20 - spaceoutput / 2)]
-                        NeuralNetApp.listoflinesappend(self, 3, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
+                        RedNeuronalLabApp.listoflinesappend(self, 3, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
                 else:
                     for d in range(20):
                         mypoints = [middlex+148, d * 25 + (middley + 9 - spacethree / 2), middlex+230, e * 50 + (middley + 20 - spaceoutput / 2)]
-                        NeuralNetApp.listoflinesappend(self, 3, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
+                        RedNeuronalLabApp.listoflinesappend(self, 3, e, d, linecoloroutput, draw.canvas, mydata.networklist, mypoints)
             draw.add_widget(Label(text=str(mydata.list_hidden[0]), pos=(middlex+89, middley + 220), size_hint=(None, None),font_size=13))
 
         # output layer
@@ -801,7 +802,7 @@ class NeuralNetApp(App):
             draw.add_widget(image)
             c += 1
 
-        if len(inputimagelist):
+        if len(inputimagelist) and self.historyfile is False:
             imageinput = WidgetTexture(inputimagelist[0])
             imageinput.pos = middlex - 320 , middley - 50
             imageinput.size_hint=(None, None)
@@ -927,7 +928,7 @@ class NeuralNetApp(App):
             currentpage -= 1
             mydata = leftpanellist[currentpage - 1]
             self.drawinglblblackkv(textlayout, mydata)
-        NeuralNetApp.establishbtnpages(self)
+        RedNeuronalLabApp.establishbtnpages(self)
 
         self.lblcurrentpage.text = ('[b]Página:[/b]' + ' ' + str("{:.0f}".format(currentpage)) + '/' + str(
             "{:.0f}".format(len(leftpanellist))))
@@ -1196,13 +1197,13 @@ class NeuralNetApp(App):
                 leftpanellist.clear()
                 for index in range(mynumberofitems):
                     mydatadict = mystore.get('leftpanelhistory' + str(index))['value']
-                    NeuralNetApp.network = None
-                    mydataclasss = NeuralNetApp.Lblleft(self, type='', dataerror=0)
+                    RedNeuronalLabApp.network = None
+                    mydataclasss = RedNeuronalLabApp.Lblleft(self, type='', dataerror=0)
                     for key in mydatadict:
                         setattr(mydataclasss, key, mydatadict[key])
                     leftpanellist.append(mydataclasss)
                     currentpage = len(leftpanellist)
-                    NeuralNetApp.establishbtnpages(self)
+                    RedNeuronalLabApp.establishbtnpages(self)
         except Exception as e:
             print('restore panel error: ' + str(e))
             os.remove('neuroncfg.json')
@@ -1211,8 +1212,8 @@ class NeuralNetApp(App):
         global currentpage
         leftpanellist.append(mypannelclass)
         currentpage = len(leftpanellist)
-        NeuralNetApp.establishbtnpages(self)
-        NeuralNetApp.storeleftpanellist(self)
+        RedNeuronalLabApp.establishbtnpages(self)
+        RedNeuronalLabApp.storeleftpanellist(self)
     def historylayout(self):
         self.layoutmainscreen.height = 580
         self.btnlayout.height = 50
@@ -1247,7 +1248,7 @@ class NeuralNetApp(App):
 
     def auxhistorylayout(self):
         try:
-            NeuralNetApp.restoreleftpanellist(self)
+            RedNeuronalLabApp.restoreleftpanellist(self)
             mydata = leftpanellist[-1]
             currentpage = len(leftpanellist)
             self.drawinglblblackkv(self.layoutinfomiddle, mydata)
@@ -1537,8 +1538,8 @@ class NeuralNetApp(App):
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
         self.layoutinfotop.add_widget(self.btnHistory)
-        mydata = NeuralNetApp.Lblleft(self, type='Test', dataerror=accuracy)
-        NeuralNetApp.addclasstopanel(self, mydata)
+        mydata = RedNeuronalLabApp.Lblleft(self, type='Test', dataerror=accuracy)
+        RedNeuronalLabApp.addclasstopanel(self, mydata)
         self.drawinglblblackkv(self.layoutinfomiddle, mydata)
 
     def trainlayout(self):
@@ -1564,8 +1565,8 @@ class NeuralNetApp(App):
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
         self.layoutinfotop.add_widget(self.btnHistory)
-        mydata = NeuralNetApp.Lblleft(self, type='Entrenamiento', dataerror=0)
-        NeuralNetApp.addclasstopanel(self, mydata)
+        mydata = RedNeuronalLabApp.Lblleft(self, type='Entrenamiento', dataerror=0)
+        RedNeuronalLabApp.addclasstopanel(self, mydata)
         self.drawinglblblackkv(self.layoutinfomiddle, mydata)
 
     def cancellayout(self):
@@ -1606,7 +1607,7 @@ class NeuralNetApp(App):
         self.layoutinfotop.add_widget(self.btnBack)
         self.layoutinfotop.add_widget(self.btnSettings)
         self.layoutinfotop.add_widget(self.btnHistory)
-        mydata = NeuralNetApp.Lblleft(self, type='Error', dataerror=accuracy)
+        mydata = RedNeuronalLabApp.Lblleft(self, type='Error', dataerror=accuracy)
         self.addclasstopanel(mydata)
         self.leftlabels(self.layoutinfomiddle, mydata)
 
@@ -1879,7 +1880,7 @@ class NeuralNetApp(App):
                 self.dispatch('on_drawinghistorylayout', myapp)
 
             def on_drawinghistorylayout(self, myapp):
-                NeuralNetApp.auxhistorylayout(myapp)
+                RedNeuronalLabApp.auxhistorylayout(myapp)
 
 
             @mainthread
@@ -1936,6 +1937,8 @@ class NeuralNetApp(App):
                 try:
                     Filechooser.filechoosershowdatasetcont(filechooser, filenameselected, details)
                 except Exception as e:  # work on python 3.x
+                    track = traceback.format_exc()
+                    print(track)
                     print('filechoosershowdatasetcont: ' + str(e))
 
 
@@ -2127,7 +2130,7 @@ class NeuralNetApp(App):
         lblfolds = Label(text='[b]GRUPOS:',markup=True, font_size=(11), pos_hint={'center_x': .5, 'center_y': .5})
         self.numfolds = Label(text=str(self.n_folds))
 
-        NeuralNetApp.restoreleftpanellist(self)
+        RedNeuronalLabApp.restoreleftpanellist(self)
 
         self.btnplussidetext.disabled = True
         self.btnlesssidetext.disabled = True
@@ -2253,7 +2256,7 @@ class LayoutScreen(BoxLayout):
 
 
 if __name__ == '__main__':
-    NeuralNetApp().run()
+    RedNeuronalLabApp().run()
 
 '''
 [{'weights': [0.09749164884035584, 0.8385365317026721, 0.7582938712917109, 0.23408540444090786], 'output': 0.9301660140324418, 'delta': -1.0868317911913742e-05}, 

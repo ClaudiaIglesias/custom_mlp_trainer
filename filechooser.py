@@ -50,7 +50,7 @@ class Filechooser(BoxLayout):
 
         if self.mytexturedataset == None:
             containererror = BoxLayout(orientation='vertical')
-            popuperror = Popup(title='DATASET:', content=containererror, separator_color=(.6,1,1, 1),
+            popuperror = Popup(title='BASE DE DATOS:', content=containererror, separator_color=(.6,1,1, 1),
                               auto_dismiss=False, size_hint=(.5,.5))
             lblerror = Label(text='{} : Formato de archivo no válido' .format(filenameselected))
             popuperrorbtn = Button(text='Aceptar', on_press=popuperror.dismiss, background_normal='images/ButtonPlusP.png',
@@ -63,7 +63,7 @@ class Filechooser(BoxLayout):
             self.pagenum = 1
             self.pags = 0
             containerbox = BoxLayout(orientation='vertical', spacing = 10)
-            popupshow = Popup(title='DATASET:', content=containerbox, separator_color=(.6,1,1, 1),
+            popupshow = Popup(title='BASE DE DATOS:', content=containerbox, separator_color=(.6,1,1, 1),
                               auto_dismiss=False)
             popupbtn = Button(text='Aceptar', on_press=popupshow.dismiss, background_normal='images/ButtonPlusP.png',
                               background_down='images/ButtonDeactivated.png', background_disabled_normal='images/ButtonDeactivated.png',
@@ -149,13 +149,12 @@ class Filechooser(BoxLayout):
             containerbox.add_widget(mybtnlayout)
             popupshow.open()
 
-            if details is None:
-                if self.isimage is not 'number':
-                    self.imagedatabox.active = True
-                else:
-                    self.numberdatabox.active = True
+
+            if self.isimage is not 'number':
+                self.imagedatabox.active = True
             else:
-                self.numberdatasetfunc('', details)
+                self.numberdatabox.active = True
+
 
 
 
@@ -200,7 +199,12 @@ class Filechooser(BoxLayout):
                     firstline = self.mytexturedataset[rowtexture + (self.pagenum-1) * linesperpage]
                     for number in firstline:
                         if pos < 5 or pos >= (len(firstline) - 5):
-                            datalbl = Label(text=str(number))
+                            if details is not None and pos == (len(firstline)-1) and details[index] != number:
+                                mystrrow = str(number) + ' (pred:{}) '.format(str(details[index]))
+                                datalbl = Label(text=mystrrow, color=(1, 0, 0, 1))
+                            else:
+                                mystrrow = str(number)
+                                datalbl = Label(text=mystrrow)
                             self.mainlayout.add_widget(datalbl)
                         elif pos == 5 :
                             datalbl = Label(text='...')
@@ -212,9 +216,15 @@ class Filechooser(BoxLayout):
                     pos = rowtexture+(self.pagenum-1)*14
                     if pos >= len(self.mytexturedataset):
                         break
+                    index = 0
                     for number in self.mytexturedataset[pos]:
-                        mystrrow = str(number) + ' '
-                        datalbl = Label(text =mystrrow)
+                        index += 1
+                        if details is not None and index == len(self.mytexturedataset[pos]) and details[pos] != number:
+                            mystrrow = str(number) + ' (pred:{}) '.format(str(details[pos]))
+                            datalbl = Label(text=mystrrow, color=(1,0,0,1))
+                        else:
+                            mystrrow = str(number) + ' '
+                            datalbl = Label(text=mystrrow)
                         self.mainlayout.add_widget(datalbl)
 
             self.callerclass.inputimagelist = []
