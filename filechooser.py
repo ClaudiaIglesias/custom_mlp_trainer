@@ -16,6 +16,8 @@ from kivy.core.window import Window
 from loaddataset import showdataset
 from widgettexture import WidgetTexture
 
+# para tener instancias distintas para el checkbox
+countnumberdatabox = 0
 
 class PopupLoading(Label):
     anglef = NumericProperty(40)
@@ -45,6 +47,8 @@ class Filechooser(BoxLayout):
         self.ids.text_input.text = basename(filenameselected)
 
     def filechoosershowdatasetcont(self, filenameselected, details):
+        global countnumberdatabox
+        countnumberdatabox += 1
         self.callerclass.historyfile = False
         self.popup.dismiss()
 
@@ -83,16 +87,16 @@ class Filechooser(BoxLayout):
             mybtnlayout = BoxLayout(orientation='horizontal', size_hint=(1,.1))
             typelayout = GridLayout( cols = 4)
             infolayout = BoxLayout(orientation='horizontal', size_hint=(1,.1))
-            self.imagedatabox = CheckBox(group = 'typeobject', size_hint=(.4,1))
+            self.imagedatabox = CheckBox(group = 'typeobject' + str(countnumberdatabox), size_hint=(.4,1))
             lblimagedatabox = Label(text='Dataset de imágenes',halign="left")
             lblimagedatabox.bind(size=lblimagedatabox.setter('text_size'))
-            self.numberdatabox = CheckBox(group = 'typeobject', size_hint=(.4,1))
+            self.numberdatabox = CheckBox(group = 'typeobject' + str(countnumberdatabox), size_hint=(.4,1))
             lblnumberdatabox = Label(text='Dataset de números',halign="left")
             lblnumberdatabox.bind(size=lblnumberdatabox.setter('text_size'))
-            self.outputfirstbox = CheckBox(group='output', size_hint=(.4,1))
+            self.outputfirstbox = CheckBox(group='output' + str(countnumberdatabox), size_hint=(.4,1))
             lbloutputfirstbox = Label(text='Salidas en la primera columna',halign="left")
             lbloutputfirstbox.bind(size=lbloutputfirstbox.setter('text_size'))
-            self.outputlastbox = CheckBox(group='output', size_hint=(.4,1))
+            self.outputlastbox = CheckBox(group='output' + str(countnumberdatabox), size_hint=(.4,1))
             lbloutputlastbox = Label(text='Salidas en la última columna',halign="left")
             lbloutputlastbox.bind(size=lbloutputlastbox.setter('text_size'))
 
@@ -116,8 +120,8 @@ class Filechooser(BoxLayout):
             self.outputchanged = False
             self.btnpreviouspage.disabled = True
             self.btnnextpage.disabled = False
-            self.btnnextpage.bind(on_press=lambda x:self.numberdatasetfunc('plusbtn', details))
-            self.btnpreviouspage.bind(on_press=lambda x:self.numberdatasetfunc('lessbtn', details))
+            self.btnnextpage.bind(on_press=lambda x:self.numberdatasetfunc('plusbtn'))
+            self.btnpreviouspage.bind(on_press=lambda x:self.numberdatasetfunc('lessbtn'))
             self.outputfirstbox.bind(on_press=lambda x:self.outputdatasetfunc())
             self.numberdatabox.bind(active=lambda x,y:self.resetandnumberdatasetfunc(''))
             self.imagedatabox.bind(active=lambda x, y: self.resetandnumberdatasetfunc(''))
@@ -149,10 +153,12 @@ class Filechooser(BoxLayout):
             containerbox.add_widget(mybtnlayout)
             popupshow.open()
 
-
+            self.details = details
             if self.isimage is not 'number':
+                print('--------------------------------image es true')
                 self.imagedatabox.active = True
             else:
+                print('--------------------------------nmuber es true')
                 self.numberdatabox.active = True
 
 
@@ -166,9 +172,8 @@ class Filechooser(BoxLayout):
         self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filename)
         eventp.evshowfile(self, filenameselected, details)
 
-    def numberdatasetfunc(self, plusless, details=None):
+    def numberdatasetfunc(self, plusless):
         global outputimageslist, inputimagelist
-
         self.mainlayout.clear_widgets()
         if plusless == 'plusbtn':
             self.pagenum += 1
@@ -199,8 +204,8 @@ class Filechooser(BoxLayout):
                     firstline = self.mytexturedataset[rowtexture + (self.pagenum-1) * linesperpage]
                     for number in firstline:
                         if pos < 5 or pos >= (len(firstline) - 5):
-                            if details is not None and pos == (len(firstline)-1) and details[index] != number:
-                                mystrrow = str(number) + ' (pred:{}) '.format(str(details[index]))
+                            if self.details is not None and pos == (len(firstline)-1) and self.details[index] != number:
+                                mystrrow = str(number) + ' (pred:{}) '.format(str(self.details[index]))
                                 datalbl = Label(text=mystrrow, color=(1, 0, 0, 1))
                             else:
                                 mystrrow = str(number)
@@ -219,8 +224,8 @@ class Filechooser(BoxLayout):
                     index = 0
                     for number in self.mytexturedataset[pos]:
                         index += 1
-                        if details is not None and index == len(self.mytexturedataset[pos]) and details[pos] != number:
-                            mystrrow = str(number) + ' (pred:{}) '.format(str(details[pos]))
+                        if self.details is not None and index == len(self.mytexturedataset[pos]) and self.details[pos] != number:
+                            mystrrow = str(number) + ' (pred:{}) '.format(str(self.details[pos]))
                             datalbl = Label(text=mystrrow, color=(1,0,0,1))
                         else:
                             mystrrow = str(number) + ' '
@@ -261,12 +266,12 @@ class Filechooser(BoxLayout):
                 index = rowtexture+(self.pagenum-1)*nitemsperpage
                 if index >= len(self.mytexturedataset):
                     break
-                if details is None:
+                if self.details is None:
                     imagedata = WidgetTexture(self.mytexturedataset[index], self.isimage)
                 else:
                     imagedata = WidgetTexture(self.mytexturedataset[index], self.isimage,
-                                              details[index], self.mytexturedataset[index][-1],
-                                              self.myoutputimageslist[details[index]])
+                                              self.details[index], self.mytexturedataset[index][-1],
+                                              self.myoutputimageslist[self.details[index]])
                 self.mainlayout.add_widget(imagedata)
 
 
