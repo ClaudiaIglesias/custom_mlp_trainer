@@ -155,10 +155,8 @@ class Filechooser(BoxLayout):
 
             self.details = details
             if self.isimage is not 'number':
-                print('--------------------------------image es true')
                 self.imagedatabox.active = True
             else:
-                print('--------------------------------nmuber es true')
                 self.numberdatabox.active = True
 
 

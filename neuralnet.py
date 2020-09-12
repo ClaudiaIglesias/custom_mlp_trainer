@@ -138,20 +138,20 @@ def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eve
         myapp.currentcycle += 1
         if myapp.stoptrainning:
             break
-        i = 1
+        item = 1
         for row in train:
             outputs = forward_propagate(network, row)
             expected = [0 for i in range(n_outputs)]
             expected[row[-1]] = 1
             sum_error += sum([(expected[i] - outputs[i]) ** 2 for i in range(len(expected))])
-            myapp.mean_qerror = sum_error / i
-            i += 1
+            myapp.mean_qerror = sum_error / item
+            item += 1
             backward_propagate_error(network, expected)
             update_weights(network, row, l_rate)
             if myapp.stoptrainning:
                 break
             myapp.valuepb += step
-        print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, myapp.l_rate, sum_error))
+
 
     if type == 'train':
         eventp.trainfinished(myapp)
@@ -218,7 +218,6 @@ def evaluate_algorithm(dataset, algorithm, eventp, myapp, n_folds, *args):
 
 
 def predictfunc(myapp,mydataset):
-    print('len mydataset:{}' .format(len(mydataset)))
     myapp.valuepredict = 0
     myapp.totalpredict = 0
     myapp.correctpredict = 0

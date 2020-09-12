@@ -296,7 +296,6 @@ class RedNeuronalLabApp(App):
                     if linecolorinput < abs(mydata.networklist[0][a]['weights'][i]):
                         linecolorinput = abs(mydata.networklist[0][a]['weights'][i])
 
-            print('drawing level: {0}, max: {1}'.format(a, linecolorinput))
             for e in range(numoutputs):
                 for a in range(mydata.list_hidden[0]):
                     if linecoloroutput < abs(mydata.networklist[1][e]['weights'][a]):
@@ -1825,7 +1824,6 @@ class RedNeuronalLabApp(App):
                 layoutprogressbar = myapp.parentlayout.ids.mainseparatorprogressbar
                 layoutprogressbar.remove_widget(progressbar)
                 progressbar.value = 0
-                print('Scores: %s' % scores)
                 if len(scores):
                     accuracylabel = (sum(scores) / float(len(scores)))
                     myapp.errorlayout(accuracylabel)
@@ -1845,8 +1843,6 @@ class RedNeuronalLabApp(App):
                     myapp.mainlayout_func()
                 else:
                     myapp.trainlayout()
-                    for layer in myapp.network:
-                        print(layer)
 
             @mainthread
             def predictfinished(self, myapp, scores):

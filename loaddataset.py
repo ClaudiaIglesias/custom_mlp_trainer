@@ -227,14 +227,3 @@ def readdataset(filenamepath, myevent, myapp, forceisimage=None, forceoutputcolu
 
         myevent.evreaddataset(100, isimage, mydataset, myapp)
         return isimage, mydataset
-
-# def main():
-#     # print command line arguments
-#
-#     for arg in sys.argv[1:]:
-#         isimage, dataset = readdataset(arg)
-#         print ("isimage {0},  rows {1}" .format(isimage, len(dataset)))
-#
-#
-# if __name__ == '__main__':
-#     main()
