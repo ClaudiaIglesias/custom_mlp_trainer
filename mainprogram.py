@@ -513,17 +513,21 @@ class RedNeuronalLabApp(App):
                             #draw.nodeslabel = Label(text=biases, font_size=10,size_hint=(None,None), pos=(middlex +49, d * 50 + (middley-31.5 - spacetwo / 2)),
                                                     #color=(1,1,1, 0.25 + colorlayerone/1.33))
                             #draw.add_widget(draw.nodeslabel)
-                        if mydata.list_hidden[0] < 21:
-                            for j in range(mydata.list_hidden[0]):
-                                mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
-                                RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
-                        else:
-                            for j in range(20):
-                                mypoints = [middlex -62, j * 25 + (middley+9 - spaceone / 2), middlex+80, d * 25 + (middley+9 - spacetwo / 2)]
-                                RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas, mydata.networklist, mypoints)
                     else:
                         with draw.canvas:
                             Ellipse(pos=(middlex + 87, d * 25 + (middley - spacetwo / 2) + 9), size=(5, 5))
+                    if mydata.list_hidden[0] < 21:
+                        for j in range(mydata.list_hidden[0]):
+                            mypoints = [middlex - 62, j * 25 + (middley + 9 - spaceone / 2), middlex + 80,
+                                        d * 25 + (middley + 9 - spacetwo / 2)]
+                            RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas,
+                                                                mydata.networklist, mypoints)
+                    else:
+                        for j in range(20):
+                            mypoints = [middlex - 62, j * 25 + (middley + 9 - spaceone / 2), middlex + 80,
+                                        d * 25 + (middley + 9 - spacetwo / 2)]
+                            RedNeuronalLabApp.listoflinesappend(self, 1, d, j, linecolorinput, draw.canvas,
+                                                                mydata.networklist, mypoints)
             for e in range(numoutputs):
                 if mydata.list_hidden[1] < 21:
                     for d in range(mydata.list_hidden[1]):
@@ -945,8 +949,14 @@ class RedNeuronalLabApp(App):
 
         numoutputs = n_outputs
         numdata = n_inputs
-        space = numdata * 20 + (numdata - 1) * 5
-        spaceone = list_hidden[0] * 20 + (list_hidden[0] - 1) * 5
+        if numdata < 11:
+            space = numdata * 20 + (numdata - 1) * 5
+        else:
+            space = 10 * 20 + (10 - 1) * 5
+        if list_hidden[0] < 9:
+            spaceone =list_hidden[0] * 20 + (list_hidden[0] - 1) * 5
+        else:
+            spaceone = 10 * 20 + (10 - 1) * 5
         spaceoutput = numoutputs * 20 + (numoutputs - 1) * 5
         middlex = draw.width/2
         middley = draw.height/2 -20
@@ -959,208 +969,482 @@ class RedNeuronalLabApp(App):
         titlelayout.remove_widget(self.hiddenlayeronelabelthree)
 
 
-
         if len(list_hidden) == 1:
-            # hiddenlayerone
-            #self.hiddenlayeronelabelone.pos =(middletitlex - 28, middletitley - 50)
-            #titlelayout.add_widget(hiddenlayeronelabelone)
-            a = 0
-            for x in range(list_hidden[0]):
-                with draw.canvas:
-                    Color(1,1,1)
-                    RoundedRectangle(size=(20, 20), pos=(middlex, a * 30 + (middley - spaceone / 2)))
-                    Color(0,0,0,1)
-                    RoundedRectangle(size=(15, 15), pos=(middlex+2.5, a * 30 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
-                i = 0
-                e = 0
-                if numdata < 10:
-                    for y in range(numdata):
-                        with draw.canvas:
-                            Color(.5,.5,.5)
-                            Line(points=[middlex - 220, i * 30 + (middley+10 - space / 2), middlex, a * 30 + (middley+10 - spaceone / 2) ])
-                            i = i + 1
-                else:
-                    for y in range(10):
-                        with draw.canvas:
-                            Color(.5,.5,.5)
-                            Line(points=[middlex - 220, i * 30 + (middley+10 - 245 / 2), middlex, a * 30 + (middley+10 - spaceone / 2) ])
-                            i = i + 1
-                for z in range(numoutputs):
+            if list_hidden[0] < 9:
+                for a in range(list_hidden[0]):
                     with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex+20, a * 30 + (middley+10  - spaceone / 2), middlex+230,
-                                     e * 30 + (middley+ 10 - spaceoutput / 2) ])
-                    e = e + 1
-                a = a + 1
+                        Color(.6+a/15,.3+a/15,.4+a/15)
+                        RoundedRectangle(size=(20, 20), pos=(middlex, a * 30 + (middley - spaceone / 2)))
+                        Color(0,0,0,1)
+                        RoundedRectangle(size=(15, 15), pos=(middlex+2.5, a * 30 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
+                    i = 0
+                    e = 0
+                    if numdata < 11:
+                        for d in range(numdata):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, i * 30 + (middley+10 - space / 2), middlex, a * 30 + (middley+10 - spaceone / 2) ])
+                                i = i + 1
+                    else:
+                        for d in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, i * 30 + (middley+10 - space / 2), middlex, a * 30 + (middley+10 - spaceone / 2) ])
+                                i = i + 1
+
+            else:
+                for a in range(10):
+                    if a < 4 or a > 5:
+                        with draw.canvas:
+                            Color(.6+a/15,.3+a/15,.4+a/15)
+                            RoundedRectangle(size=(20, 20), pos=(middlex, a * 30 + (middley - spaceone / 2)))
+                            Color(0,0,0,1)
+                            RoundedRectangle(size=(15, 15), pos=(middlex+2.5, a * 30 + (middley + 2.5 - spaceone / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
+                        i = 0
+                        e = 0
+                    else:
+                        with draw.canvas:
+                            Color(1,1,1,1)
+                            Ellipse(pos=(middlex + 7, a * 30 + (middley - spaceone / 2) + 9), size=(5, 5))
+                            Ellipse(pos=(middlex + 7, 4.5 * 30 + (middley - spaceone / 2) + 9), size=(5, 5))
+
+                    if numdata < 11:
+                        for d in range(numdata):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, d * 30 + (middley + 10 - space / 2), middlex,
+                                             a * 30 + (middley + 10 - spaceone / 2)])
+                    else:
+                        for d in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, d * 30 + (middley + 10 - space / 2), middlex,
+                                             a * 30 + (middley + 10 - spaceone / 2)])
+
+            draw.add_widget(Label(text = str(list_hidden[0]), pos = (middlex - 40 , middley+140), size_hint=(None,None), font_size=13))
+
+            for e in range(numoutputs):
+                if list_hidden[0] < 10:
+                    for a in range(list_hidden[0]):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex+20, a * 30 + (middley+10  - spaceone / 2), middlex+230,
+                            e * 30 + (middley+ 10 - spaceoutput / 2) ])
+                else:
+                    for a in range(10):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex + 20, a * 30 + (middley + 10 - spaceone / 2), middlex + 230,
+                                     e * 30 + (middley + 10 - spaceoutput / 2)])
 
         if len(list_hidden) == 2:
-            # hiddenlayerone
-            spacetwo = list_hidden[1] * 20 + (list_hidden[1] - 1) * 5
-            #self.hiddenlayeronelabelone.pos=(middletitlex-108, middletitley - 50)
-            #titlelayout.add_widget(self.hiddenlayeronelabelone)
-            a = 0
-            for x in range(list_hidden[0]):
-                with draw.canvas:
-                    Color(1,1,1)
-                    RoundedRectangle(size=(20, 20), pos=(middlex-80, a * 30 + (middley - spaceone / 2)))
-                    Color(0,0,0,1)
-                    RoundedRectangle(size=(15, 15), pos=(middlex + 2.5 - 80, a * 30 + (middley + 2.5 - spaceone / 2)),
-                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                i = 0
-                e = 0
-                if numdata < 10:
-                    for y in range(numdata):
+            #hiddenlayerone
+            if list_hidden[1] < 9:
+                spacetwo = list_hidden[1] * 20 + (list_hidden[1] - 1) * 5
+            else:
+                spacetwo = 10 * 20 + (10 - 1) * 5
+
+            if list_hidden[0] < 9:
+                for a in range(list_hidden[0]):
+                    with draw.canvas:
+                        Color(.6+a/15,.3+a/15,.4+a/15)
+                        RoundedRectangle(size=(20, 20), pos=(middlex - 80, a * 30 + (middley - spaceone / 2)))
+                        Color(0, 0, 0, 1)
+                        RoundedRectangle(size=(15, 15), pos=(middlex + 2.5 - 80, a * 30 + (middley + 2.5 - spaceone / 2)),
+                                         radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+
+                    if numdata < 10:
+                        for i in range(numdata):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, i * 30 + (middley-20 - space / 2) + 30, middlex-80, a * 30 + (middley + 10 - spaceone / 2) ])
+
+                    else:
+                        for i in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, i * 30 + (middley-20 - space / 2) + 30, middlex-80, a * 30 + (middley + 10 - spaceone / 2) ])
+            else:
+                for a in range(10):
+                    if a < 4 or a > 5:
                         with draw.canvas:
-                            Color(.5,.5,.5)
-                            Line(points=[middlex - 220, i * 30 + (middley-20 - space / 2) + 30, middlex-80, a * 30 + (middley + 10 - spaceone / 2) ])
-                            i = i + 1
-                else:
-                    for y in range(10):
+                            Color(.6+a/15,.3+a/15,.4+a/15)
+                            RoundedRectangle(size=(18, 18), pos=(middlex - 80, a * 30 + (middley - spaceone / 2)))
+                            Color(0, 0, 0, 1)
+                            RoundedRectangle(size=(13, 13),
+                                             pos=(middlex + 2.5 - 80, a * 30 + (middley + 2.5 - spaceone / 2)),
+                                             radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    else:
                         with draw.canvas:
-                            Color(.5,.5,.5)
-                            Line(points=[middlex - 220, i * 30 + (middley-20 - 245 / 2)+30, middlex-80, a * 30 + (middley+10 - spaceone / 2) ])
-                            i = i + 1
-                a = a + 1
+                            Ellipse(pos=(middlex - 73, a * 30 + (middley - spaceone / 2) + 9), size=(5, 5))
+                            Ellipse(pos=(middlex - 73, 4.5 * 30 + (middley - spaceone / 2) + 9), size=(5, 5))
+
+                    if numdata < 10:
+                        for i in range(numdata):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, i * 30 + (middley - 20 - space / 2) + 30, middlex - 80,
+                                         a * 30 + (middley + 10 - spaceone / 2)])
+
+                    else:
+                        for i in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, i * 30 + (middley - 20 - space / 2) + 30, middlex - 80,
+                                         a * 30 + (middley + 10 - spaceone / 2)])
+            draw.add_widget(
+                Label(text=str(list_hidden[0]), pos=(middlex - 121, middley + 140), size_hint=(None, None),
+                      font_size=13))
 
             # hiddenlayertwo
-            d = 0
-            a = 0
-            d = 0
-            for x in range(list_hidden[1]):
-                with draw.canvas:
-                    Color(1,1,1)
-                    RoundedRectangle(size=(20, 20), pos=(middlex + 80, d * 30 + (middley - spacetwo / 2)))
-                    Color(0,0,0,1)
-                    RoundedRectangle(size=(15, 15), pos=(middlex + 82.5, d * 30 + (middley + 2.5 - spacetwo / 2)),
-                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                j = 0
-                e = 0
-                for y in range(list_hidden[0]):
+
+            if list_hidden[1] < 10:
+                for d in range(list_hidden[1]):
                     with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex-60, j * 30 + (middley+10 - spaceone / 2), middlex+80, d * 30 + (middley+10 - spacetwo / 2)])
-                        j = j + 1
-                for z in range(numoutputs):
-                    with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex+100, d * 30 + (middley+10 - spacetwo / 2), middlex + 230, e * 30 + (middley +10 - spaceoutput / 2)])
-                    e = e + 1
-                d = d + 1
+                        Color(.6+d/15,.3+d/15,.4+d/15)
+                        RoundedRectangle(size=(20, 20), pos=(middlex + 80, d * 30 + (middley - spacetwo / 2)))
+                        Color(0, 0, 0, 1)
+                        RoundedRectangle(size=(15, 15), pos=(middlex + 82.5, d * 30 + (middley + 2.5 - spacetwo / 2)),
+                                         radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    if list_hidden[0] < 10:
+                        for j in range(list_hidden[0]):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex-60, j * 30 + (middley+10 - spaceone / 2), middlex+80, d * 30 + (middley+10 - spacetwo / 2)])
+                    else:
+                        for j in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex-60, j * 30 + (middley+10 - spaceone / 2), middlex+80, d * 30 + (middley+10 - spacetwo / 2)])
+            else:
+                for d in range(10):
+                    if d < 4 or d > 5:
+                        with draw.canvas:
+                            Color(.6+d/15,.3+d/15,.4+d/15)
+                            RoundedRectangle(size=(20, 20), pos=(middlex + 80, d * 30 + (middley - spacetwo / 2)))
+                            Color(0, 0, 0, 1)
+                            RoundedRectangle(size=(15, 15), pos=(middlex + 82.5, d * 30 + (middley + 2.5 - spacetwo / 2)),
+                                             radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    else:
+                        with draw.canvas:
+                            Ellipse(pos=(middlex + 87, d * 30 + (middley - spacetwo / 2) + 9), size=(5, 5))
+                            Ellipse(pos=(middlex + 87, 4.5 * 30 + (middley - spacetwo / 2) + 9), size=(5, 5))
+                    if list_hidden[0] < 10:
+                        for j in range(list_hidden[0]):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 60, j * 30 + (middley + 10 - spaceone / 2), middlex + 80,
+                                         d * 30 + (middley + 10 - spacetwo / 2)])
+                    else:
+                        for j in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 60, j * 30 + (middley + 10 - spaceone / 2), middlex + 80,
+                                         d * 30 + (middley + 10 - spacetwo / 2)])
+
+            for e in range(numoutputs):
+                if list_hidden[1] < 10:
+                    for d in range(list_hidden[1]):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex+100, d * 30 + (middley+10 - spacetwo / 2), middlex + 230, e * 30 + (middley +10 - spaceoutput / 2)])
+                else:
+                    for d in range(10):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex+100, d * 30 + (middley+10 - spacetwo / 2), middlex + 230, e * 30 + (middley +10 - spaceoutput / 2)])
+            draw.add_widget(
+                Label(text=str(list_hidden[1]), pos=(middlex + 38, middley + 140), size_hint=(None, None),
+                      font_size=13))
 
         if len(list_hidden) == 3:
-            # hiddenlayerone
-            spacethree = list_hidden[2] * 20 + (list_hidden[2] - 1) * 5
-            spacetwo = list_hidden[1] * 20 + (list_hidden[1] - 1) * 5
-            #self.hiddenlayeronelabelone.pos=(middletitlex-158, middletitley-50)
-            #titlelayout.add_widget(self.hiddenlayeronelabelone)
-            a = 0
-            for x in range(list_hidden[0]):
-                with draw.canvas:
-                    Color(1,1,1)
-                    RoundedRectangle(size=(20, 20), pos=(middlex - 130, a * 30 + (middley - spaceone / 2)))
-                    Color(0,0,0,1)
-                    RoundedRectangle(size=(15, 15), pos=(middlex + 2.5 - 130, a * 30 + (middley + 2.5 - spaceone / 2)),
-                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                i = 0
-                e = 0
-                if numdata < 10:
-                    for y in range(numdata):
-                        with draw.canvas:
-                            Color(.5,.5,.5)
-                            Line(points=[middlex - 220, i * 30 + (middley-20 - space / 2) + 30, middlex-130,
-                                     a * 30 + (middley+ 10 - spaceone / 2) ])
-                            i = i + 1
-                else:
-                    for y in range(10):
-                        with draw.canvas:
-                            Color(.5,.5,.5)
-                            Line(points=[middlex - 220, i * 30 + (middley -20 - 245 / 2) + 30, middlex - 130, a * 30 + (middley+10 - spaceone / 2) ])
-                            i = i + 1
-                a = a + 1
+        # hiddenlayerone
+            # spacethree = list_hidden[2] * 20 + (list_hidden[2] - 1) * 5
+            # spacetwo = list_hidden[1] * 20 + (list_hidden[1] - 1) * 5
+            # #self.hiddenlayeronelabelone.pos=(middletitlex-158, middletitley-50)
+            # #titlelayout.add_widget(self.hiddenlayeronelabelone)
+            # a = 0
+            # for x in range(list_hidden[0]):
+            #     with draw.canvas:
+            #         Color(1,1,1)
+            #         RoundedRectangle(size=(20, 20), pos=(middlex - 130, a * 30 + (middley - spaceone / 2)))
+            #         Color(0,0,0,1)
+            #         RoundedRectangle(size=(15, 15), pos=(middlex + 2.5 - 130, a * 30 + (middley + 2.5 - spaceone / 2)),
+            #                          radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+            #     i = 0
+            #     if numdata < 10:
+            #         for y in range(numdata):
+            #             with draw.canvas:
+            #                 Color(.5,.5,.5)
+            #                 Line(points=[middlex - 220, i * 30 + (middley-20 - space / 2) + 30, middlex-130,
+            #                          a * 30 + (middley+ 10 - spaceone / 2) ])
+            #                 i = i + 1
+            #     else:
+            #         for y in range(10):
+            #             with draw.canvas:
+            #                 Color(.5,.5,.5)
+            #                 Line(points=[middlex - 220, i * 30 + (middley -20 - 245 / 2) + 30, middlex - 130, a * 30 + (middley+10 - spaceone / 2) ])
+            #                 i = i + 1
+            #     a = a + 1
+            #
+            # # hiddenlayertwo
+            # d = 0
+            # a = 0
+            # d = 0
+            # for x in range(list_hidden[1]):
+            #     with draw.canvas:
+            #         Color(1,1,1)
+            #         RoundedRectangle(size=(20, 20), pos=(middlex, d * 30 + (middley - spacetwo / 2)))
+            #         Color(0,0,0,1)
+            #         RoundedRectangle(size=(15, 15), pos=(middlex + 2.5, d * 30 + (middley + 2.5 - spacetwo / 2)),
+            #                          radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+            #     j = 0
+            #     e = 0
+            #     for y in range(list_hidden[0]):
+            #         with draw.canvas:
+            #             Color(.5,.5,.5)
+            #             Line(points=[middlex-110, j * 30 + (middley+10 - spaceone / 2), middlex, d * 30 + (middley+10 - spacetwo / 2)])
+            #             j = j + 1
+            #     d = d + 1
+            #
+            # #hiddenlayerthree
+            # d = 0
+            # a = 0
+            #
+            # d = 0
+            # for x in range(list_hidden[2]):
+            #     with draw.canvas:
+            #         Color(1,1,1)
+            #         RoundedRectangle(size=(20, 20), pos=(middlex+130, d * 30 + (middley - spacethree / 2)))
+            #         Color(0,0,0,1)
+            #         RoundedRectangle(size=(15, 15), pos=(middlex + 132.5, d * 30 + (middley + 2.5 - spacethree / 2)),
+            #                          radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+            #     l = 0
+            #     e = 0
+            #     for y in range(list_hidden[1]):
+            #         with draw.canvas:
+            #             Color(.5,.5,.5)
+            #             Line(points=[middlex+20, l * 30 + (middley+10 - spacetwo / 2), middlex+130, d * 30 + (middley+10 - spacethree / 2)])
+            #             l = l + 1
+            #     for z in range(numoutputs):
+            #         with draw.canvas:
+            #             Color(.5,.5,.5)
+            #             Line(points=[middlex+150, d * 30 + (middley+10 - spacethree / 2), middlex+230, e * 30 + (middley+10 - spaceoutput / 2)])
+            #         e = e + 1
+            #     d = d + 1
+            if list_hidden[2] < 10:
+                spacethree = list_hidden[2] * 20 + (list_hidden[2] - 1) * 5
+            else:
+                spacethree = 10 * 20 + (10 - 1) * 5
+            if list_hidden[1] < 10:
+                spacetwo = list_hidden[1] * 20 + (list_hidden[1] - 1) * 5
+            else:
+                spacetwo = 10 * 20 + (10 - 1) * 5
 
+
+            if list_hidden[0] < 10:
+                for a in range(list_hidden[0]):
+                    with draw.canvas:
+                        Color(.6+a/15,.3+a/15,.4+a/15)
+                        RoundedRectangle(size=(20, 20), pos=(middlex - 130, a * 30 + (middley - spaceone / 2)))
+                        Color(0,0,0,1)
+                        RoundedRectangle(size=(15, 15), pos=(middlex + 2.5 - 130, a * 30 + (middley + 2.5 - spaceone / 2)),
+                                         radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+
+                    if numdata < 10:
+                        for i in range(numdata):
+                            with draw.canvas:
+                                Color(.5,.5,.5)
+                                Line(points=[middlex - 220, i * 30 + (middley-20 - space / 2) + 30, middlex-130,a * 30 + (middley+ 10 - spaceone / 2) ])
+
+                    else:
+                        for i in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, i * 30 + (middley - 20 - space / 2) + 30, middlex - 130,
+                                             a * 30 + (middley + 10 - spaceone / 2)])
+            else:
+                for a in range(10):
+                    if a < 4 or a > 5:
+                        with draw.canvas:
+                            Color(.6+a/15,.3+a/15,.4+a/15)
+                            RoundedRectangle(size=(20, 20), pos=(middlex - 130, a * 30 + (middley - spaceone / 2)))
+                            Color(0, 0, 0, 1)
+                            RoundedRectangle(size=(15, 15),
+                                             pos=(middlex + 2.5 - 130, a * 30 + (middley + 2.5 - spaceone / 2)),
+                                             radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    else:
+                        with draw.canvas:
+                            Ellipse(pos=(middlex - 123, a * 30 + (middley - spaceone / 2) + 9), size=(5, 5))
+                            Ellipse(pos=(middlex - 123, 4.5 * 30 + (middley - spaceone / 2) + 9), size=(5, 5))
+
+                    if numdata < 10:
+                        for i in range(numdata):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, i * 30 + (middley - 20 - space / 2) + 30, middlex - 130,
+                                             a * 30 + (middley + 10 - spaceone / 2)])
+
+                    else:
+                        for i in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 220, i * 30 + (middley - 20 - space / 2) + 30, middlex - 130,
+                                             a * 30 + (middley + 10 - spaceone / 2)])
+            draw.add_widget(
+                Label(text=str(list_hidden[0]), pos=(middlex - 171, middley + 140), size_hint=(None, None),
+                      font_size=13))
             # hiddenlayertwo
-            d = 0
-            a = 0
-            d = 0
-            for x in range(list_hidden[1]):
-                with draw.canvas:
-                    Color(1,1,1)
-                    RoundedRectangle(size=(20, 20), pos=(middlex, d * 30 + (middley - spacetwo / 2)))
-                    Color(0,0,0,1)
-                    RoundedRectangle(size=(15, 15), pos=(middlex + 2.5, d * 30 + (middley + 2.5 - spacetwo / 2)),
-                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                j = 0
-                e = 0
-                for y in range(list_hidden[0]):
-                    with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex-110, j * 30 + (middley+10 - spaceone / 2), middlex, d * 30 + (middley+10 - spacetwo / 2)])
-                        j = j + 1
-                d = d + 1
 
+            if list_hidden[1] < 10:
+                for d in range(list_hidden[1]):
+                    with draw.canvas:
+                        Color(.6+d/15,.3+d/15,.4+d/15)
+                        RoundedRectangle(size=(20, 20), pos=(middlex, d * 30 + (middley - spacetwo / 2)))
+                        Color(0,0,0,1)
+                        RoundedRectangle(size=(15, 15), pos=(middlex + 2.5, d * 30 + (middley + 2.5 - spacetwo / 2)),
+                                         radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    if list_hidden[0] < 10:
+                        for j in range(list_hidden[0]):
+                            with draw.canvas:
+                                Color(.5,.5,.5)
+                                Line(points=[middlex-110, j * 30 + (middley+10 - spaceone / 2), middlex, d * 30 + (middley+10 - spacetwo / 2)])
+                    else:
+                        for j in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 110, j * 30 + (middley + 10 - spaceone / 2), middlex,
+                                             d * 30 + (middley + 10 - spacetwo / 2)])
+            else:
+                for d in range(10):
+                    if d < 4 or d > 5:
+                        with draw.canvas:
+                            Color(.6+d/15,.3+d/15,.4+d/15)
+                            RoundedRectangle(size=(20, 20), pos=(middlex, d * 30 + (middley - spacetwo / 2)))
+                            Color(0, 0, 0, 1)
+                            RoundedRectangle(size=(15, 15), pos=(middlex + 2.5, d * 30 + (middley + 2.5 - spacetwo / 2)),
+                                             radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    else:
+                        with draw.canvas:
+                            Ellipse(pos=(middlex + 7, d * 30 + (middley - spacetwo / 2) + 9), size=(5, 5))
+                            Ellipse(pos=(middlex + 7, 4.5 * 30 + (middley - spacetwo / 2) + 9), size=(5, 5))
+
+                    if list_hidden[0] < 10:
+                        for j in range(list_hidden[0]):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 110, j * 30 + (middley + 10 - spaceone / 2), middlex,
+                                             d * 30 + (middley + 10 - spacetwo / 2)])
+                    else:
+                        for j in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex - 110, j * 30 + (middley + 10 - spaceone / 2), middlex,
+                                             d * 30 + (middley + 10 - spacetwo / 2)])
+            draw.add_widget(
+                Label(text=str(list_hidden[0]), pos=(middlex - 40, middley + 140), size_hint=(None, None),
+                      font_size=13))
             #hiddenlayerthree
-            d = 0
-            a = 0
 
-            d = 0
-            for x in range(list_hidden[2]):
-                with draw.canvas:
-                    Color(1,1,1)
-                    RoundedRectangle(size=(20, 20), pos=(middlex+130, d * 30 + (middley - spacethree / 2)))
-                    Color(0,0,0,1)
-                    RoundedRectangle(size=(15, 15), pos=(middlex + 132.5, d * 30 + (middley + 2.5 - spacethree / 2)),
-                                     radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                l = 0
-                e = 0
-                for y in range(list_hidden[1]):
+            if list_hidden[2] < 10:
+                for d in range(list_hidden[2]):
                     with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex+20, l * 30 + (middley+10 - spacetwo / 2), middlex+130, d * 30 + (middley+10 - spacethree / 2)])
-                        l = l + 1
-                for z in range(numoutputs):
-                    with draw.canvas:
-                        Color(.5,.5,.5)
-                        Line(points=[middlex+150, d * 30 + (middley+10 - spacethree / 2), middlex+230, e * 30 + (middley+10 - spaceoutput / 2)])
-                    e = e + 1
-                d = d + 1
+                        Color(.6+d/15,.3+d/15,.4+d/15)
+                        RoundedRectangle(size=(20, 20), pos=(middlex+130, d * 30 + (middley - spacethree / 2)))
+                        Color(0,0,0,1)
+                        RoundedRectangle(size=(15, 15), pos=(middlex + 132.5, d * 30 + (middley + 2.5 - spacethree / 2)),
+                                         radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+
+                    if list_hidden[1] < 10:
+                        for l in range(list_hidden[1]):
+                            with draw.canvas:
+                                Color(.5,.5,.5)
+                                Line(points=[middlex+20, l * 30 + (middley+10 - spacetwo / 2), middlex+130, d * 30 + (middley+10 - spacethree / 2)])
+                    else:
+                        for l in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex + 20, l * 30 + (middley + 10 - spacetwo / 2), middlex + 130,
+                                             d * 30 + (middley + 10 - spacethree / 2)])
+            else:
+                for d in range(10):
+                    if d < 4 or d > 5:
+                        with draw.canvas:
+                            Color(.6+d/15,.3+d/15,.4+d/15)
+                            RoundedRectangle(size=(20, 20), pos=(middlex + 130, d * 30 + (middley - spacethree / 2)))
+                            Color(0, 0, 0, 1)
+                            RoundedRectangle(size=(15, 15),
+                                             pos=(middlex + 132.5, d * 30 + (middley + 2.5 - spacethree / 2)),
+                                             radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
+                    else:
+                        with draw.canvas:
+                            Ellipse(pos=(middlex +137, d * 30 + (middley - spacethree / 2) + 9), size=(5, 5))
+                            Ellipse(pos=(middlex + 137, 4.5 * 30 + (middley - spacethree / 2) + 9), size=(5, 5))
+
+                    if list_hidden[1] < 10:
+                        for l in range(list_hidden[1]):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex + 20, l * 30 + (middley + 10 - spacetwo / 2), middlex + 130,
+                                             d * 30 + (middley + 10 - spacethree / 2)])
+                    else:
+                        for l in range(10):
+                            with draw.canvas:
+                                Color(.5, .5, .5)
+                                Line(points=[middlex + 20, l * 30 + (middley + 10 - spacetwo / 2), middlex + 130,
+                                             d * 30 + (middley + 10 - spacethree / 2)])
+
+            for e in range(numoutputs):
+                if list_hidden[2] < 10:
+                    for d in range(list_hidden[2]):
+                        with draw.canvas:
+                            Color(.5,.5,.5)
+                            Line(points=[middlex+150, d * 30 + (middley+10 - spacethree / 2), middlex+230, e * 30 + (middley+10 - spaceoutput / 2)])
+                else:
+                    for d in range(10):
+                        with draw.canvas:
+                            Color(.5, .5, .5)
+                            Line(points=[middlex + 150, d * 30 + (middley + 10 - spacethree / 2), middlex + 230,
+                                         e * 30 + (middley + 10 - spaceoutput / 2)])
+            draw.add_widget(Label(text=str(list_hidden[0]), pos=(middlex+89, middley + 140), size_hint=(None, None),font_size=13))
 
         # output layer
         for x in range(numoutputs):
-            outputoptions = str(c)
+            outputoptions = str(x)
             lbloutputoptions = Label(text='[b]' + outputoptions, markup=True, size_hint=(None,None),
                                      pos=(middlex+215, c * 30 + (middley -40 - spaceoutput / 2)), color=(1, 1, 1, 1))
             draw.add_widget(lbloutputoptions)
             with draw.canvas:
-                Color(.67+c/9,.57+c/9,.69+c/9)
-                RoundedRectangle(size=(20, 20), pos=(middlex + 230, c * 30 + (middley - spaceoutput / 2)))
+                Color(.57+x/20,.47+x/20,.59+x/20)
+                RoundedRectangle(size=(20, 20), pos=(middlex + 230, x * 30 + (middley - spaceoutput / 2)))
                 Color(0, 0, 0)
-                RoundedRectangle(size=(15, 15), pos=(middlex + 232.5, c * 30 + (middley+2.5 - spaceoutput / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
-            c = c + 1
+                RoundedRectangle(size=(15, 15), pos=(middlex + 232.5, x * 30 + (middley+2.5 - spaceoutput / 2)), radius=[(6,6),(6,6),(6,6),(6,6)])
+
         # input layer
         if numdata < 10:
             for x in range(numdata):
                 with draw.canvas:
-                    Color(.6,.87,.89)
-                    RoundedRectangle(size=(20, 20), pos=(middlex - 240, b * 30 + (middley - space / 2)))
+                    Color(.4 + x / 10, .67 + x / 10, .69 + x / 10)
+                    RoundedRectangle(size=(20, 20), pos=(middlex - 240, x * 30 + (middley - space / 2)))
                     Color(0, 0, 0)
-                    RoundedRectangle(size=(15, 15), pos=(middlex - 237.5, b * 30 + (middley + 2.5 - space / 2)),
+                    RoundedRectangle(size=(15, 15), pos=(middlex - 237.5, x * 30 + (middley + 2.5 - space / 2)),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                    b = b + 1
         else:
             for x in range(4):
                 with draw.canvas:
-                    Color(.6,.87,.89)
+                    Color(.6, .87, .89)
+                    Color(.4 + x / 10, .67 + x / 10, .69 + x / 10)
                     RoundedRectangle(size=(20, 20), pos=(middlex - 240, b * 30 + (middley - 245 / 2)))
                     Color(0, 0, 0)
                     RoundedRectangle(size=(15, 15), pos=(middlex - 237.5, b * 30 + (middley + 2.5 - 245 / 2)),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
-                    Color(.6, .87, .89)
+                    Color(.4 + x / 10, .67 + x / 10, .69 + x / 10)
                     RoundedRectangle(size=(20, 20), pos=(middlex - 240, (middley + 245 / 2) - b * 30 +25 ))
                     Color(0, 0, 0)
                     RoundedRectangle(size=(15, 15), pos=(middlex - 237.5, (middley + 2.5 +  245 / 2) - b * 30 +25 ),
                                      radius=[(6, 6), (6, 6), (6, 6), (6, 6)])
                     b = b + 1
-                    Color(.4+b/9,.67+b/9,.69+b/9)
+                    Color(.3+b/10,.57+b/10,.59+b/10)
                     Ellipse(pos=(middlex - 233, middley-b*10+42),size= (4,4))
                 draw.add_widget(Label(text=str(numdata), pos=(middlex - 320, middley-30), size_hint=(None,None)))
                     #Point(points=(200,200),pointsize=2)

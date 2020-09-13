@@ -144,7 +144,7 @@ def train_network(network, train, n_folds, l_rate, n_epoch, n_outputs, type, eve
             expected = [0 for i in range(n_outputs)]
             expected[row[-1]] = 1
             sum_error += sum([(expected[i] - outputs[i]) ** 2 for i in range(len(expected))])
-            myapp.mean_qerror = sum_error / item
+            myapp.mean_qerror = sum_error / (item * len(expected))
             item += 1
             backward_propagate_error(network, expected)
             update_weights(network, row, l_rate)
