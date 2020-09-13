@@ -2,6 +2,7 @@
 
 # Load a CSV file
 import sys
+import traceback
 from csv import reader
 from math import sqrt
 from os.path import basename
@@ -23,7 +24,10 @@ def load_csv(filename):
                     continue
                 dataset.append(row)
         return dataset
-    except:
+    except Exception as e:  # work on python 3.x
+        track = traceback.format_exc()
+        print(track)
+        print('load_csv: ' + str(e))
         return None
 
 
@@ -167,9 +171,7 @@ def showdataset(filenamepath):
         return outputoptional, imageoptional, isimage, mydataset
 
 def readdataset(filenamepath, myevent, myapp, forceisimage=None, forceoutputcolumn=None):
-
     myevent.evreaddataset(5, None, None, myapp)
-
     filename = basename(filenamepath)
     if re.compile('\.*csv').search(filename) is None and filename.find('idx') != -1:
         images, labels = load_mnist(filenamepath)
@@ -227,3 +229,8 @@ def readdataset(filenamepath, myevent, myapp, forceisimage=None, forceoutputcolu
 
         myevent.evreaddataset(100, isimage, mydataset, myapp)
         return isimage, mydataset
+
+def loadfileoutputnames(filenamepath):
+    filenameoutputnames = filenamepath + '.txt'
+    readfilenameoutputnames = load_csv(filenameoutputnames)
+    return readfilenameoutputnames

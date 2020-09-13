@@ -13,7 +13,7 @@ from kivy.animation import Animation
 import threading
 from kivy.core.window import Window
 
-from loaddataset import showdataset
+from loaddataset import showdataset, loadfileoutputnames
 from widgettexture import WidgetTexture
 
 # para tener instancias distintas para el checkbox
@@ -168,6 +168,7 @@ class Filechooser(BoxLayout):
         self.callerclass.filename = filename
         self.callerclass.lblfilename.text = ('[b] Archivo: [/b]' + '[i]' + filenameselected)
         self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filename)
+        self.filenameoutputnames = loadfileoutputnames(filename)
         eventp.evshowfile(self, filenameselected, details)
 
     def numberdatasetfunc(self, plusless):
@@ -309,7 +310,8 @@ class Filechooser(BoxLayout):
         if self.imagedatabox.active == True:
             outputbox.cols = len(setoutputslast)
         else:
-            outputbox.rows = len(setoutputslast)
+            outputbox.cols = len(setoutputslast)
+            print(setoutputslast)
 
         if self.imagedatabox.active == True:
             # for number in setoutputslast:
@@ -332,6 +334,10 @@ class Filechooser(BoxLayout):
                 lbloutput = Label(text=str(number))
                 outputbox.add_widget(lbloutput)
 
+        if self.filenameoutputnames is not None and len(self.filenameoutputnames[0]):
+            for name in self.filenameoutputnames[0]:
+                lbloutput = Label(text=str(name))
+                outputbox.add_widget(lbloutput)
 
         containeroutput.add_widget(outputbox)
 
