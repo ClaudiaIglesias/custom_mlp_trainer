@@ -1,6 +1,8 @@
 import traceback
+import sys
 
 from kivy.app import App
+from kivy.resources import resource_add_path
 from kivy.storage.jsonstore import JsonStore
 from kivy.uix.button import Button
 from kivy.uix.label import Label
@@ -2536,6 +2538,9 @@ class LayoutScreen(BoxLayout):
 
 
 if __name__ == '__main__':
+    if hasattr(sys, '_MEIPASS'):
+        print ("pyinstaller path =" + sys._MEIPASS)
+        resource_add_path(sys._MEIPASS)
     RedNeuronalLabApp().run()
 
 '''

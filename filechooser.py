@@ -13,7 +13,7 @@ from kivy.animation import Animation
 import threading
 from kivy.core.window import Window
 
-from loaddataset import showdataset, loadfileoutputnames
+from loaddataset import showdataset, loadfileoutputnames, datasetoutputfirsttolastcolumn
 from widgettexture import WidgetTexture
 
 # para tener instancias distintas para el checkbox
@@ -88,10 +88,10 @@ class Filechooser(BoxLayout):
             typelayout = GridLayout( cols = 4)
             infolayout = BoxLayout(orientation='horizontal', size_hint=(1,.1))
             self.imagedatabox = CheckBox(group = 'typeobject' + str(countnumberdatabox), size_hint=(.4,1))
-            lblimagedatabox = Label(text='Dataset de imágenes',halign="left")
+            lblimagedatabox = Label(text='Base de datos de imágenes',halign="left")
             lblimagedatabox.bind(size=lblimagedatabox.setter('text_size'))
             self.numberdatabox = CheckBox(group = 'typeobject' + str(countnumberdatabox), size_hint=(.4,1))
-            lblnumberdatabox = Label(text='Dataset de números',halign="left")
+            lblnumberdatabox = Label(text='Base de datos de números',halign="left")
             lblnumberdatabox.bind(size=lblnumberdatabox.setter('text_size'))
             self.outputfirstbox = CheckBox(group='output' + str(countnumberdatabox), size_hint=(.4,1))
             lbloutputfirstbox = Label(text='Salidas en la primera columna',halign="left")
@@ -99,6 +99,7 @@ class Filechooser(BoxLayout):
             self.outputlastbox = CheckBox(group='output' + str(countnumberdatabox), size_hint=(.4,1))
             lbloutputlastbox = Label(text='Salidas en la última columna',halign="left")
             lbloutputlastbox.bind(size=lbloutputlastbox.setter('text_size'))
+
 
             self.lblpage = Label(text='', markup = True, pos_hint={'center_x': .5, 'center_y': .5},
                             size_hint=(1, .1), color=(.7,.9,.9))
@@ -133,11 +134,11 @@ class Filechooser(BoxLayout):
                     typelayout.add_widget(lblnumberdatabox)
                     typelayout.add_widget(self.imagedatabox)
                     typelayout.add_widget(lblimagedatabox)
-                if self.optionaloutput:
-                    typelayout.add_widget(self.outputlastbox)
-                    typelayout.add_widget(lbloutputlastbox)
-                    typelayout.add_widget(self.outputfirstbox)
-                    typelayout.add_widget(lbloutputfirstbox)
+                # if selfoptionaloutput.:
+                #     typelayout.add_widget(self.outputlastbox)
+                #     typelayout.add_widget(lbloutputlastbox)
+                #     typelayout.add_widget(self.outputfirstbox)
+                #     typelayout.add_widget(lbloutputfirstbox)
             mybtnlayout.add_widget(popupbtn)
             mybtnlayout.add_widget(typelayout)
             middlelayout.add_widget(self.btnpreviouspage)
@@ -289,7 +290,10 @@ class Filechooser(BoxLayout):
     def outputdatasetfunc(self):
 
         if self.outputfirstbox.active == True and self.outputchanged == False:
-            self.optionaloutput, self.optionalimage, self.isimage, self.mytexturedataset = showdataset(filenameselected)
+            self.mytexturedataset=datasetoutputfirsttolastcolumn(self.mytexturedataset)
+            outputslast = ([row[-1] for row in self.mytexturedataset])
+            setoutputslast = sorted(set(outputslast))
+            self.btnnoutputs.text='[b]nº salidas: [/b]' + str(len(setoutputslast))
             self.numberdatasetfunc('')
             self.outputchanged = True
         elif self.outputlastbox.active == True and self.outputchanged == True:

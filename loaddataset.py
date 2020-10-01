@@ -77,7 +77,7 @@ def optional_output_column(mydataset, columnselected):
     else:
         return True
 
-def guess_output_column(mydataset):
+def guess_output_column(mydataset,filenamepath):
     last = -1
     first = 0
     outputslast = ([row[last] for row in mydataset])
@@ -105,7 +105,11 @@ def guess_output_column(mydataset):
         # if floatvalue is not an integer
         if (floatvalue != intvalue):
             return last
-    return last
+    outputstxt=loadfileoutputnames(filenamepath)
+    if outputstxt is not None and len(outputstxt[0]) != n_outputslast and len(outputstxt[0]) == n_outputsfirst:
+        return first
+    else:
+        return last
 
 def guess_is_type_image(mydataset):
     inputfirst = len(mydataset[0])
@@ -129,7 +133,7 @@ def normalize_dataset(dataset, minmax):
             if minmax[i][1] != minmax[i][0]:
                 row[i] = (row[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
     
-def showdataset(filenamepath):
+def showdataset(filenamepath, forceoutputcolumn=None):
     filename = basename(filenamepath)
     if re.compile('\.*csv').search(filename) is None and (filename.find('idx') != -1 or filename.find('batch') != -1):
         if filename.find('idx') != -1:
@@ -157,7 +161,11 @@ def showdataset(filenamepath):
         mydataset = load_csv(filenamepath)
         if mydataset is None:
             return None, None, None, None
-        outputcolumn = guess_output_column(mydataset)
+
+        if forceoutputcolumn is None:
+            outputcolumn = guess_output_column(mydataset,filenamepath)
+        else:
+            outputcolumn = forceoutputcolumn
         outputoptional = optional_output_column(mydataset, outputcolumn)
         isimage = guess_is_type_image(mydataset)
         if isimage is not 'number':
@@ -202,7 +210,7 @@ def readdataset(filenamepath, myevent, myapp, forceisimage=None, forceoutputcolu
         if mydataset is None:
             return None, None
         if forceoutputcolumn is None:
-            outputcolumn = guess_output_column(mydataset)
+            outputcolumn = guess_output_column(mydataset,filenamepath)
         else:
             outputcolumn = forceoutputcolumn
         if outputcolumn == 0:
