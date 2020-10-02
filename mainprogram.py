@@ -2538,10 +2538,16 @@ class LayoutScreen(BoxLayout):
 
 
 if __name__ == '__main__':
+    errorinit = False
     if hasattr(sys, '_MEIPASS'):
-        print ("pyinstaller path =" + sys._MEIPASS)
-        resource_add_path(sys._MEIPASS)
-    RedNeuronalLabApp().run()
+        if os.path.exists('.') is False:
+            print("Por favor añade el directorio de trabajo (.) a la variable PATH de las variables de entorno de tu sistema")
+            errorinit = True
+        else:
+            print ("pyinstaller path =" + sys._MEIPASS)
+            resource_add_path(sys._MEIPASS)
+    if errorinit is False:
+        RedNeuronalLabApp().run()
 
 '''
 [{'weights': [0.09749164884035584, 0.8385365317026721, 0.7582938712917109, 0.23408540444090786], 'output': 0.9301660140324418, 'delta': -1.0868317911913742e-05}, 
