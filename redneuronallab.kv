@@ -67,7 +67,7 @@
             width: self.parent.width
             height: 10
             Image:
-                source:'line.png'
+                source:'images/line.png'
                 width: self.parent.width
 
         RelativeLayout:
@@ -244,14 +244,14 @@
                 size_hint_x: .2
                 pos_hint: {'center_x': .5, 'center_y': .5}
                 background_normal: 'images/ButtonPlusP.png'
-                background_down: 'ButtonDeactivated.png'
+                background_down: 'images/ButtonDeactivated.png'
             Button:
                 text: 'Abrir'
                 on_press: idfilechooser.open(filechooserbox.path, text_input.text)
                 size_hint_x: .2
                 pos_hint: {'center_x': .5, 'center_y': .5}
                 background_normal: 'images/ButtonPlusB.png'
-                background_down: 'ButtonDeactivated.png'
+                background_down: 'images/ButtonDeactivated.png'
                 color: 0,0,0,1
 
 

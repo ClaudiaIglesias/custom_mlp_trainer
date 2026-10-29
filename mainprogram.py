@@ -903,9 +903,11 @@ class RedNeuronalLabApp(App):
         textlayout.add_widget(labelrate)
         if leftpanelitem.type is 'Error' or leftpanelitem.type is 'None':
             textlayout.add_widget(labelfolds)
+        if leftpanelitem.type is 'Error' or leftpanelitem.type is 'Test':
+            textlayout.add_widget(self.labelaccuracy)
         textlayout.add_widget(errorlbl)
         textlayout.add_widget(labeltransfer)
-        textlayout.add_widget(self.labelaccuracy)
+
 
 
 
@@ -2540,12 +2542,9 @@ class LayoutScreen(BoxLayout):
 if __name__ == '__main__':
     errorinit = False
     if hasattr(sys, '_MEIPASS'):
-        if os.path.exists('.') is False:
-            print("Por favor añade el directorio de trabajo (.) a la variable PATH de las variables de entorno de tu sistema")
-            errorinit = True
-        else:
-            print ("pyinstaller path =" + sys._MEIPASS)
-            resource_add_path(sys._MEIPASS)
+        os.environ["PATH"] += os.pathsep + sys._MEIPASS
+        resource_add_path(sys._MEIPASS)
+    print("PATH=" + str(os.environ["PATH"]))
     if errorinit is False:
         RedNeuronalLabApp().run()
 
